@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "19027942066",
+    "project_id": "clima-61e37",
+    "storage_bucket": "clima-61e37.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:19027942066:android:5b4ef9e475045f77ec07ab",
+        "android_client_info": {
+          "package_name": "com.example.clima"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "19027942066-sicgc8r9e98bfmg4tsae45lv1ismkr9n.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAchRdKMlje21KODWIhFFowbBaiR9MclTk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "19027942066-sicgc8r9e98bfmg4tsae45lv1ismkr9n.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
