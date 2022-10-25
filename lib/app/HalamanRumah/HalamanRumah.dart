@@ -1,8 +1,15 @@
 // ignore_for_file: file_names, non_constant_identifier_names
 
+import 'package:clima/app/Halaman%201/DataPasien/PasienLama.dart';
+import 'package:clima/app/Halaman%201/DataPasien/datapasien.dart';
+import 'package:clima/app/Halaman2/Perawatan.dart';
 import 'package:flutter/material.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
 import 'package:line_icons/line_icons.dart';
+
+import '../Halaman 1/Absen.dart';
+import '../Halaman3/Halaman3.dart';
+import 'Header.dart';
 
 class HalamanRumah extends StatefulWidget {
   const HalamanRumah({Key? key}) : super(key: key);
@@ -49,86 +56,84 @@ class _HalamanRumahState extends State<HalamanRumah> {
                     child: Center(
                       child: (_selectedIndex == 0)
                           ? Center(
-                          child: Container(
-                              width: MediaQuery.of(context).size.width,
-                              height: MediaQuery.of(context).size.height,
-                              decoration: const BoxDecoration(
-                                  gradient: RadialGradient(
-                                      colors: [Colors.black, Colors.white],
-                                      radius: 0.8,
-                                      center: Alignment.topRight,
-                                      focalRadius: 0.80)),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 12),
-                                child: Column(
-                                  children: [
-
-                                    const SizedBox(
-                                      height: 12,
-                                    ),
-
-                                    Row(
-                                      mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
+                              child: Container(
+                                  width: MediaQuery.of(context).size.width,
+                                  height: MediaQuery.of(context).size.height,
+                                  decoration: const BoxDecoration(
+                                      gradient: RadialGradient(
+                                          colors: [Colors.black, Colors.white],
+                                          radius: 0.8,
+                                          center: Alignment.topRight,
+                                          focalRadius: 0.80)),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 12),
+                                    child: Column(
                                       children: [
+                                        const SizedBox(
+                                          height: 12,
+                                        ),
+                                        const Header(),
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            ElevatedButton(
+                                                onPressed: () {
+                                                  Navigator.push(
+                                                      context,
+                                                      MaterialPageRoute(
+                                                          builder: (context) =>
+                                                              const InputDataPasien()));
+                                                },
+                                                child:
+                                                    const Text('Pasien Baru')),
+                                            ElevatedButton(
+                                                onPressed: () {
+                                                  Navigator.push(
+                                                      context,
+                                                      MaterialPageRoute(
+                                                          builder: (context) =>
+                                                              PasienLama()));
+                                                },
+                                                child:
+                                                    const Text('Pasien Lama')),
+                                          ],
+                                        ),
                                         ElevatedButton(
                                             onPressed: () {
+                                              Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          const Absen()));
                                             },
-                                            child: const Text(
-                                                'Registrasi Pasien')),
-                                        ElevatedButton(
-                                            onPressed: () {
-                                            },
-                                            child:
-                                            const Text('Daftar Shift')),
+                                            child: const Text('Absen')),
                                       ],
                                     ),
-                                    InkWell(
-                                      child: Card(
-                                          clipBehavior: Clip.antiAlias,
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                            BorderRadius.circular(12),
-                                          ),
-                                          elevation: 2,
-                                          child: Padding(
-                                            padding:
-                                            const EdgeInsets.symmetric(
-                                                vertical: 8,
-                                                horizontal: 8),
-                                            child: SizedBox(
-                                              height: 40,
-                                              width: MediaQuery.of(context)
-                                                  .size
-                                                  .width,
-                                              child: const Center(
-                                                child: Text('List Pasien'),
-                                              ),
-                                            ),
-                                          )),
-                                      onTap: () {
-                                      },
+                                  )))
+                          : (_selectedIndex == 1)
+                              ? Column(
+                                  children: [
+                                    const SizedBox(
+                                      height: 48,
+                                    ),
+                                    SizedBox(
+                                      height:
+                                          MediaQuery.of(context).size.height -
+                                              120,
+                                      child: const Perawatan(),
                                     ),
                                   ],
+                                )
+                              : Column(
+                                  children: const [
+                                    SizedBox(
+                                      height: 48,
+                                    ),
+                                    Tab3(),
+                                  ],
                                 ),
-                              )))
-                          : (_selectedIndex == 1)
-                          ? Column(
-                        children: const [
-                          SizedBox(
-                            height: 48,
-                          ),
-                        ],
-                      )
-                          : Column(
-                        children: [
-                          const SizedBox(
-                            height: 48,
-                          ),
-
-                        ],
-                      ),
                     )))),
         bottomNavigationBar: Container(
           decoration: BoxDecoration(
@@ -138,7 +143,7 @@ class _HalamanRumahState extends State<HalamanRumah> {
           child: SafeArea(
             child: Padding(
               padding:
-              const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8),
+                  const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8),
               child: GNav(
                 gap: 12,
                 rippleColor: Colors.black12,
@@ -146,20 +151,20 @@ class _HalamanRumahState extends State<HalamanRumah> {
                 activeColor: Colors.black,
                 iconSize: 24,
                 padding:
-                const EdgeInsets.symmetric(horizontal: 25, vertical: 12),
+                    const EdgeInsets.symmetric(horizontal: 25, vertical: 12),
                 duration: const Duration(milliseconds: 300),
                 tabBackgroundColor: Colors.black12,
                 color: Colors.black,
-                tabs: [
-                  const GButton(
+                tabs: const [
+                  GButton(
                     icon: LineIcons.home,
                     text: 'Home',
                   ),
-                  const GButton(
+                  GButton(
                     icon: LineIcons.hospital,
                     text: 'Kerja',
                   ),
-                  const GButton(
+                  GButton(
                     icon: LineIcons.user,
                     text: 'User',
                   ),

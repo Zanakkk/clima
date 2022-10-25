@@ -1,13 +1,11 @@
 // ignore_for_file: avoid_print, non_constant_identifier_names, deprecated_member_use, unnecessary_null_comparison, avoid_types_as_parameter_names, depend_on_referenced_packages, library_private_types_in_public_api
 
 import 'dart:io';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
-import 'package:date_time_picker/date_time_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
-import 'package:gender_picker/source/enums.dart';
-import 'package:gender_picker/source/gender_picker.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -26,9 +24,10 @@ class _IsiDataState extends State<IsiData> {
   int currentstep = 0;
 
   TextEditingController nama = TextEditingController();
-  TextEditingController NIM = TextEditingController();
-  TextEditingController noHP = TextEditingController();
-  TextEditingController alamat = TextEditingController();
+  TextEditingController Username = TextEditingController();
+  TextEditingController Password = TextEditingController();
+  TextEditingController NomorTelepon = TextEditingController();
+  TextEditingController Alamat = TextEditingController();
   String? tanggal, bulan, tahun;
   String? gender;
 
@@ -66,64 +65,58 @@ class _IsiDataState extends State<IsiData> {
 
     var cekstep = [false, false, false, false, false, false, false, false];
 
+    FirebaseFirestore firestore = FirebaseFirestore.instance;
+    CollectionReference Console = firestore.collection('Console');
     List<Step> getSteps() => [
           Step(
               state: currentstep > 0 ? StepState.complete : StepState.indexed,
               isActive: currentstep >= 0,
-              title: const Text('Nama'),
+              title: const Text('Nama Klinik'),
               content: TextFormField(
                 controller: nama,
               ),
-              subtitle: const Text('nama lengkapmu')),
+              subtitle: const Text('Nama Klinik')),
           Step(
               state: currentstep > 1 ? StepState.complete : StepState.indexed,
               isActive: currentstep >= 1,
-              title: const Text('NIM'),
+              title: const Text('Alamat Klinik'),
               content: TextFormField(
-                controller: NIM,
-
-                keyboardType: TextInputType.number,
+                controller: Alamat,
+                keyboardType: TextInputType.streetAddress,
               ),
-              subtitle: const Text('ini akan ditampilkan di aplikasi')),
+              subtitle: const Text('Nama Klinik')),
           Step(
-              state: currentstep > 2 ? StepState.complete : StepState.indexed,
-              isActive: currentstep >= 2,
-              title: const Text('Jenis Kelamin'),
-              content: GenderPickerWithImage(
-                showOtherGender: false,
-                verticalAlignedText: true,
-                equallyAligned: true,
-
-                selectedGenderTextStyle: const TextStyle(
-                    color: Color(0xFF8b32a8), fontWeight: FontWeight.bold),
-                unSelectedGenderTextStyle: const TextStyle(
-                    color: Colors.white, fontWeight: FontWeight.normal),
-                selectedGender: (genderr == 'Laki-Laki')
-                    ? Gender.Male
-                    : (genderr == 'Perempuan')
-                        ? Gender.Female
-                        : null,
-                onChanged: (Gender) async {
-                  if (Gender?.index == 0) {
-                    genderr = 'Laki-Laki';
-                  } else {
-                    genderr = 'Perempuan';
-                  }
-                  print(Gender?.index);
-                },
-                animationDuration: const Duration(milliseconds: 300),
-                isCircular: true,
-                maleText: 'Laki-Laki',
-                femaleText: 'Perempuan',
-                // default : true,
-                opacityOfGradient: 0.4,
-                padding: const EdgeInsets.all(3),
-                size: 120, //default : 40
-              ),
-              subtitle: const Text('jenis kelaminmu')),
+            state: currentstep > 2 ? StepState.complete : StepState.indexed,
+            isActive: currentstep >= 2,
+            title: const Text('Username'),
+            content: TextFormField(
+              controller: Username,
+              keyboardType: TextInputType.text,
+            ),
+            subtitle: const Text('Untuk Pemulihan Akun'),
+          ),
           Step(
             state: currentstep > 3 ? StepState.complete : StepState.indexed,
             isActive: currentstep >= 3,
+            title: const Text('Password'),
+            content: TextFormField(
+              controller: Password,
+              keyboardType: TextInputType.text,
+            ),
+            subtitle: const Text('Untuk Pemulihan Akun'),
+          ),
+          Step(
+            state: currentstep > 4 ? StepState.complete : StepState.indexed,
+            isActive: currentstep >= 4,
+            title: const Text('Nomor HP'),
+            content: TextFormField(
+              controller: NomorTelepon,
+              keyboardType: TextInputType.phone,
+            ),
+          ),
+          Step(
+            state: currentstep > 5 ? StepState.complete : StepState.indexed,
+            isActive: currentstep >= 5,
             title: const Text('Upload Foto'),
             content: Column(
               children: <Widget>[
@@ -187,51 +180,6 @@ class _IsiDataState extends State<IsiData> {
               ],
             ),
           ),
-          Step(
-              state: currentstep > 4 ? StepState.complete : StepState.indexed,
-              isActive: currentstep >= 4,
-              title: const Text('Tanggal Lahir'),
-              content: DateTimePicker(
-                type: DateTimePickerType.date,
-                dateMask: 'd MMM, yyyy',
-                initialValue: DateTime.now().toString(),
-                firstDate: DateTime(1900),
-                lastDate: DateTime.now(),
-                icon: const Icon(Icons.event),
-                dateLabelText: 'Date',
-                selectableDayPredicate: (date) {
-                  // Disable weekend days to select from the calendar
-
-                  tanggal = date.day.toString();
-                  bulan = date.month.toString();
-                  tahun = date.year.toString();
-                  return true;
-                },
-                onChanged: (val) => print(val),
-                validator: (val) {
-                  print(val);
-
-                  return null;
-                },
-                onSaved: (val) => print(val),
-              )),
-          Step(
-            state: currentstep > 5 ? StepState.complete : StepState.indexed,
-            isActive: currentstep >= 5,
-            title: const Text('Nomor HP'),
-            content: TextFormField(
-              controller: noHP,
-              keyboardType: TextInputType.phone,
-            ),
-          ),
-          Step(
-              state: currentstep > 6 ? StepState.complete : StepState.indexed,
-              isActive: currentstep >= 6,
-              title: const Text('Alamat'),
-              content: TextFormField(
-                controller: alamat,
-                keyboardType: TextInputType.streetAddress,
-              )),
         ];
 
     return Scaffold(
@@ -276,33 +224,49 @@ class _IsiDataState extends State<IsiData> {
                 margin: const EdgeInsets.only(top: 50),
                 child: Row(
                   children: [
+
                     (isLastStep == true)
                         ? Expanded(
-                            child: ElevatedButton(
-                              onPressed: () {
-                                genderr ??= 'Laki-laki';
-                                print(genderr);
-                                DatabaseServices.updateakun(
-                                  email,
-                                  nama.text,
-                                  NIM.text,
-                                  genderr!,
-                                  tanggal,
-                                  bulan,
-                                  tahun!,
-                                  alamat.text,
-                                  noHP.text,
-                                  imageUrl.toString(),
-                                );
+                            child:  StreamBuilder<DocumentSnapshot>(
+                              stream: Console.doc('klinik').snapshots(),
+                              builder: (context, AsyncSnapshot snapshot) {
+                                if (snapshot.hasData) {
+                                  Map<String, dynamic> data =
+                                  snapshot.data!.data() as Map<String, dynamic>;
 
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) =>
-                                          const HalamanRumah()),
+                                  int ID = data['BanyakKlinik'];
+
+                                  ID += 10000000;
+
+                                  return ElevatedButton(
+                                    onPressed: () {
+                                      DatabaseServices.updateakun(
+                                        email,
+                                        nama.text,
+                                        ID.toString(),
+                                        Alamat.text,
+                                        Username.text,
+                                        Password.text,
+                                        DateTime.now().day,
+                                        DateTime.now().month,
+                                        DateTime.now().year,
+                                        NomorTelepon.text,
+                                        imageUrl.toString(),
+                                      );
+
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (context) => const HalamanRumah()),
+                                      );
+                                    },
+                                    child: const Text('Konfirmasi'),
+                                  );
+                                }
+                                return const Center(
+                                  child: CircularProgressIndicator(),
                                 );
                               },
-                              child: const Text('Konfirmasi'),
                             ),
                           )
                         : (cekstep[currentstep] == false)
@@ -315,7 +279,7 @@ class _IsiDataState extends State<IsiData> {
                             : Expanded(
                                 child: ElevatedButton(
                                   onPressed: () {},
-                                  child: const Text('kalakang'),
+                                  child: const Text('Kembali'),
                                 ),
                               ),
                     const SizedBox(
@@ -325,7 +289,7 @@ class _IsiDataState extends State<IsiData> {
                       Expanded(
                         child: ElevatedButton(
                           onPressed: details.onStepCancel,
-                          child: const Text('balik'),
+                          child: const Text('Kembali'),
                         ),
                       ),
                   ],
@@ -356,7 +320,7 @@ class _IsiDataState extends State<IsiData> {
       final destination = 'userprofile/$fileName';
 
       if (image != null) {
-        //Upload to Firebase
+        // Upload to Firebase
         var snapshot = await storage
             .ref()
             .child(destination)

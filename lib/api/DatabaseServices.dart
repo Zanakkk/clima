@@ -5,190 +5,163 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class DatabaseServices {
   static FirebaseFirestore firestore = FirebaseFirestore.instance;
 
-  static CollectionReference userdata = firestore.collection('user');
-  static CollectionReference blog = firestore.collection('blog');
-  static CollectionReference video = firestore.collection('videopembelajaran');
-  static CollectionReference listusergoldar =
-      firestore.collection('listusergoldar');
+  static CollectionReference klinik = firestore.collection('Klinik');
   static CollectionReference console = firestore.collection('console');
 
   static Future<void> updateakun(
       String? email,
-      String nama,
-      String NIM,
-      String gender,
-      String? tanggal,
-      String? bulan,
-      String? tahun,
-      String alamat,
-      String noHP,
+      String ID,
+      String Nama,
+      String Alamat,
+      String username,
+      String password,
+      int tanggal,
+      int bulan,
+      int tahun,
+      String NomorTelepon,
       String? imageUrl) async {
-    await userdata.doc(email).set(
+    await klinik.doc(email).set(
       {
-        'email': email,
-        'nama': nama,
-        'NIM' : NIM,
-        'gender': gender,
-        'tanggal': tanggal,
-        'bulan': bulan,
-        'tahun': tahun,
-        'alamat': alamat,
-        'noHP': noHP,
-        'imageurl': imageUrl,
+        'Email': email,
+        'ID': ID,
+        'Nama': Nama,
+        'username': username,
+        'password': password,
+        'JoinTanggal': tanggal,
+        'JoinBulan': bulan,
+        'JoinTahun': tahun,
+        'NomorTelepon': NomorTelepon,
+        'GambarKlinik': imageUrl,
       },
     );
   }
 
-  static Future<void> setFAQ(String email, int n) async {
-    await userdata
-        .doc(email.toString())
-        .collection('FAQ')
-        .doc(n.toString())
-        .set(
-      {
-        'expand': false,
-        'id': n,
-      },
-    );
-  }
-
-  static Future<void> expandFAQ(
-    int id,
-    bool expand,
+  static Future<void> RegistrasiPasien(
     String email,
+    String ID,
+    String Nama,
+    int tanggal,
+    int bulan,
+    int tahun,
+    String TempatLahir,
+    String Pekerjaan,
+    String Alamat,
+    String NomorTelepon,
   ) async {
-    await userdata
-        .doc(email.toString())
-        .collection('FAQ')
-        .doc(id.toString())
-        .update(
+    await klinik.doc(email).collection('RekamMedis').doc(ID).set(
       {
-        'expand': !expand,
+        'IDRM': ID,
+        'Nama': Nama,
+        'JoinTanggal': tanggal,
+        'JoinBulan': bulan,
+        'JoinTahun': tahun,
+        'TempatLahir': TempatLahir,
+        'Pekerjaan': Pekerjaan,
+        'Alamat': Alamat,
+        'NomorTelepon': NomorTelepon,
+        'Done': false,
       },
     );
   }
 
-  static Future<void> videoditonton(String? id) async {
-    await video.doc(id).update(
+  static Future<void> incremetnRekamMedis(
+    String email,
+    String ID,
+  ) async {
+    await klinik.doc(email).collection('Console').doc('Console').update(
+      {'RekamMedis': FieldValue.increment(1)},
+    );
+  }
+
+  static Future<void> DataMedikPasien(
+    String email,
+    String ID,
+    String goldar,
+    bool Jantung,
+    bool Diabetes,
+    bool Hepatitis,
+    bool Lainnya,
+    String PenyakitLainnya,
+    bool AlergiObat,
+    String AlergiObats,
+    bool AlergiMakanan,
+    String AlergiMakanans,
+    int perawatan,
+  ) async {
+    await klinik.doc(email).collection('RekamMedis').doc(ID).update(
       {
-        'ditonton': FieldValue.increment(1),
+        'GolonganDarah': goldar,
+        'DataMedikJantung': Jantung,
+        'DataMedikDiabetes': Diabetes,
+        'DataMedikHepatitis': Hepatitis,
+        'DataMedikLainnya': Lainnya,
+        'DataMedikLainnyaPenjelasan': PenyakitLainnya,
+        'DataMedikAlergiObat': AlergiObat,
+        'DataMedikAlergiObatPenjelasan': AlergiObats,
+        'DataMedikAlergiMakanan': AlergiMakanan,
+        'DataMedikAlergiMakananPenjelasan': AlergiMakanans,
+        'perawatan': perawatan,
       },
     );
   }
 
-  static Future<void> postingkomentarvideoditonton(
-      String? idvideo, email, String? idkomentar, String? komentar) async {
-    await video
-        .doc(idvideo)
-        .collection('komentar')
-        .doc(idkomentar.toString())
+  static Future<void> PerawatanPasien(
+    String email,
+    String ID,
+    int perawatanno,
+    String Keluhan,
+    String Perawatan,
+    int Biaya,
+    String NamaDokterGigi,
+    String TTD,
+  ) async {
+    await klinik
+        .doc(email)
+        .collection('RekamMedis')
+        .doc(ID)
+        .collection('Perawatan')
+        .doc(perawatanno.toString())
         .set(
       {
-        'id': idkomentar,
-        'email': email,
-        'komentar': komentar,
+        'PerawatanKe': perawatanno,
+        'Keluhan': Keluhan,
+        'Perawatan': Perawatan,
+        'Biaya': Biaya,
+        'DokterGigi': NamaDokterGigi,
+        'TTD': TTD,
       },
     );
   }
 
-  static Future<void> likesvideoup(String? id) async {
-    await video.doc(id).update(
-      {
-        'like': FieldValue.increment(1),
-      },
-    );
-  }
-
-  static Future<void> likesvideodown(String? id) async {
-    await video.doc(id).update(
-      {
-        'like': FieldValue.increment(-1),
-      },
-    );
-  }
-
-  static Future<void> listuserlikevideo(
-      String? idvideo, email, String? idlikes, bool setlike) async {
-    await video.doc(idvideo).collection('likes').doc(idlikes.toString()).set(
-      {
-        'id': idlikes,
-        'email': email,
-        'likes': setlike,
-      },
-    );
-  }
-
-  static Future<void> naikkanbanyakkomentarvideoditonton(
-    String? idvideo,
+  static Future<void> incrementPerawatanPasien(
+    String email,
+    String ID,
+    int perawatanno,
   ) async {
-    await video.doc(idvideo).update(
-      {
-        'banyakkomentar': FieldValue.increment(1),
-      },
+    await klinik.doc(email).collection('RekamMedis').doc(ID).update(
+      {'perawatan': FieldValue.increment(1)},
     );
   }
 
-  static Future<void> terbacaBlog(String? id) async {
-    await blog.doc(id).update(
-      {
-        'terbaca': FieldValue.increment(1),
-      },
+  static Future<void> perawatansetdone(
+    String email,
+    String ID,
+    int perawatanno,
+  ) async {
+    await klinik.doc(email).collection('RekamMedis').doc(ID).update(
+      {'Done': true},
     );
   }
 
-  static Future<void> kritikdansaran(String keluhan) async {
-    await userdata.doc().set(
-      {
-        'keluhan': keluhan,
-      },
-    );
-  }
-
-  static Future<void> setdatagolongandarahorang(
-      int antrian,
-      String nama,
-      jeniskelamin,
-      nomorHP,
-      alamat,
-      goldar,
+  static Future<void> perawatansetfalse(
+      String email,
+      String ID,
+      int perawatanno,
       ) async {
-    await listusergoldar.doc(antrian.toString()).set(
-      {
-        'nama': nama,
-        'jeniskelamin': jeniskelamin,
-        'nomorHP': nomorHP,
-        'alamat': alamat,
-        'golongan darah': goldar,
-        'antrian':antrian,
-      },
+    await klinik.doc(email).collection('RekamMedis').doc(ID).update(
+      {'Done': false},
     );
   }
 
 
-  static Future<void> setdatagolongandarahorang2(
-    int antrian,
-    String nama,
-    jeniskelamin,
-    nomorHP,
-    alamat,
-    goldar,
-  ) async {
-    await listusergoldar.doc(nama).set(
-      {
-        'nama': nama,
-        'jeniskelamin': jeniskelamin,
-        'nomorHP': nomorHP,
-        'alamat': alamat,
-        'golongan darah': goldar,
-      },
-    );
-  }
-
-  static Future<void> inccountgolongandarah() async {
-    await console.doc('nomorantriangolongandarah').update(
-      {
-        'count': FieldValue.increment(1),
-      },
-    );
-  }
 }

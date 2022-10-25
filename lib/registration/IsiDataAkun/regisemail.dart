@@ -113,9 +113,9 @@ class _RegisEmailScreenState extends State<RegisEmailScreen> {
                                             context,
                                             MaterialPageRoute(
                                                 builder: (context) =>
-                                                    HalamanRumah()));
+                                                    const HalamanRumah()));
                                       },
-                                      child: Text('Masuk dengan Akun Google'));
+                                      child: const Text('Masuk dengan Akun Google'));
                                 }
                               }),
                         ],
