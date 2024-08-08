@@ -1,0 +1,9 @@
+{
+  "projects": {
+    "clima": "clima-93a68",
+    "default": "clima-93a68"
+  },
+  "targets": {},
+  "etags": {},
+  "dataconnectEmulatorConfig": {}
+}
