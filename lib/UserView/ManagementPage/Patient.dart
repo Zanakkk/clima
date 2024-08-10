@@ -11,7 +11,8 @@ import 'Page/PeripheralPage.dart';
 import 'Page/PurchasePage.dart';
 import 'Page/ReportsPage.dart';
 import 'Page/ReservationPage.dart';
-import 'Page/SalesPage.dart';
+import 'Page/Sales/SalesAnalysis.dart';
+import 'Page/Sales/SalesPage.dart';
 import 'Page/StaffListPage.dart';
 import 'Page/StocksPage.dart';
 import 'Page/TreatmentsPage.dart';
@@ -71,7 +72,7 @@ class _PatientDetailPageState extends State<PatientDetailPage> {
               padding: const EdgeInsets.all(16.0),
               child: IndexedStack(
                 index: selectedIndex,
-                children: const [
+                children:  const [
                   DashboardPage(),
                   ReservationsPage(),
                   PatientsPage(),
@@ -79,6 +80,7 @@ class _PatientDetailPageState extends State<PatientDetailPage> {
                   StaffListPage(),
                   AccountsPage(),
                   SalesPage(),
+                  SalesAnalysisPage(),
                   PurchasesPage(),
                   PaymentMethodPage(),
                   StocksPage(),
