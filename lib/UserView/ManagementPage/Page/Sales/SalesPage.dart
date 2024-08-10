@@ -55,9 +55,14 @@ class _SalesPageState extends State<SalesPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        ElevatedButton(onPressed: (){
-                          Navigator.push(context, MaterialPageRoute(builder: (context) => SalesTablePage()));
-                        }, child: Text('tabel')),
+                        ElevatedButton(
+                            onPressed: () {
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => SalesTablePage()));
+                            },
+                            child: const Text('tabel')),
                         Row(
                           children: [
                             CircleAvatar(
@@ -101,7 +106,8 @@ class _SalesPageState extends State<SalesPage> {
                           children: [
                             Text(
                               'Total: Rp ${treatment.procedures.fold<int>(0, (sum, item) => sum + item.price)}',
-                              style: const TextStyle(fontWeight: FontWeight.bold),
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.bold),
                             ),
                           ],
                         ),
