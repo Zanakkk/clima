@@ -2,7 +2,6 @@
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-
 class DatabaseServices {
   static FirebaseFirestore firestore = FirebaseFirestore.instance;
 
@@ -17,9 +16,9 @@ class DatabaseServices {
   static CollectionReference Dosen = firestore.collection('Dosen');
 
   static Future<void> AccMahasiswaKoas(
-      String email,
-      bool acc,
-      ) async {
+    String email,
+    bool acc,
+  ) async {
     await userdata.doc(email).update(
       {
         'ACCADMIN': acc,
@@ -28,18 +27,18 @@ class DatabaseServices {
   }
 
   static Future<void> updateakun(
-      String? email,
-      String nama,
-      String NIM,
-      String gender,
-      String? tanggal,
-      String? bulan,
-      String? tahun,
-      String alamat,
-      String noHP,
-      String? imageUrl,
-      String namarsgm,
-      ) async {
+    String? email,
+    String nama,
+    String NIM,
+    String gender,
+    String? tanggal,
+    String? bulan,
+    String? tahun,
+    String alamat,
+    String noHP,
+    String? imageUrl,
+    String namarsgm,
+  ) async {
     await userdata.doc(email).set(
       {
         'email': email,
@@ -67,4 +66,5 @@ class DatabaseServices {
         'ACCADMIN': false,
       },
     );
-  }}
+  }
+}

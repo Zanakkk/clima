@@ -31,7 +31,6 @@ class ColorZanak {
   static const matchinggradient5 = Color(0xFFFF97E4);
 }
 
-
 const primaryColor = Color(0xFF2E2E48);
 const canvasColor = Color(0xFFF3F3F7);
 const scaffoldBackgroundColor = Color(0xFFF3F3F7);

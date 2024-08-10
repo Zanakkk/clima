@@ -1,3 +1,5 @@
+// ignore_for_file: library_private_types_in_public_api
+
 import 'package:flutter/material.dart';
 import 'Anterior.dart';
 import 'DetailPage.dart';
@@ -15,7 +17,7 @@ class _HomePageState extends State<HomePage> {
   String? selectedLabel;
   List<Map<String, dynamic>> toothConditions = List.generate(
     32,
-        (index) => {
+    (index) => {
       'label': '',
       'mesial': null,
       'distal': null,
@@ -29,16 +31,19 @@ class _HomePageState extends State<HomePage> {
   void _onShapeTapped(String label) {
     setState(() {
       if (selectedLabel == label) {
-        selectedLabel = null; // Hide the DetailPage if the same label is tapped again
+        selectedLabel =
+            null; // Hide the DetailPage if the same label is tapped again
       } else {
         selectedLabel = label; // Show the DetailPage for the new label
       }
     });
   }
 
-  void _updateToothCondition(String label, String part, String condition, bool? rct) {
+  void _updateToothCondition(
+      String label, String part, String condition, bool? rct) {
     setState(() {
-      int index = toothConditions.indexWhere((element) => element['label'] == label);
+      int index =
+          toothConditions.indexWhere((element) => element['label'] == label);
       if (index != -1) {
         toothConditions[index][part] = condition;
         if (rct != null) {
@@ -97,13 +102,15 @@ class _HomePageState extends State<HomePage> {
               },
               child: selectedLabel != null
                   ? DetailPage(
-                key: ValueKey<String>(selectedLabel!),
-                label: selectedLabel!,
-                onClose: _closeDetailPage,
-                onConditionChanged: (label, part, condition) => _updateToothCondition(label, part, condition, null),
-                onRCTChanged: (label, value) => _updateToothCondition(label, '', '', value),
-                toothConditions: toothConditions,
-              )
+                      key: ValueKey<String>(selectedLabel!),
+                      label: selectedLabel!,
+                      onClose: _closeDetailPage,
+                      onConditionChanged: (label, part, condition) =>
+                          _updateToothCondition(label, part, condition, null),
+                      onRCTChanged: (label, value) =>
+                          _updateToothCondition(label, '', '', value),
+                      toothConditions: toothConditions,
+                    )
                   : Container(),
             ),
           ),
@@ -150,83 +157,141 @@ class _ShapeGridPageState extends State<ShapeGridPage> {
 
   @override
   Widget build(BuildContext context) {
-    List<String> labels = [
-      '18', '17', '16', '15', '14', '13', '12', '11', '21', '22', '23', '24', '25', '26', '27', '28',
-      '48', '47', '46', '45', '44', '43', '42', '41', '31', '32', '33', '34', '35', '36', '37', '38',
+    final labels = [
+      '18',
+      '17',
+      '16',
+      '15',
+      '14',
+      '13',
+      '12',
+      '11',
+      '21',
+      '22',
+      '23',
+      '24',
+      '25',
+      '26',
+      '27',
+      '28',
+      '48',
+      '47',
+      '46',
+      '45',
+      '44',
+      '43',
+      '42',
+      '41',
+      '31',
+      '32',
+      '33',
+      '34',
+      '35',
+      '36',
+      '37',
+      '38',
     ];
 
-    return Stack(
-      children: [
-        GridView.builder(
-          padding: const EdgeInsets.all(8),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 16, // Number of columns
-            crossAxisSpacing: 4,
-            mainAxisSpacing: 4,
-            childAspectRatio: 1, // Ensure the grid items are square
-          ),
-          itemCount: 32,
-          itemBuilder: (context, index) {
-            String label = labels[index];
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final double itemSize = screenWidth / 16 * 0.75;
 
-            var toothCondition = widget.toothConditions.firstWhere(
-                    (element) => element['label'] == label,
-                orElse: () => {'label': label});
+    Widget buildToothItem(int index, String label) {
+      final toothCondition = widget.toothConditions.firstWhere(
+        (element) => element['label'] == label,
+        orElse: () => {'label': label},
+      );
 
-            CustomPainter painter;
-            if ([
-              '18', '17', '16', '15', '14', '24', '25', '26', '27', '28',
-              '48', '47', '46', '45', '44', '34', '35', '36', '37', '38'
-            ].contains(label)) {
-              painter = Posterior(
-                isBlue: _isBlueList[index],
-                conditions: toothCondition,
-                label: label,
-              );
-            } else {
-              painter = Anterior(
-                isBlue: _isBlueList[index],
-                conditions: toothCondition,
-                label: label,
-              );
-            }
+      final isPosterior = [
+        '18',
+        '17',
+        '16',
+        '15',
+        '14',
+        '24',
+        '25',
+        '26',
+        '27',
+        '28',
+        '48',
+        '47',
+        '46',
+        '45',
+        '44',
+        '34',
+        '35',
+        '36',
+        '37',
+        '38',
+      ].contains(label);
 
-            bool showTriangle = toothCondition['rct'] ?? false;
+      final painter = isPosterior
+          ? Posterior(
+              isBlue: _isBlueList[index],
+              conditions: toothCondition,
+              label: label,
+            )
+          : Anterior(
+              isBlue: _isBlueList[index],
+              conditions: toothCondition,
+              label: label,
+            );
 
-            return GestureDetector(
-              onTap: () {
-                _toggleShapeColor(index);
-                widget.onShapeTapped(label);
-              },
-              child: Column(
-                children: [
-                  SizedBox(
-                    width: 48,
-                    height: 48,
+      final bool showTriangle = toothCondition['rct'] ?? false;
+
+      return SizedBox(
+        width: itemSize,
+        height: 100, // Adjusted height
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Column(
+              children: [
+                const SizedBox(height: 4),
+                InkWell(
+                  onTap: () {
+                    _toggleShapeColor(index);
+                    widget.onShapeTapped(label);
+                  },
+                  child: SizedBox(
+                    height: itemSize * 0.75,
+                    width: itemSize * 0.75,
                     child: CustomPaint(
                       painter: painter,
                       child: Container(),
                     ),
                   ),
-                  if (showTriangle) InvertedTriangleWidget(),
-                  const SizedBox(height: 4),
-                  Text(label),
-                ],
-              ),
-            );
-          },
+                ),
+                if (showTriangle)
+                  SizedBox(
+                    height: itemSize * 0.25,
+                    child: const InvertedTriangleWidget(),
+                  ),
+              ],
+            ),
+            Text(label, style: const TextStyle(fontSize: 12)),
+          ],
+        ),
+      );
+    }
+
+    return Column(
+      children: [
+        Wrap(
+          spacing: 2,
+          runSpacing: 8,
+          children: List.generate(16, (index) {
+            return buildToothItem(index, labels[index]);
+          }),
+        ),
+        const SizedBox(height: 20), // Spacing between the rows
+        Wrap(
+          spacing: 2,
+          runSpacing: 8,
+          children: List.generate(16, (index) {
+            return buildToothItem(index + 16, labels[index + 16]);
+          }),
         ),
       ],
-    );
-  }
-}
-
-class InvertedTriangleWidget extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return CustomPaint(
-      size: const Size(20, 40),
-      painter: InvertedTrianglePainter(),
     );
   }
 }

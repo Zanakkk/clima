@@ -28,19 +28,19 @@ class LihatFoto extends StatelessWidget {
             onZoomStart: () {},
             onZoomEnd: () {},
             child: (MediaQuery.of(context).size.width >
-                MediaQuery.of(context).size.height)
+                    MediaQuery.of(context).size.height)
                 ? ImageNetwork(
-              image: foto!,
-              height: MediaQuery.of(context).size.width,
-              width: MediaQuery.of(context).size.width,
-              fitWeb: BoxFitWeb.scaleDown,
-            )
+                    image: foto!,
+                    height: MediaQuery.of(context).size.width,
+                    width: MediaQuery.of(context).size.width,
+                    fitWeb: BoxFitWeb.scaleDown,
+                  )
                 : ImageNetwork(
-              image: foto!,
-              height: MediaQuery.of(context).size.height,
-              width: MediaQuery.of(context).size.height,
-              fitAndroidIos: BoxFit.fitWidth,
-            )),
+                    image: foto!,
+                    height: MediaQuery.of(context).size.height,
+                    width: MediaQuery.of(context).size.height,
+                    fitAndroidIos: BoxFit.fitWidth,
+                  )),
       ),
     );
   }

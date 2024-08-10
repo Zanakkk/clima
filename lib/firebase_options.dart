@@ -46,7 +46,8 @@ class DefaultFirebaseOptions {
     messagingSenderId: '126612127567',
     projectId: 'clima-93a68',
     authDomain: 'clima-93a68.firebaseapp.com',
-    databaseURL: 'https://clima-93a68-default-rtdb.asia-southeast1.firebasedatabase.app',
+    databaseURL:
+        'https://clima-93a68-default-rtdb.asia-southeast1.firebasedatabase.app',
     storageBucket: 'clima-93a68.appspot.com',
     measurementId: 'G-GKCL1F1CXG',
   );
@@ -56,7 +57,8 @@ class DefaultFirebaseOptions {
     appId: '1:126612127567:android:7c8d4ec8e11b459d710f3a',
     messagingSenderId: '126612127567',
     projectId: 'clima-93a68',
-    databaseURL: 'https://clima-93a68-default-rtdb.asia-southeast1.firebasedatabase.app',
+    databaseURL:
+        'https://clima-93a68-default-rtdb.asia-southeast1.firebasedatabase.app',
     storageBucket: 'clima-93a68.appspot.com',
   );
 
@@ -65,7 +67,8 @@ class DefaultFirebaseOptions {
     appId: '1:126612127567:ios:3d6fa2a812e83e07710f3a',
     messagingSenderId: '126612127567',
     projectId: 'clima-93a68',
-    databaseURL: 'https://clima-93a68-default-rtdb.asia-southeast1.firebasedatabase.app',
+    databaseURL:
+        'https://clima-93a68-default-rtdb.asia-southeast1.firebasedatabase.app',
     storageBucket: 'clima-93a68.appspot.com',
     iosBundleId: 'com.example.clima',
   );
@@ -75,7 +78,8 @@ class DefaultFirebaseOptions {
     appId: '1:126612127567:ios:3d6fa2a812e83e07710f3a',
     messagingSenderId: '126612127567',
     projectId: 'clima-93a68',
-    databaseURL: 'https://clima-93a68-default-rtdb.asia-southeast1.firebasedatabase.app',
+    databaseURL:
+        'https://clima-93a68-default-rtdb.asia-southeast1.firebasedatabase.app',
     storageBucket: 'clima-93a68.appspot.com',
     iosBundleId: 'com.example.clima',
   );
@@ -86,7 +90,8 @@ class DefaultFirebaseOptions {
     messagingSenderId: '126612127567',
     projectId: 'clima-93a68',
     authDomain: 'clima-93a68.firebaseapp.com',
-    databaseURL: 'https://clima-93a68-default-rtdb.asia-southeast1.firebasedatabase.app',
+    databaseURL:
+        'https://clima-93a68-default-rtdb.asia-southeast1.firebasedatabase.app',
     storageBucket: 'clima-93a68.appspot.com',
     measurementId: 'G-9S7S0498GQ',
   );

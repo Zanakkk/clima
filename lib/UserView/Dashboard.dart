@@ -36,7 +36,7 @@ class _DashboardState extends State<Dashboard> {
   final List<Widget> _pages = [
     const DaftarPasienPage(),
     const DaftarTindakanPage(),
-     const UsersManagementPage(),
+    const UsersManagementPage(),
   ];
 
   void _onItemTapped(int index) {

@@ -33,7 +33,6 @@ final Map<String, String> toothLabels = {
   '38': 'Lower Left Molar 3',
 };
 
-
 List<String> labels = [
   '18',
   '17',

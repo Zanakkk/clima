@@ -6,5 +6,9 @@ class User {
   final String email;
   final String role;
 
-  User({required this.id, required this.name, required this.email, required this.role});
+  User(
+      {required this.id,
+      required this.name,
+      required this.email,
+      required this.role});
 }

@@ -2,6 +2,20 @@
 
 import 'package:flutter/material.dart';
 
+import 'Page/AccountsPage.dart';
+import 'Page/CustomerSupportPage.dart';
+import 'Page/Dashboard.dart';
+import 'Page/PatientsPage/PatientsPage.dart';
+import 'Page/PaymentMethodPage.dart';
+import 'Page/PeripheralPage.dart';
+import 'Page/PurchasePage.dart';
+import 'Page/ReportsPage.dart';
+import 'Page/ReservationPage.dart';
+import 'Page/SalesPage.dart';
+import 'Page/StaffListPage.dart';
+import 'Page/StocksPage.dart';
+import 'Page/TreatmentsPage.dart';
+import 'SideBar/SideBar.dart';
 import 'odontogram/odontogram.dart';
 
 class PatientDetailPage extends StatefulWidget {
@@ -13,10 +27,17 @@ class PatientDetailPage extends StatefulWidget {
 
 class _PatientDetailPageState extends State<PatientDetailPage> {
   bool isExpanded = true;
+  int selectedIndex = 0;
 
   void toggleSidebar() {
     setState(() {
       isExpanded = !isExpanded;
+    });
+  }
+
+  void selectPage(int index) {
+    setState(() {
+      selectedIndex = index;
     });
   }
 
@@ -36,213 +57,38 @@ class _PatientDetailPageState extends State<PatientDetailPage> {
                       Icon(isExpanded ? Icons.arrow_back : Icons.arrow_forward),
                   onPressed: toggleSidebar,
                 ),
-                Expanded(child: Sidebar(isExpanded: isExpanded)),
+                Expanded(
+                  child: Sidebar(
+                    isExpanded: isExpanded,
+                    onItemSelected: selectPage,
+                  ),
+                ),
               ],
             ),
           ),
-          const Expanded(
+          Expanded(
             child: Padding(
-              padding: EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Breadcrumb(),
-                  SizedBox(height: 16),
-                  Header(),
-                  SizedBox(height: 16),
-                  Expanded(
-                    child: PatientInfo(),
-                  )
+              padding: const EdgeInsets.all(16.0),
+              child: IndexedStack(
+                index: selectedIndex,
+                children: const [
+                  DashboardPage(),
+                  ReservationsPage(),
+                  PatientsPage(),
+                  TreatmentsPage(),
+                  StaffListPage(),
+                  AccountsPage(),
+                  SalesPage(),
+                  PurchasesPage(),
+                  PaymentMethodPage(),
+                  StocksPage(),
+                  PeripheralsPage(),
+                  ReportPage(),
+                  CustomerSupportPage(),
                 ],
               ),
             ),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class Sidebar extends StatelessWidget {
-  final bool isExpanded;
-
-  const Sidebar({super.key, required this.isExpanded});
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        Row(
-          children: [
-            const Icon(Icons.local_hospital, size: 36, color: Colors.blue),
-            if (isExpanded) ...[
-              const SizedBox(width: 8),
-              const Text('Zendenta',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-              const SizedBox(width: 8),
-            ],
-          ],
-        ),
-        const SizedBox(height: 16),
-        if (isExpanded)
-          const ListTile(
-            title: Text('Avicena Clinic',
-                style: TextStyle(fontWeight: FontWeight.bold)),
-            subtitle: Text('845 Euclid Avenue, CA'),
-          ),
-        const Divider(),
-        SidebarSection(
-          title: 'CLINIC',
-          isExpanded: isExpanded,
-          items: [
-            SidebarItem(
-                icon: Icons.dashboard,
-                label: 'Dashboard',
-                isExpanded: isExpanded),
-            SidebarItem(
-                icon: Icons.event,
-                label: 'Reservations',
-                isExpanded: isExpanded),
-            SidebarItem(
-                icon: Icons.people,
-                label: 'Patients',
-                isExpanded: isExpanded,
-                isActive: true),
-            SidebarItem(
-                icon: Icons.medical_services,
-                label: 'Treatments',
-                isExpanded: isExpanded),
-            SidebarItem(
-                icon: Icons.person,
-                label: 'Staff List',
-                isExpanded: isExpanded),
-          ],
-        ),
-        SidebarSection(
-          title: 'FINANCE',
-          isExpanded: isExpanded,
-          items: [
-            SidebarItem(
-                icon: Icons.account_balance,
-                label: 'Accounts',
-                isExpanded: isExpanded),
-            SidebarItem(
-                icon: Icons.monetization_on,
-                label: 'Sales',
-                isExpanded: isExpanded),
-            SidebarItem(
-                icon: Icons.shopping_cart,
-                label: 'Purchases',
-                isExpanded: isExpanded),
-            SidebarItem(
-                icon: Icons.payment,
-                label: 'Payment Method',
-                isExpanded: isExpanded),
-          ],
-        ),
-        SidebarSection(
-          title: 'PHYSICAL ASSET',
-          isExpanded: isExpanded,
-          items: [
-            SidebarItem(
-                icon: Icons.store, label: 'Stocks', isExpanded: isExpanded),
-            SidebarItem(
-                icon: Icons.devices,
-                label: 'Peripherals',
-                isExpanded: isExpanded),
-          ],
-        ),
-        SidebarSection(
-          title: '',
-          isExpanded: isExpanded,
-          items: [
-            SidebarItem(
-                icon: Icons.report, label: 'Report', isExpanded: isExpanded),
-            SidebarItem(
-                icon: Icons.support,
-                label: 'Customer Support',
-                isExpanded: isExpanded),
-          ],
-        ),
-      ],
-    );
-  }
-}
-
-class SidebarSection extends StatelessWidget {
-  final String title;
-  final List<SidebarItem> items;
-  final bool isExpanded;
-
-  const SidebarSection(
-      {super.key,
-      required this.title,
-      required this.items,
-      required this.isExpanded});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (title.isNotEmpty && isExpanded)
-          Text(
-            title,
-            style: const TextStyle(
-                fontSize: 14, fontWeight: FontWeight.bold, color: Colors.grey),
-          ),
-        ...items.map((item) => item),
-        const SizedBox(height: 16),
-      ],
-    );
-  }
-}
-
-class SidebarItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool isActive;
-  final bool isExpanded;
-
-  const SidebarItem(
-      {super.key,
-      required this.icon,
-      required this.label,
-      this.isActive = false,
-      required this.isExpanded});
-
-  @override
-  Widget build(BuildContext context) {
-    return ElevatedButton(
-      style: ElevatedButton.styleFrom(
-        foregroundColor: isActive ? Colors.blue : Colors.black,
-        backgroundColor: isActive ? Colors.blue[50] : Colors.white,
-        elevation: 0,
-        shadowColor: Colors.transparent,
-        padding:
-            EdgeInsets.symmetric(vertical: 12, horizontal: isExpanded ? 16 : 8),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
-      ),
-      onPressed: () {},
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          Icon(icon, color: isActive ? Colors.blue : Colors.grey),
-          if (isExpanded) ...[
-            const SizedBox(width: 16),
-            Expanded(
-              child: Text(
-                label,
-                style: TextStyle(
-                  color: isActive ? Colors.blue : Colors.black,
-                  fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-                ),
-              ),
-            ),
-          ],
         ],
       ),
     );
@@ -360,7 +206,7 @@ class PatientInfo extends StatelessWidget {
                             Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                    builder: (context) =>  const HomePage()));
+                                    builder: (context) => const HomePage()));
                           },
                           child: const Text('odontogram'))
                     ],

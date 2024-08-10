@@ -1,5 +1,6 @@
+// ignore_for_file: file_names, library_private_types_in_public_api
+
 import 'package:flutter/material.dart';
-import 'const.dart';
 
 class DetailPage extends StatefulWidget {
   final String label;
@@ -33,7 +34,7 @@ class _DetailPageState extends State<DetailPage> {
   void initState() {
     super.initState();
     var toothCondition = widget.toothConditions.firstWhere(
-            (element) => element['label'] == widget.label,
+        (element) => element['label'] == widget.label,
         orElse: () => {'label': widget.label});
 
     selectedMesial = toothCondition['mesial'];
@@ -55,7 +56,18 @@ class _DetailPageState extends State<DetailPage> {
   Widget build(BuildContext context) {
     List<String> options = ['karies', 'komposit', 'gic'];
     bool showOclusal = ![
-      '13', '12', '11', '21', '22', '23', '43', '42', '41', '31', '32', '33'
+      '13',
+      '12',
+      '11',
+      '21',
+      '22',
+      '23',
+      '43',
+      '42',
+      '41',
+      '31',
+      '32',
+      '33'
     ].contains(widget.label);
 
     return Card(
@@ -68,7 +80,9 @@ class _DetailPageState extends State<DetailPage> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            Text(widget.label, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+            Text(widget.label,
+                style:
+                    const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
             const SizedBox(height: 24),
             SwitchListTile(
               title: const Text('RCT'),
@@ -90,7 +104,8 @@ class _DetailPageState extends State<DetailPage> {
                     onChanged: (newValue) {
                       setState(() {
                         selectedMesial = newValue;
-                        widget.onConditionChanged(widget.label, 'mesial', newValue!);
+                        widget.onConditionChanged(
+                            widget.label, 'mesial', newValue!);
                       });
                     },
                   ),
@@ -106,7 +121,8 @@ class _DetailPageState extends State<DetailPage> {
                     onChanged: (newValue) {
                       setState(() {
                         selectedDistal = newValue;
-                        widget.onConditionChanged(widget.label, 'distal', newValue!);
+                        widget.onConditionChanged(
+                            widget.label, 'distal', newValue!);
                       });
                     },
                   ),
@@ -122,7 +138,8 @@ class _DetailPageState extends State<DetailPage> {
                     onChanged: (newValue) {
                       setState(() {
                         selectedBukal = newValue;
-                        widget.onConditionChanged(widget.label, 'bukal', newValue!);
+                        widget.onConditionChanged(
+                            widget.label, 'bukal', newValue!);
                       });
                     },
                   ),
@@ -138,7 +155,8 @@ class _DetailPageState extends State<DetailPage> {
                     onChanged: (newValue) {
                       setState(() {
                         selectedPalatal = newValue;
-                        widget.onConditionChanged(widget.label, 'palatal', newValue!);
+                        widget.onConditionChanged(
+                            widget.label, 'palatal', newValue!);
                       });
                     },
                   ),
@@ -155,7 +173,8 @@ class _DetailPageState extends State<DetailPage> {
                       onChanged: (newValue) {
                         setState(() {
                           selectedOclusal = newValue;
-                          widget.onConditionChanged(widget.label, 'oclusal', newValue!);
+                          widget.onConditionChanged(
+                              widget.label, 'oclusal', newValue!);
                         });
                       },
                     ),

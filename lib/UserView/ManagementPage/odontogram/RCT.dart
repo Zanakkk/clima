@@ -1,3 +1,5 @@
+// ignore_for_file: file_names
+
 import 'package:flutter/material.dart';
 
 class InvertedTrianglePainter extends CustomPainter {
@@ -25,5 +27,17 @@ class InvertedTrianglePainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) {
     return false;
+  }
+}
+
+class InvertedTriangleWidget extends StatelessWidget {
+  const InvertedTriangleWidget({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      size: const Size(16, 12), // Reduced size to fit better
+      painter: InvertedTrianglePainter(),
+    );
   }
 }

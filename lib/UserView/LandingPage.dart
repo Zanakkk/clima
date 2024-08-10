@@ -3,8 +3,6 @@
 import 'package:flutter/material.dart';
 import 'ManagementPage/Patient.dart';
 
-
-
 class LandingPage extends StatelessWidget {
   const LandingPage({super.key});
 
@@ -63,9 +61,10 @@ class DesktopLayout extends StatelessWidget {
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
-                Navigator.push(context,
-                    MaterialPageRoute(builder: (context) =>
-                        const PatientDetailPage()));
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const PatientDetailPage()));
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white,

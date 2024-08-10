@@ -7,7 +7,8 @@ class Posterior extends CustomPainter {
   final Map<String, dynamic> conditions;
   final String label;
 
-  Posterior({required this.isBlue, required this.conditions, required this.label});
+  Posterior(
+      {required this.isBlue, required this.conditions, required this.label});
 
   @override
   void paint(Canvas canvas, Size size) {
