@@ -6,6 +6,8 @@ import 'package:line_icons/line_icons.dart';
 import 'dart:convert';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../main.dart';
+
 class TreatmentsPage extends StatefulWidget {
   const TreatmentsPage({super.key});
 
@@ -30,7 +32,7 @@ class _TreatmentsPageState extends State<TreatmentsPage> {
 
   Future<void> _fetchPatients() async {
     final url = Uri.parse(
-        'https://clima-93a68-default-rtdb.asia-southeast1.firebasedatabase.app/datapasien.json');
+        '$URL/datapasien.json');
 
     final response = await http.get(url);
 
@@ -57,7 +59,7 @@ class _TreatmentsPageState extends State<TreatmentsPage> {
     if (_selectedPatient == null) return;
 
     final url = Uri.parse(
-        'https://clima-93a68-default-rtdb.asia-southeast1.firebasedatabase.app/tindakan.json');
+        '$URL/tindakan.json');
 
     final response = await http.get(url);
 
@@ -92,7 +94,7 @@ class _TreatmentsPageState extends State<TreatmentsPage> {
     if (_selectedPatient == null) return;
 
     final url = Uri.parse(
-        'https://clima-93a68-default-rtdb.asia-southeast1.firebasedatabase.app/tindakan.json');
+        '$URL/tindakan.json');
 
     final newTindakan = {
       'idpasien': _selectedPatient!['id'],
@@ -135,7 +137,7 @@ class _TreatmentsPageState extends State<TreatmentsPage> {
     ];
 
     final url = Uri.parse(
-        'https://clima-93a68-default-rtdb.asia-southeast1.firebasedatabase.app/tindakan/${_selectedTindakan!['id']}.json');
+        '$URL/tindakan/${_selectedTindakan!['id']}.json');
 
     final response = await http.patch(
       url,

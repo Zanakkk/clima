@@ -60,7 +60,8 @@ class _SalesPageState extends State<SalesPage> {
                               Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                      builder: (context) => SalesTablePage()));
+                                      builder: (context) =>
+                                          const SalesTablePage()));
                             },
                             child: const Text('tabel')),
                         Row(

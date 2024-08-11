@@ -1,12 +1,18 @@
+// ignore_for_file: library_private_types_in_public_api
+
 import 'dart:convert';
+// ignore: avoid_web_libraries_in_flutter
 import 'dart:html' as html;
 import 'package:excel/excel.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 import '../../../../Component/FormatUmum.dart';
+import '../../../../main.dart';
 
 class SalesTablePage extends StatefulWidget {
+  const SalesTablePage({super.key});
+
   @override
   _SalesTablePageState createState() => _SalesTablePageState();
 }
@@ -27,7 +33,7 @@ class _SalesTablePageState extends State<SalesTablePage> {
 
   Future<void> fetchData() async {
     final response = await http.get(Uri.parse(
-        'https://clima-93a68-default-rtdb.asia-southeast1.firebasedatabase.app/tindakan.json'));
+        '$URL/tindakan.json'));
 
     if (response.statusCode == 200) {
       setState(() {
@@ -107,7 +113,7 @@ class _SalesTablePageState extends State<SalesTablePage> {
     String day = now.day.toString().padLeft(2, '0');
     String month = now.month.toString().padLeft(2, '0');
     String year = now.year.toString();
-    return 'report_${day}_${month}_${year}.xlsx';
+    return 'report_${day}_${month}_$year.xlsx';
   }
 
   Future<void> jsonToExcel() async {
@@ -149,7 +155,6 @@ class _SalesTablePageState extends State<SalesTablePage> {
 
       html.Url.revokeObjectUrl(url);
     } else {
-      print("Gagal menyimpan file Excel");
     }
   }
 
@@ -167,7 +172,7 @@ class _SalesTablePageState extends State<SalesTablePage> {
               children: [
                 Expanded(
                   child: DropdownButton<String>(
-                    hint: Text('Select Month'),
+                    hint: const Text('Select Month'),
                     value: selectedMonth,
                     onChanged: (String? newValue) {
                       setState(() {
@@ -179,10 +184,10 @@ class _SalesTablePageState extends State<SalesTablePage> {
                     items: _buildMonthDropdownItems(),
                   ),
                 ),
-                SizedBox(width: 16),
+                const SizedBox(width: 16),
                 Expanded(
                   child: DropdownButton<String>(
-                    hint: Text('Select Year'),
+                    hint: const Text('Select Year'),
                     value: selectedYear,
                     onChanged: (String? newValue) {
                       setState(() {
@@ -194,7 +199,7 @@ class _SalesTablePageState extends State<SalesTablePage> {
                     items: _buildYearDropdownItems(),
                   ),
                 ),
-                SizedBox(width: 16),
+                const SizedBox(width: 16),
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () => _selectDate(context),

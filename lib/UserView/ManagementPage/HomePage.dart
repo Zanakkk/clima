@@ -17,16 +17,15 @@ import 'Page/StaffListPage.dart';
 import 'Page/StocksPage.dart';
 import 'Page/TreatmentsPage.dart';
 import 'SideBar/SideBar.dart';
-import 'odontogram/odontogram.dart';
 
-class PatientDetailPage extends StatefulWidget {
-  const PatientDetailPage({super.key});
+class HomePage extends StatefulWidget {
+  const HomePage({super.key});
 
   @override
-  _PatientDetailPageState createState() => _PatientDetailPageState();
+  State<HomePage> createState() => _HomePageState();
 }
 
-class _PatientDetailPageState extends State<PatientDetailPage> {
+class _HomePageState extends State<HomePage> {
   bool isExpanded = true;
   int selectedIndex = 0;
 
@@ -53,16 +52,17 @@ class _PatientDetailPageState extends State<PatientDetailPage> {
             color: Colors.white,
             child: Column(
               children: [
-                IconButton(
-                  icon:
-                      Icon(isExpanded ? Icons.arrow_back : Icons.arrow_forward),
-                  onPressed: toggleSidebar,
-                ),
+
                 Expanded(
                   child: Sidebar(
                     isExpanded: isExpanded,
                     onItemSelected: selectPage,
                   ),
+                ),
+                IconButton(
+                  icon:
+                  Icon(isExpanded ? Icons.arrow_back : Icons.arrow_forward),
+                  onPressed: toggleSidebar,
                 ),
               ],
             ),
@@ -72,7 +72,7 @@ class _PatientDetailPageState extends State<PatientDetailPage> {
               padding: const EdgeInsets.all(16.0),
               child: IndexedStack(
                 index: selectedIndex,
-                children:  const [
+                children:   const [
                   DashboardPage(),
                   ReservationsPage(),
                   PatientsPage(),

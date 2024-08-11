@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+import '../../../../main.dart';
+
 class PatientListPage extends StatefulWidget {
   const PatientListPage({super.key});
 
@@ -33,7 +35,7 @@ class _PatientListPageState extends State<PatientListPage> {
 
   Future<void> _fetchPatients() async {
     final url = Uri.parse(
-        'https://clima-93a68-default-rtdb.asia-southeast1.firebasedatabase.app/datapasien.json');
+        '$URL/datapasien.json');
 
     final response = await http.get(url);
 

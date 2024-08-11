@@ -3,6 +3,8 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+import '../../../../main.dart';
+
 class AttendancePage extends StatelessWidget {
   final String id;
 
@@ -10,7 +12,7 @@ class AttendancePage extends StatelessWidget {
 
   Future<void> _updateAttendance(String id) async {
     final url = Uri.parse(
-        'https://clima-93a68-default-rtdb.asia-southeast1.firebasedatabase.app/absen/$id.json');
+        '$URL/absen/$id.json');
 
     final response = await http.put(
       url,
@@ -25,7 +27,7 @@ class AttendancePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final qrData =
-        'https://clima-93a68-default-rtdb.asia-southeast1.firebasedatabase.app/absen/$id.json';
+        '$URL/absen/$id.json';
 
     return Scaffold(
       appBar: AppBar(

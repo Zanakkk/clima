@@ -17,7 +17,7 @@ class AuthServices {
     }
   }
 
-  static Future<UserCredential?> signInWithGoogle() async {
+  static Future<UserCredential?> signInWithGoogle2() async {
     try {
       // Trigger the authentication flow
       final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
@@ -40,19 +40,23 @@ class AuthServices {
     }
   }
 
-  static Future<UserCredential> signInWithGoogleWEB() async {
-    // Create a new provider
-    GoogleAuthProvider googleProvider = GoogleAuthProvider();
 
-    googleProvider
-        .addScope('https://www.googleapis.com/auth/contacts.readonly');
-    googleProvider.setCustomParameters({'login_hint': 'user@example.com'});
+  static Future<UserCredential?> signInWithGoogleWEB() async {
+    try {
+      GoogleAuthProvider googleProvider = GoogleAuthProvider();
+      googleProvider
+          .addScope('https://www.googleapis.com/auth/contacts.readonly');
+      googleProvider.setCustomParameters({'login_hint': 'user@example.com'});
 
-    // Once signed in, return the UserCredential
-    return await FirebaseAuth.instance.signInWithPopup(googleProvider);
+      // Menggunakan signInWithRedirect alih-alih signInWithPopup
+      await FirebaseAuth.instance.signInWithRedirect(googleProvider);
 
-    // Or use signInWithRedirect
-    // return await FirebaseAuth.instance.signInWithRedirect(googleProvider);
+      // Dapatkan hasil setelah redirect
+      return await FirebaseAuth.instance.getRedirectResult();
+    } catch (e) {
+      print("Google login failed: $e");
+      return null;
+    }
   }
 
   static Future<UserCredential?> signInWithEMAIL(

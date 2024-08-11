@@ -1,5 +1,3 @@
-// ignore_for_file: curly_braces_in_flow_control_structures
-
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -7,7 +5,11 @@ import 'dart:async';
 
 import 'Provider/RCTProvider.dart';
 import 'UserView/LandingPage.dart';
+import 'UserView/ManagementPage/HomePage.dart';
 import 'firebase_options.dart';
+
+String ENDPOINT = '';
+String URL = '';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,13 +24,18 @@ Future<void> main() async {
   );
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
   @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false, // Tambahkan baris ini
+      debugShowCheckedModeBanner: false,
       initialRoute: '/',
       onGenerateRoute: (settings) {
         if (settings.name == '/') {
@@ -36,30 +43,24 @@ class MyApp extends StatelessWidget {
             builder: (context) => const LandingPage(),
           );
         } else if (settings.name != null && settings.name!.startsWith('/')) {
-          String parameterFromUrl = settings.name!.substring(1);
-          // Output: displayhealth/iDent
+          String parameterFromUrl =
+          settings.name!.substring(1); // Extracts the path segment
 
-          String displaymana = '';
-          List<String> parts = parameterFromUrl.split('/');
-          if (parts.length > 1) {
-            displaymana = parts[0]; // Mengambil bagian pertama dari array parts
-            // Output: Display Mana: displayhealth
+          // Update the global variables outside of setState
+          ENDPOINT = parameterFromUrl;
+          URL =
+          'https://clima-93a68-default-rtdb.asia-southeast1.firebasedatabase.app/clinics/$ENDPOINT';
 
-            // Selanjutnya, Anda bisa melakukan apa yang perlu dilakukan dengan displaymana ini.
+          // You can add custom logic based on the extracted segment
+          if (parameterFromUrl.isNotEmpty) {
+            return MaterialPageRoute(
+              builder: (context) => HomePage(),
+            );
+          } else {
+            return MaterialPageRoute(
+              builder: (context) => LandingPage(),
+            );
           }
-
-          if (displaymana == 'display') {
-            return MaterialPageRoute(
-              builder: (context) => Container(),
-            );
-          } else if (displaymana == 'displayhealth') {
-            return MaterialPageRoute(
-              builder: (context) => Container(),
-            );
-          } else
-            return MaterialPageRoute(
-              builder: (context) => Container(),
-            );
         }
         return null;
       },

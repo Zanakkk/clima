@@ -1,6 +1,8 @@
-// ignore_for_file: file_names, library_private_types_in_public_api
-
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+
+import '../../../main.dart';
 
 class Sidebar extends StatefulWidget {
   final bool isExpanded;
@@ -15,6 +17,38 @@ class Sidebar extends StatefulWidget {
 
 class _SidebarState extends State<Sidebar> {
   int _selectedIndex = 0;
+  String _clinicName = 'Loading...';
+  String _clinicAddress = '';
+  String _clinicLogo = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchClinicData();
+  }
+
+  Future<void> _fetchClinicData() async {
+    final url = '$URL/.json';
+    try {
+      final response = await http.get(Uri.parse(url));
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        setState(() {
+          _clinicName = data['name'];
+          _clinicAddress = data['address'];
+          _clinicLogo = data['logo'];
+        });
+      } else {
+        setState(() {
+          _clinicName = 'Error Loading Data';
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _clinicName = 'Error Loading Data';
+      });
+    }
+  }
 
   void _handleItemSelected(int index) {
     setState(() {
@@ -30,21 +64,73 @@ class _SidebarState extends State<Sidebar> {
       children: [
         Row(
           children: [
-            const Icon(Icons.local_hospital, size: 36, color: Colors.blue),
+            Card(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(
+                    18), // Half of the width/height to make it circular
+              ),
+              child: ClipRRect(
+                borderRadius:
+                    BorderRadius.circular(18), // Make sure it's circular
+                child: (_clinicLogo.isNotEmpty)
+                    ? Image.network(
+                        _clinicLogo,
+                        width: 32,
+                        height: 32,
+                        fit:
+                            BoxFit.cover, // Cover the entire area of the circle
+                      )
+                    : Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: Colors.blue[50],
+                          shape: BoxShape.circle,
+                        ),
+                        child: Center(
+                          child: Text(
+                            _clinicName.isNotEmpty
+                                ? _clinicName[0].toUpperCase()
+                                : '',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.blue, // Color of the initial
+                            ),
+                          ),
+                        ),
+                      ),
+              ),
+            ),
             if (widget.isExpanded) ...[
               const SizedBox(width: 8),
-              const Text('Zendenta',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+              Expanded(
+                // Ensures the text wraps or fits within the available space
+                child: Text(
+                  _clinicName,
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  overflow: TextOverflow.ellipsis, // Prevent overflow
+                ),
+              ),
               const SizedBox(width: 8),
             ],
           ],
         ),
         const SizedBox(height: 16),
         if (widget.isExpanded)
-          const ListTile(
-            title: Text('Avicena Clinic',
-                style: TextStyle(fontWeight: FontWeight.bold)),
-            subtitle: Text('845 Euclid Avenue, CA'),
+          ListTile(
+            title: Text(
+              _clinicName,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+              overflow: TextOverflow.ellipsis, // Prevent overflow
+            ),
+            subtitle: Text(
+              _clinicAddress,
+              overflow: TextOverflow.ellipsis, // Prevent overflow
+            ),
           ),
         const Divider(),
         SidebarSection(

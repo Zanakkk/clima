@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:firebase_storage/firebase_storage.dart';
 
+import '../../../../main.dart';
 import '../../SideBar/SideBar.dart';
 import 'DaftarPasien.dart';
 import 'LihatPasien.dart';
@@ -45,7 +46,7 @@ class _PatientsPageState extends State<PatientsPage> {
 
   Future<void> _fetchMedicalRecordNumber() async {
     final url = Uri.parse(
-        'https://clima-93a68-default-rtdb.asia-southeast1.firebasedatabase.app/datapasien.json');
+        '$URL/datapasien.json');
 
     final response = await http.get(url);
 
@@ -102,7 +103,7 @@ class _PatientsPageState extends State<PatientsPage> {
   Future<void> _submitData() async {
     if (_formKey.currentState?.validate() ?? false) {
       final url = Uri.parse(
-          'https://clima-93a68-default-rtdb.asia-southeast1.firebasedatabase.app/datapasien.json');
+          '$URL/datapasien.json');
 
       final response = await http.post(
         url,

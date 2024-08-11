@@ -1,7 +1,9 @@
-// ignore_for_file: file_names
-
+import 'package:clima/UserView/RegisterLogin/Login/Login.dart';
 import 'package:flutter/material.dart';
-import 'ManagementPage/Patient.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
+import 'ManagementPage/HomePage.dart';
+import 'RegisterLogin/Login/InputDataKlinik.dart';
 
 class LandingPage extends StatelessWidget {
   const LandingPage({super.key});
@@ -10,71 +12,55 @@ class LandingPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          if (constraints.maxWidth < 600) {
-            // Mobile layout
-            return const MobileLayout();
-          } else {
-            // Desktop layout
-            return const DesktopLayout();
-          }
-        },
-      ),
-    );
-  }
-}
-
-class MobileLayout extends StatelessWidget {
-  const MobileLayout({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const SingleChildScrollView(
-      padding: EdgeInsets.all(16),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          LandingContent(),
-          SizedBox(height: 20),
-        ],
-      ),
-    );
-  }
-}
-
-class DesktopLayout extends StatelessWidget {
-  const DesktopLayout({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Container(
-        constraints: const BoxConstraints(maxWidth: 800),
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            const LandingContent(),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => const PatientDetailPage()));
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                textStyle: const TextStyle(fontSize: 18),
-              ),
-              child: const Text('Buat'),
-            ),
-          ],
+      body: Center(
+        child: StreamBuilder<User?>(
+          stream: FirebaseAuth.instance.authStateChanges(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const CircularProgressIndicator();
+            }
+            if (snapshot.hasData) {
+              return ClinicRegistrationPage(); // Jika pengguna sudah login, tampilkan HomePage
+            } else {
+              return LayoutBuilder(
+                builder: (context, constraints) {
+                  final isMobile = constraints.maxWidth < 600;
+                  return Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isMobile ? 16 : 32,
+                      vertical: isMobile ? 16 : 32,
+                    ),
+                    constraints: const BoxConstraints(maxWidth: 800),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        const LandingContent(),
+                        const SizedBox(height: 20),
+                        ElevatedButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const LoginPage(),
+                              ),
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 32, vertical: 16),
+                            textStyle: const TextStyle(fontSize: 18),
+                          ),
+                          child: const Text('Login'),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              );
+            }
+          },
         ),
       ),
     );
@@ -86,14 +72,18 @@ class LandingContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Column(
+    final screenWidth = MediaQuery.of(context).size.width;
+    final imageSize = screenWidth < 600 ? 180.0 : 240.0;
+
+    return Column(
       children: [
-        Image(
-          image: AssetImage('assets/LOGO.jpg'),
-          width: 240,
-          height: 240,
+        Image.asset(
+          'assets/LOGO.jpg',
+          width: imageSize,
+          height: imageSize,
         ),
-        Text(
+        const SizedBox(height: 16),
+        const Text(
           'Clinic Management',
           textAlign: TextAlign.center,
           style: TextStyle(
@@ -102,8 +92,8 @@ class LandingContent extends StatelessWidget {
             fontWeight: FontWeight.bold,
           ),
         ),
-        SizedBox(height: 16),
-        Text(
+        const SizedBox(height: 16),
+        const Text(
           'Aplikasi untuk clinic management',
           textAlign: TextAlign.center,
           style: TextStyle(

@@ -1,10 +1,11 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
+import '../../../../main.dart';
 import 'Model.dart';
 
 Future<Map<String, Treatment>> fetchTreatments() async {
-  final response = await http.get(Uri.parse('https://clima-93a68-default-rtdb.asia-southeast1.firebasedatabase.app/tindakan.json'));
+  final response = await http.get(Uri.parse('$URL/tindakan.json'));
 
   if (response.statusCode == 200) {
     final Map<String, dynamic> data = json.decode(response.body);
@@ -15,7 +16,7 @@ Future<Map<String, Treatment>> fetchTreatments() async {
 }
 
 Future<Map<String, Patient>> fetchPatients() async {
-  final response = await http.get(Uri.parse('https://clima-93a68-default-rtdb.asia-southeast1.firebasedatabase.app/datapasien.json'));
+  final response = await http.get(Uri.parse('$URL/datapasien.json'));
 
   if (response.statusCode == 200) {
     final Map<String, dynamic> data = json.decode(response.body);

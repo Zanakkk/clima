@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+import '../../../../main.dart';
+
 class DaftarTindakanPasien extends StatefulWidget {
   const DaftarTindakanPasien({super.key});
 
@@ -36,7 +38,7 @@ class _DaftarTindakanPasienState extends State<DaftarTindakanPasien> {
 
   Future<void> _fetchPatients() async {
     final url = Uri.parse(
-        'https://clima-93a68-default-rtdb.asia-southeast1.firebasedatabase.app/datapasien.json');
+        '$URL/datapasien.json');
 
     final response = await http.get(url);
 
@@ -99,7 +101,7 @@ class _DaftarTindakanPasienState extends State<DaftarTindakanPasien> {
     }
 
     final url = Uri.parse(
-        'https://clima-93a68-default-rtdb.asia-southeast1.firebasedatabase.app/tindakan.json');
+        '$URL/tindakan.json');
 
     final Map<String, dynamic> data = {
       'doctor': _selectedDentist!['name'],
