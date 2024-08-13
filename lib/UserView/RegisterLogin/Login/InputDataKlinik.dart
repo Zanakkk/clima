@@ -1,15 +1,17 @@
-import 'dart:math';
-import 'dart:typed_data';
-import 'dart:io';
-import 'package:firebase_storage/firebase_storage.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
+// ignore_for_file: avoid_web_libraries_in_flutter, library_private_types_in_public_api, use_build_context_synchronously
+
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
+import 'dart:math';
+import 'dart:html' as html;
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-import '../../../main.dart';
+import '../../ManagementPage/HomePage.dart';
 
 class ClinicRegistrationPage extends StatefulWidget {
   const ClinicRegistrationPage({super.key});
@@ -40,9 +42,11 @@ class _ClinicRegistrationPageState extends State<ClinicRegistrationPage> {
       });
       await _uploadFile(pickedFile);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No image selected.')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No image selected.')),
+        );
+      }
     }
   }
 
@@ -56,19 +60,23 @@ class _ClinicRegistrationPageState extends State<ClinicRegistrationPage> {
           : storageRef.putFile(_imageFile!);
 
       final snapshot = await uploadTask;
-      _downloadUrl = await snapshot.ref.getDownloadURL();
+      final downloadUrl = await snapshot.ref.getDownloadURL();
 
       setState(() {
-        _downloadUrl = _downloadUrl;
+        _downloadUrl = downloadUrl;
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('File uploaded successfully')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('File uploaded successfully')),
+        );
+      }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to upload file: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to upload file: $e')),
+        );
+      }
     }
   }
 
@@ -79,14 +87,17 @@ class _ClinicRegistrationPageState extends State<ClinicRegistrationPage> {
     final String endpoint = _generateEndpoint(clinicName);
 
     if (clinicName.isEmpty || clinicAddress.isEmpty || _downloadUrl == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text("Please fill all the fields and upload a logo.")),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text("Please fill all the fields and upload a logo.")),
+        );
+      }
       return;
     }
 
-    final String url = '$URL/clinics/$endpoint.json';
+    final String url =
+        'https://clima-93a68-default-rtdb.asia-southeast1.firebasedatabase.app/clinics/$endpoint.json';
 
     try {
       final response = await http.put(
@@ -100,57 +111,41 @@ class _ClinicRegistrationPageState extends State<ClinicRegistrationPage> {
       );
 
       if (response.statusCode == 200) {
-        copyFirebaseData();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Clinic registered successfully!")),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text(
-                  "Failed to register clinic. Status code: ${response.statusCode}")),
-        );
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("An error occurred: $e")),
-      );
-    }
-  }
+        FULLURL =
+            'https://clima-93a68-default-rtdb.asia-southeast1.firebasedatabase.app/clinics/$endpoint.json';
 
-  Future<void> copyFirebaseData() async {
-    // Source and target URLs
-    final String sourceUrl =
-        'https://clima-93a68-default-rtdb.asia-southeast1.firebasedatabase.app/.json';
-    final String targetUrl =
-        'https://clima-93a68-default-rtdb.asia-southeast1.firebasedatabase.app/clinics/zanakdental5651.json';
+        final newUrl = Uri.base.replace(path: '/$endpoint');
+        html.window.history.pushState(null, '', newUrl.toString());
 
-    try {
-      // Fetch data from the source URL
-      final sourceResponse = await http.get(Uri.parse(sourceUrl));
+        if (mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => HomePage(id: endpoint),
+            ),
+          );
+        }
 
-      if (sourceResponse.statusCode == 200) {
-        // Decode the JSON data
-        final Map<String, dynamic> data = json.decode(sourceResponse.body);
-
-        // Write data to the target URL
-        final targetResponse = await http.put(
-          Uri.parse(targetUrl),
-          body: json.encode(data),
-        );
-
-        if (targetResponse.statusCode == 200) {
-          print('Data successfully copied to the target URL.');
-        } else {
-          print(
-              'Failed to copy data. Status code: ${targetResponse.statusCode}');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Clinic registered successfully!")),
+          );
         }
       } else {
-        print(
-            'Failed to fetch data from the source URL. Status code: ${sourceResponse.statusCode}');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+                content: Text(
+                    "Failed to register clinic. Status code: ${response.statusCode}")),
+          );
+        }
       }
     } catch (e) {
-      print('An error occurred: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("An error occurred: $e")),
+        );
+      }
     }
   }
 
@@ -165,79 +160,62 @@ class _ClinicRegistrationPageState extends State<ClinicRegistrationPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          title: const Text('Register Clinic'),
-        ),
-        body: Center(
-          child: SizedBox(
-            width: MediaQuery.of(context).size.width / 3,
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment
-                      .stretch, // Make elements fill the available width
-                  children: [
-                    TextField(
-                      controller: _nameController,
-                      decoration: const InputDecoration(
-                        labelText: 'Clinic Name',
-                        border:
-                            OutlineInputBorder(), // Adding a border for better UI
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: _addressController,
-                      decoration: const InputDecoration(
-                        labelText: 'Clinic Address',
-                        border:
-                            OutlineInputBorder(), // Adding a border for better UI
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    if (_imageBytes != null || _imageFile != null)
-                      Container(
-                        margin: const EdgeInsets.symmetric(vertical: 8.0),
-                        height: 200,
-                        width: 200,
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: kIsWeb
-                              ? Image.memory(_imageBytes!)
-                              : Image.file(_imageFile!),
-                        ),
-                      )
-                    else
-                      const Text("No image selected"),
-                    const SizedBox(height: 16),
-                    ElevatedButton.icon(
-                      onPressed: () => _pickImage(ImageSource.gallery),
-                      icon: const Icon(Icons.photo_library),
-                      label: const Text('Select Logo'),
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 12.0),
-                        textStyle: const TextStyle(fontSize: 16),
-                      ),
-                    ),
-                    const SizedBox(height: 32),
-                    ElevatedButton(
-                      onPressed: _registerClinic,
-                      child: const Text('Register Clinic'),
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 12.0),
-                        textStyle: const TextStyle(fontSize: 16),
-                      ),
-                    ),
-                  ],
-                ),
+      appBar: AppBar(
+        title: const Text('Register Clinic'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            TextField(
+              controller: _nameController,
+              decoration: const InputDecoration(
+                labelText: 'Clinic Name',
+                border: OutlineInputBorder(),
               ),
             ),
-          ),
-        ));
+            const SizedBox(height: 16),
+            TextField(
+              controller: _addressController,
+              decoration: const InputDecoration(
+                labelText: 'Clinic Address',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 16),
+            if (_imageBytes != null || _imageFile != null)
+              Container(
+                margin: const EdgeInsets.symmetric(vertical: 8.0),
+                height: 200,
+                width: 200,
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: kIsWeb
+                      ? Image.memory(_imageBytes!)
+                      : Image.file(_imageFile!),
+                ),
+              )
+            else
+              const Text("No image selected"),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: () => _pickImage(ImageSource.gallery),
+              icon: const Icon(Icons.photo_library),
+              label: const Text('Select Logo'),
+            ),
+            const SizedBox(height: 32),
+            ElevatedButton(
+              onPressed: _registerClinic,
+              child: const Text('Register Clinic'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

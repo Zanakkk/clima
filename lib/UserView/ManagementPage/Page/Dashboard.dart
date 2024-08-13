@@ -3,8 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-
-import '../../../main.dart';
+import '../HomePage.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -25,7 +24,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Future<void> _fetchData() async {
     final response = await http.get(Uri.parse(
-        '$URL/.json'));
+        '$FULLURL/.json'));
 
     if (response.statusCode == 200) {
       setState(() {

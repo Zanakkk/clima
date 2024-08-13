@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-import '../../../../main.dart';
+import '../../HomePage.dart';
 
 class DaftarTindakanPasien extends StatefulWidget {
   const DaftarTindakanPasien({super.key});
@@ -25,7 +25,7 @@ class _DaftarTindakanPasienState extends State<DaftarTindakanPasien> {
   void initState() {
     super.initState();
     _fetchPatients();
-    _initializeDentists();
+    _fetchDentists(); // Mengambil data dokter dari API
     _searchController.addListener(_filterPatients);
   }
 
@@ -37,8 +37,7 @@ class _DaftarTindakanPasienState extends State<DaftarTindakanPasien> {
   }
 
   Future<void> _fetchPatients() async {
-    final url = Uri.parse(
-        '$URL/datapasien.json');
+    final url = Uri.parse('$FULLURL/datapasien.json');
 
     final response = await http.get(url);
 
@@ -64,13 +63,31 @@ class _DaftarTindakanPasienState extends State<DaftarTindakanPasien> {
     }
   }
 
-  void _initializeDentists() {
-    _dentists = [
-      {'name': 'Drg. Amelia Putri', 'sip': 'SIP-001'},
-      {'name': 'Drg. Budi Santoso', 'sip': 'SIP-002'},
-      {'name': 'Drg. Chandra Wijaya', 'sip': 'SIP-003'},
-      {'name': 'Drg. Dita Arifin', 'sip': 'SIP-004'},
-    ];
+  Future<void> _fetchDentists() async {
+    final url = Uri.parse(
+        'https://clima-93a68-default-rtdb.asia-southeast1.firebasedatabase.app/clinics/zanakdental5651/dokter.json');
+
+    final response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic>? data = json.decode(response.body);
+      if (data != null) {
+        final List<Map<String, dynamic>> dentists = [];
+        data.forEach((id, dentistData) {
+          dentists.add({
+            'id': id,
+            ...dentistData,
+          });
+        });
+        setState(() {
+          _dentists = dentists;
+        });
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to fetch dentists.')),
+      );
+    }
   }
 
   void _filterPatients() {
@@ -100,8 +117,7 @@ class _DaftarTindakanPasienState extends State<DaftarTindakanPasien> {
       return;
     }
 
-    final url = Uri.parse(
-        '$URL/tindakan.json');
+    final url = Uri.parse('$FULLURL/tindakan.json');
 
     final Map<String, dynamic> data = {
       'doctor': _selectedDentist!['name'],

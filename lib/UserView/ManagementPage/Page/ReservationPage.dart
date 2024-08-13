@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-import '../../../main.dart';
+import '../HomePage.dart';
+import 'IDCARD.dart';
 
 class ReservationsPage extends StatefulWidget {
   const ReservationsPage({super.key});
@@ -33,6 +34,7 @@ class _ReservationsPageState extends State<ReservationsPage> {
                       builder: (context) => const ReservationResultsPage()));
             },
             child: const Text('klinik')),
+        const IDCard(),
       ],
     );
   }
@@ -91,7 +93,7 @@ class _ReservationPageMasyarakatState extends State<ReservationPageMasyarakat> {
       };
 
       final url = Uri.parse(
-          '$URL/reservation.json');
+          '$FULLURL/reservation.json');
       final response = await http.post(
         url,
         body: json.encode(reservationData),
@@ -235,7 +237,7 @@ class _ReservationResultsPageState extends State<ReservationResultsPage> {
 
   Future<void> _fetchReservations() async {
     final url = Uri.parse(
-        '$URL/reservation.json');
+        '$FULLURL/reservation.json');
     final response = await http.get(url);
 
     if (response.statusCode == 200) {

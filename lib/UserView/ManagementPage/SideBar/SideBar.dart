@@ -1,8 +1,10 @@
+// ignore_for_file: library_private_types_in_public_api
+
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-import '../../../main.dart';
+import '../HomePage.dart';
 
 class Sidebar extends StatefulWidget {
   final bool isExpanded;
@@ -28,7 +30,7 @@ class _SidebarState extends State<Sidebar> {
   }
 
   Future<void> _fetchClinicData() async {
-    final url = '$URL/.json';
+    final url = '$FULLURL/.json';
     try {
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
@@ -92,7 +94,7 @@ class _SidebarState extends State<Sidebar> {
                             _clinicName.isNotEmpty
                                 ? _clinicName[0].toUpperCase()
                                 : '',
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
                               color: Colors.blue, // Color of the initial
@@ -253,6 +255,14 @@ class _SidebarState extends State<Sidebar> {
               isActive: _selectedIndex == 13,
               onTap: () => _handleItemSelected(13),
             ),
+            SidebarItem(
+              icon: Icons.warning_amber,
+              label: 'Log Out',
+              isExpanded: widget.isExpanded,
+              isActive: _selectedIndex == 14,
+              onTap: () => _handleItemSelected(14),
+            ),
+
           ],
         ),
       ],

@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 import '../../../../Component/FormatUmum.dart';
-import '../../../../main.dart';
+import '../../HomePage.dart';
 
 class SalesTablePage extends StatefulWidget {
   const SalesTablePage({super.key});
@@ -33,7 +33,7 @@ class _SalesTablePageState extends State<SalesTablePage> {
 
   Future<void> fetchData() async {
     final response = await http.get(Uri.parse(
-        '$URL/tindakan.json'));
+        '$FULLURL/tindakan.json'));
 
     if (response.statusCode == 200) {
       setState(() {

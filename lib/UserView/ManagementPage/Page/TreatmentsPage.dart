@@ -2,11 +2,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:line_icons/line_icons.dart';
 import 'dart:convert';
+import 'package:line_icons/line_icons.dart';
 import 'package:url_launcher/url_launcher.dart';
-
-import '../../../main.dart';
 
 class TreatmentsPage extends StatefulWidget {
   const TreatmentsPage({super.key});
@@ -18,7 +16,6 @@ class TreatmentsPage extends StatefulWidget {
 class _TreatmentsPageState extends State<TreatmentsPage> {
   List<Map<String, dynamic>> _patients = [];
   Map<String, dynamic>? _selectedPatient;
-  List<Map<String, dynamic>> _tindakanData = [];
   Map<String, dynamic>? _selectedTindakan;
   String? _selectedProcedure;
   final TextEditingController _procedureExplanationController =
@@ -32,7 +29,7 @@ class _TreatmentsPageState extends State<TreatmentsPage> {
 
   Future<void> _fetchPatients() async {
     final url = Uri.parse(
-        '$URL/datapasien.json');
+        'https://clima-93a68-default-rtdb.asia-southeast1.firebasedatabase.app/clinics/zanakdental5651/datapasien.json');
 
     final response = await http.get(url);
 
@@ -59,7 +56,7 @@ class _TreatmentsPageState extends State<TreatmentsPage> {
     if (_selectedPatient == null) return;
 
     final url = Uri.parse(
-        '$URL/tindakan.json');
+        'https://clima-93a68-default-rtdb.asia-southeast1.firebasedatabase.app/clinics/zanakdental5651/tindakan.json');
 
     final response = await http.get(url);
 
@@ -67,54 +64,18 @@ class _TreatmentsPageState extends State<TreatmentsPage> {
       final Map<String, dynamic>? data = json.decode(response.body);
       if (data != null) {
         final tindakanData = data.entries
-            .where(
-                (entry) => entry.value['idpasien'] == _selectedPatient!['id'])
-            .map<Map<String, dynamic>>(
-                (entry) => {'id': entry.key, ...entry.value})
-            .toList();
+            .firstWhere(
+                (entry) => entry.value['idpasien'] == _selectedPatient!['id'],
+                orElse: () => const MapEntry('', {}))
+            .value;
 
         setState(() {
-          _tindakanData = tindakanData;
-          _selectedTindakan =
-              tindakanData.isNotEmpty ? tindakanData.first : null;
+          _selectedTindakan = tindakanData.isNotEmpty ? tindakanData : null;
         });
-
-        if (tindakanData.isEmpty) {
-          await _createNewTindakanEntry();
-        }
       }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Failed to fetch tindakan data.')),
-      );
-    }
-  }
-
-  Future<void> _createNewTindakanEntry() async {
-    if (_selectedPatient == null) return;
-
-    final url = Uri.parse(
-        '$URL/tindakan.json');
-
-    final newTindakan = {
-      'idpasien': _selectedPatient!['id'],
-      'namapasien': _selectedPatient!['fullName'],
-      'doctor': 'Drg. Amelia Putri', // Example doctor name, adjust as needed
-      'timestamp': DateTime.now().toIso8601String(),
-      'procedures': [],
-    };
-
-    final response = await http.post(
-      url,
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode(newTindakan),
-    );
-
-    if (response.statusCode == 200) {
-      _fetchTindakanData();
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to create tindakan entry.')),
       );
     }
   }
@@ -127,29 +88,36 @@ class _TreatmentsPageState extends State<TreatmentsPage> {
     final int price = _getProcedurePrice(_selectedProcedure!);
     final String explanation = _procedureExplanationController.text.trim();
 
-    final updatedProcedures = [
-      ...(_selectedTindakan!['procedures'] as List<dynamic>),
-      {
-        'procedure': _selectedProcedure,
-        'price': price,
-        'explanation': explanation.isNotEmpty ? explanation : null,
-      },
-    ];
+    // Buat body untuk POST
+    final newProcedure = {
+      'procedure': _selectedProcedure,
+      'price': price,
+      'explanation': explanation.isNotEmpty ? explanation : null,
+      'timestamp': DateTime.now().toIso8601String(),
+    };
 
     final url = Uri.parse(
-        '$URL/tindakan/${_selectedTindakan!['id']}.json');
+        'https://clima-93a68-default-rtdb.asia-southeast1.firebasedatabase.app/clinics/zanakdental5651/tindakan/${_selectedTindakan!['id']}/procedure.json');
 
-    final response = await http.patch(
+    final response = await http.post(
       url,
       headers: {'Content-Type': 'application/json'},
-      body: json.encode({'procedures': updatedProcedures}),
+      body: json.encode(newProcedure),
     );
 
     if (response.statusCode == 200) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Procedure added successfully.')),
       );
-      _fetchTindakanData(); // Refresh the data
+
+      // Fetch ulang data tindakan setelah menambahkan procedure baru
+      await _fetchTindakanData();
+
+      // Pastikan untuk memperbarui UI setelah fetch data terbaru
+      setState(() {
+        // _selectedTindakan akan diperbarui dengan data terbaru
+      });
+
       _procedureExplanationController.clear();
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -172,49 +140,74 @@ class _TreatmentsPageState extends State<TreatmentsPage> {
   }
 
   double _calculateTotalCost() {
-    if (_selectedTindakan == null || _selectedTindakan!['procedures'] == null) {
+    if (_selectedTindakan == null || _selectedTindakan!['procedure'] == null) {
       return 0;
     }
-    return (_selectedTindakan!['procedures'] as List<dynamic>)
+    return (_selectedTindakan!['procedure'] as Map<String, dynamic>)
+        .values
         .map<double>((procedure) => (procedure['price'] as num).toDouble())
         .fold(0, (a, b) => a + b);
   }
 
   Future<void> _sendInvoice() async {
-    if (_selectedPatient == null || _selectedTindakan == null) return;
+    if (_selectedPatient == null) return;
 
-    // Header
-    String message = '🧾 *Invoice* 🧾\n\n';
+    final String tindakanId = _selectedTindakan!['id']; // ID tindakan khusus
+    final String url =
+        'https://clima-93a68-default-rtdb.asia-southeast1.firebasedatabase.app/clinics/zanakdental5651/tindakan/$tindakanId/procedure.json';
 
-    // Patient Information
-    message += '👤 *Nama Pasien:* ${_selectedPatient!['fullName']}\n';
-    message += '👨‍⚕️ *Dokter:* ${_selectedTindakan!['doctor']}\n';
-    message += '📅 *Tanggal:* ${_selectedTindakan!['timestamp']}\n\n';
+    final response = await http.get(Uri.parse(url));
 
-    // Procedures List
-    message += '📝 *Detail Tindakan:*\n';
-    for (var procedure in _selectedTindakan!['procedures']) {
-      message +=
-          '🔹 *${procedure['procedure']}*: Rp${procedure['price'].toString()}';
-      if (procedure['explanation'] != null) {
-        message += ' _(💬 Keterangan: ${procedure['explanation']})_';
+    if (response.statusCode == 200) {
+      final Map<String, dynamic>? data = json.decode(response.body);
+      if (data != null) {
+        // Mulai membuat pesan invoice
+        String message = '🧾 *Invoice* 🧾\n\n';
+
+        // Informasi Pasien
+        message += '👤 *Nama Pasien:* ${_selectedPatient!['fullName']}\n';
+        message += '📅 *Tanggal:* ${DateTime.now().toIso8601String()}\n\n';
+
+        // Detail Tindakan
+        message += '📝 *Detail Tindakan:*\n';
+        double totalCost = 0.0;
+
+        data.forEach((key, procedure) {
+          final procedureName = procedure['procedure'] ?? 'Unknown';
+          final price = procedure['price'] ?? 0;
+          final explanation = procedure['explanation'] ?? '';
+
+          message += '🔹 *$procedureName*: Rp$price';
+          if (explanation.isNotEmpty) {
+            message += ' _(💬 Keterangan: $explanation)_';
+          }
+          message += '\n';
+
+          totalCost += price;
+        });
+
+        // Total Biaya
+        message += '\n💵 *Total Biaya:* Rp${totalCost.toStringAsFixed(0)}\n';
+
+        // WhatsApp URI
+        final Uri whatsappUri = Uri.parse(
+            "https://wa.me/6282387696487?text=${Uri.encodeComponent(message)}");
+
+        if (await canLaunch(whatsappUri.toString())) {
+          await launch(whatsappUri.toString());
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Could not launch WhatsApp')),
+          );
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to retrieve data.')),
+        );
       }
-      message += '\n';
-    }
-
-    // Total Cost
-    message +=
-        '\n💵 *Total Biaya:* Rp${_calculateTotalCost().toStringAsFixed(0)}\n';
-
-    // WhatsApp URI
-    final Uri whatsappUri = Uri.parse(
-        "https://wa.me/6282387696487?text=${Uri.encodeComponent(message)}");
-
-    if (await canLaunch(whatsappUri.toString())) {
-      await launch(whatsappUri.toString());
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not launch WhatsApp')),
+        const SnackBar(content: Text('Failed to fetch tindakan data.')),
       );
     }
   }
@@ -286,36 +279,30 @@ class _TreatmentsPageState extends State<TreatmentsPage> {
                         const SizedBox(height: 8),
                         Expanded(
                           child: ListView.builder(
-                            itemCount: _tindakanData.length,
+                            itemCount: _selectedTindakan != null &&
+                                    _selectedTindakan!['procedure'] != null
+                                ? (_selectedTindakan!['procedure']
+                                        as Map<String, dynamic>)
+                                    .length
+                                : 0,
                             itemBuilder: (context, index) {
-                              final tindakan = _tindakanData[index];
+                              final procedures = _selectedTindakan!['procedure']
+                                  as Map<String, dynamic>;
+                              final procedureKey =
+                                  procedures.keys.elementAt(index);
+                              final procedure = procedures[procedureKey];
                               return Card(
                                 margin: const EdgeInsets.all(8.0),
                                 child: ListTile(
                                   title: Text(
-                                      'Dokter: ${tindakan['doctor']} - ${tindakan['timestamp']}'),
-                                  subtitle: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: (tindakan['procedures']
-                                            as List<dynamic>)
-                                        .map<Widget>((procedure) {
-                                      return Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                              '${procedure['procedure']} - Rp${procedure['price']}'),
-                                          if (procedure['explanation'] != null)
-                                            Text(
-                                              'Keterangan: ${procedure['explanation']}',
-                                              style: const TextStyle(
-                                                  fontStyle: FontStyle.italic),
-                                            ),
-                                        ],
-                                      );
-                                    }).toList(),
-                                  ),
+                                      '${procedure['procedure']} - Rp${procedure['price']}'),
+                                  subtitle: procedure['explanation'] != null
+                                      ? Text(
+                                          'Keterangan: ${procedure['explanation']}',
+                                          style: const TextStyle(
+                                              fontStyle: FontStyle.italic),
+                                        )
+                                      : null,
                                 ),
                               );
                             },
@@ -374,8 +361,7 @@ class _TreatmentsPageState extends State<TreatmentsPage> {
                     child: Text('Pilih pasien untuk melihat detail'),
                   ),
           ),
-// Right Section: Full Invoice
-// Right Section: Full Invoice
+          // Right Section: Full Invoice
           Expanded(
             flex: 3,
             child: _selectedPatient != null && _selectedTindakan != null
@@ -446,8 +432,10 @@ class _TreatmentsPageState extends State<TreatmentsPage> {
                               child: SingleChildScrollView(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: (_selectedTindakan!['procedures']
-                                          as List<dynamic>)
+                                  children: (_selectedTindakan!['procedure']
+                                              as Map<String, dynamic>? ??
+                                          {})
+                                      .values
                                       .map<Widget>((procedure) {
                                     return Padding(
                                       padding: const EdgeInsets.symmetric(
@@ -512,8 +500,7 @@ class _TreatmentsPageState extends State<TreatmentsPage> {
                                 ),
                                 label: const Text('Send to WhatsApp'),
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(
-                                      0xFF25D366), // WhatsApp green color
+                                  backgroundColor: const Color(0xFF25D366),
                                 ),
                               ),
                             ),

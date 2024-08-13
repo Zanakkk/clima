@@ -46,9 +46,9 @@ class Patient {
   final String imageUrl;
   final String phone;
   final String religion;
-  final String suku;
+  final String pekerjaan;
 
-  Patient({required this.fullName, required this.address, required this.dob, required this.email, required this.gender, required this.imageUrl, required this.phone, required this.religion, required this.suku});
+  Patient({required this.fullName, required this.address, required this.dob, required this.email, required this.gender, required this.imageUrl, required this.phone, required this.religion, required this.pekerjaan});
 
   factory Patient.fromJson(Map<String, dynamic> json) {
     return Patient(
@@ -60,7 +60,7 @@ class Patient {
       imageUrl: json['imageUrl'],
       phone: json['phone'],
       religion: json['religion'],
-      suku: json['suku'],
+      pekerjaan: json['pekerjaan'],
     );
   }
 }

@@ -1,10 +1,10 @@
 // ignore_for_file: use_build_context_synchronously, library_private_types_in_public_api
 
+import 'package:clima/UserView/ManagementPage/HomePage.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-import '../../../../main.dart';
 
 class PatientListPage extends StatefulWidget {
   const PatientListPage({super.key});
@@ -35,7 +35,7 @@ class _PatientListPageState extends State<PatientListPage> {
 
   Future<void> _fetchPatients() async {
     final url = Uri.parse(
-        '$URL/datapasien.json');
+        '$FULLURL/datapasien.json');
 
     final response = await http.get(url);
 
@@ -129,7 +129,7 @@ class _PatientListPageState extends State<PatientListPage> {
                     return ListTile(
                       leading: patient['imageUrl'] != null
                           ? Image.network(patient['imageUrl'],
-                              width: 50, height: 50)
+                          width: 50, height: 50)
                           : const Icon(Icons.person, size: 50),
                       title: Text(patient['fullName']),
                       subtitle: Text('Umur: ${_calculateAge(patient['dob'])}'),
@@ -147,157 +147,157 @@ class _PatientListPageState extends State<PatientListPage> {
                 flex: 2,
                 child: _selectedPatient != null
                     ? Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: SingleChildScrollView(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Card(
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                elevation: 4,
-                                margin: const EdgeInsets.only(bottom: 16),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(16.0),
-                                  child: Column(
-                                    crossAxisAlignment:
+                  padding: const EdgeInsets.all(16.0),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Card(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          elevation: 4,
+                          margin: const EdgeInsets.only(bottom: 16),
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Column(
+                              crossAxisAlignment:
+                              CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    if (_selectedPatient!['imageUrl'] !=
+                                        null)
+                                      ClipRRect(
+                                        borderRadius:
+                                        BorderRadius.circular(8),
+                                        child: Image.network(
+                                          _selectedPatient!['imageUrl'],
+                                          width: 100,
+                                          height: 100,
+                                          fit: BoxFit.cover,
+                                        ),
+                                      ),
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
                                         CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
                                         children: [
-                                          if (_selectedPatient!['imageUrl'] !=
-                                              null)
-                                            ClipRRect(
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
-                                              child: Image.network(
-                                                _selectedPatient!['imageUrl'],
-                                                width: 100,
-                                                height: 100,
-                                                fit: BoxFit.cover,
-                                              ),
+                                          Text(
+                                            _selectedPatient!['fullName'],
+                                            style: const TextStyle(
+                                              fontSize: 24,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.black,
                                             ),
-                                          const SizedBox(width: 16),
-                                          Expanded(
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  _selectedPatient!['fullName'],
-                                                  style: const TextStyle(
-                                                    fontSize: 24,
-                                                    fontWeight: FontWeight.bold,
-                                                    color: Colors.black,
-                                                  ),
-                                                ),
-                                                const SizedBox(height: 8),
-                                                Text(
-                                                  'Nomor Rekam Medis: ${_selectedPatient!['medicalRecordNumber']}',
-                                                  style: const TextStyle(
-                                                    fontSize: 16,
-                                                    color: Colors.grey,
-                                                  ),
-                                                ),
-                                              ],
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Text(
+                                            'Nomor Rekam Medis: ${_selectedPatient!['medicalRecordNumber']}',
+                                            style: const TextStyle(
+                                              fontSize: 16,
+                                              color: Colors.grey,
                                             ),
                                           ),
                                         ],
                                       ),
-                                      const SizedBox(height: 16),
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          _buildDetailItem(
-                                            icon: Icons.badge,
-                                            label: 'NIK',
-                                            value: _selectedPatient!['nik'],
-                                          ),
-                                          _buildDetailItem(
-                                            icon: Icons.cake,
-                                            label: 'Umur',
-                                            value:
-                                                '${_calculateAge(_selectedPatient!['dob'])} Tahun',
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 16),
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          _buildDetailItem(
-                                            icon: Icons.wc,
-                                            label: 'Jenis Kelamin',
-                                            value: _selectedPatient!['gender'],
-                                          ),
-                                          _buildDetailItem(
-                                            icon: Icons.calendar_today,
-                                            label: 'Tanggal Lahir',
-                                            value: _selectedPatient!['dob'],
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
+                                    ),
+                                  ],
                                 ),
-                              ),
-                              Card(
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
+                                const SizedBox(height: 16),
+                                Row(
+                                  mainAxisAlignment:
+                                  MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    _buildDetailItem(
+                                      icon: Icons.badge,
+                                      label: 'NIK',
+                                      value: _selectedPatient!['nik'],
+                                    ),
+                                    _buildDetailItem(
+                                      icon: Icons.cake,
+                                      label: 'Umur',
+                                      value:
+                                      '${_calculateAge(_selectedPatient!['dob'])} Tahun',
+                                    ),
+                                  ],
                                 ),
-                                elevation: 4,
-                                child: Padding(
-                                  padding: const EdgeInsets.all(16.0),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      _buildDetailItem(
-                                        icon: Icons.email,
-                                        label: 'Email',
-                                        value: _selectedPatient!['email'],
-                                      ),
-                                      const SizedBox(height: 16),
-                                      _buildDetailItem(
-                                        icon: Icons.phone,
-                                        label: 'Nomor Telepon',
-                                        value: _selectedPatient!['phone'],
-                                      ),
-                                      const SizedBox(height: 16),
-                                      _buildDetailItem(
-                                        icon: Icons.location_on,
-                                        label: 'Alamat',
-                                        value: _selectedPatient!['address'],
-                                      ),
-                                      const SizedBox(height: 16),
-                                      _buildDetailItem(
-                                        icon: Icons.location_city,
-                                        label: 'Agama',
-                                        value: _selectedPatient!['religion'],
-                                      ),
-                                      const SizedBox(height: 16),
-                                      _buildDetailItem(
-                                        icon: Icons.group,
-                                        label: 'Suku',
-                                        value: _selectedPatient!['suku'],
-                                      ),
-                                    ],
-                                  ),
+                                const SizedBox(height: 16),
+                                Row(
+                                  mainAxisAlignment:
+                                  MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    _buildDetailItem(
+                                      icon: Icons.wc,
+                                      label: 'Jenis Kelamin',
+                                      value: _selectedPatient!['gender'],
+                                    ),
+                                    _buildDetailItem(
+                                      icon: Icons.calendar_today,
+                                      label: 'Tanggal Lahir',
+                                      value: _selectedPatient!['dob'],
+                                    ),
+                                  ],
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
-                      )
-                    : const Center(
-                        child: Text(
-                          'Pilih pasien untuk melihat detail',
-                          style: TextStyle(fontSize: 18, color: Colors.grey),
+                        Card(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          elevation: 4,
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Column(
+                              crossAxisAlignment:
+                              CrossAxisAlignment.start,
+                              children: [
+                                _buildDetailItem(
+                                  icon: Icons.email,
+                                  label: 'Email',
+                                  value: _selectedPatient!['email'],
+                                ),
+                                const SizedBox(height: 16),
+                                _buildDetailItem(
+                                  icon: Icons.phone,
+                                  label: 'Nomor Telepon',
+                                  value: _selectedPatient!['phone'],
+                                ),
+                                const SizedBox(height: 16),
+                                _buildDetailItem(
+                                  icon: Icons.location_on,
+                                  label: 'Alamat',
+                                  value: _selectedPatient!['address'],
+                                ),
+                                const SizedBox(height: 16),
+                                _buildDetailItem(
+                                  icon: Icons.location_city,
+                                  label: 'Agama',
+                                  value: _selectedPatient!['religion'],
+                                ),
+                                const SizedBox(height: 16),
+                                _buildDetailItem(
+                                  icon: Icons.group,
+                                  label: 'pekerjaan',
+                                  value: _selectedPatient!['pekerjaan'],
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
-                      ),
+                      ],
+                    ),
+                  ),
+                )
+                    : const Center(
+                  child: Text(
+                    'Pilih pasien untuk melihat detail',
+                    style: TextStyle(fontSize: 18, color: Colors.grey),
+                  ),
+                ),
               ),
             ],
           ),

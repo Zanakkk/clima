@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-import '../../../main.dart';
+import '../HomePage.dart';
 
 class StocksPage extends StatefulWidget {
   const StocksPage({super.key});
@@ -29,7 +29,7 @@ class _StocksPageState extends State<StocksPage> {
   final _expiryDateController = TextEditingController();
 
   final String apiUrl =
-      '$URL/stokbarang.json'; // Ganti dengan URL API Anda
+      '$FULLURL/stokbarang.json'; // Ganti dengan URL API Anda
 
   @override
   void initState() {

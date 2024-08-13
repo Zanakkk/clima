@@ -5,7 +5,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-import '../../../main.dart';
+import '../HomePage.dart';
 import 'Attendance/Attendance.dart';
 
 class StaffListPage extends StatefulWidget {
@@ -46,7 +46,7 @@ class _StaffListPageState extends State<StaffListPage> {
 
   Future<void> _fetchAttendanceStatus() async {
     final url = Uri.parse(
-        '$URL/absen.json');
+        '$FULLURL/absen.json');
 
     final response = await http.get(url);
 

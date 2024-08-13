@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-import '../../../main.dart';
+import '../HomePage.dart';
 
 class ReportPage extends StatefulWidget {
   const ReportPage({super.key});
@@ -25,7 +25,7 @@ class _ReportPageState extends State<ReportPage> {
 
   Future<void> _fetchData() async {
     final response = await http.get(Uri.parse(
-        '$URL/.json'));
+        '$FULLURL/.json'));
     if (response.statusCode == 200) {
       setState(() {
         _data = json.decode(response.body);

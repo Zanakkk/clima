@@ -1,5 +1,6 @@
 // ignore_for_file: use_build_context_synchronously
 
+import 'package:clima/UserView/ManagementPage/HomePage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:typed_data';
@@ -7,7 +8,6 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:firebase_storage/firebase_storage.dart';
 
-import '../../../../main.dart';
 import '../../SideBar/SideBar.dart';
 import 'DaftarPasien.dart';
 import 'LihatPasien.dart';
@@ -27,7 +27,7 @@ class _PatientsPageState extends State<PatientsPage> {
   final TextEditingController _addressController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _sukuController = TextEditingController();
+  final TextEditingController _pekerjaanController = TextEditingController();
   String? _selectedGender;
   String? _selectedReligion;
   Uint8List? _imageBytes;
@@ -46,7 +46,7 @@ class _PatientsPageState extends State<PatientsPage> {
 
   Future<void> _fetchMedicalRecordNumber() async {
     final url = Uri.parse(
-        '$URL/datapasien.json');
+        '$FULLURL/datapasien.json');
 
     final response = await http.get(url);
 
@@ -103,7 +103,7 @@ class _PatientsPageState extends State<PatientsPage> {
   Future<void> _submitData() async {
     if (_formKey.currentState?.validate() ?? false) {
       final url = Uri.parse(
-          '$URL/datapasien.json');
+          '$FULLURL/datapasien.json');
 
       final response = await http.post(
         url,
@@ -116,7 +116,7 @@ class _PatientsPageState extends State<PatientsPage> {
           'phone': _phoneController.text,
           'address': _addressController.text,
           'religion': _selectedReligion,
-          'suku': _sukuController.text,
+          'pekerjaan': _pekerjaanController.text,
           'medicalRecordNumber': _medicalRecordNumber,
           'imageUrl': _downloadUrl, // Masukkan link download gambar
         }),
@@ -245,9 +245,9 @@ class _PatientsPageState extends State<PatientsPage> {
             value: _selectedGender,
             items: ['Male', 'Female']
                 .map((gender) => DropdownMenuItem(
-                      value: gender,
-                      child: Text(gender),
-                    ))
+              value: gender,
+              child: Text(gender),
+            ))
                 .toList(),
             decoration: const InputDecoration(
               labelText: 'Gender',
@@ -282,7 +282,7 @@ class _PatientsPageState extends State<PatientsPage> {
               if (pickedDate != null) {
                 setState(() {
                   _dobController.text =
-                      "${pickedDate.day}/${pickedDate.month}/${pickedDate.year}";
+                  "${pickedDate.day}/${pickedDate.month}/${pickedDate.year}";
                 });
               }
             },
@@ -341,12 +341,12 @@ class _PatientsPageState extends State<PatientsPage> {
           DropdownButtonFormField<String>(
             value: _selectedReligion,
             items:
-                ['Islam', 'Kristen', 'Katolik', 'Hindu', 'Buddha', 'Konghucu']
-                    .map((religion) => DropdownMenuItem(
-                          value: religion,
-                          child: Text(religion),
-                        ))
-                    .toList(),
+            ['Islam', 'Kristen', 'Katolik', 'Hindu', 'Buddha', 'Konghucu']
+                .map((religion) => DropdownMenuItem(
+              value: religion,
+              child: Text(religion),
+            ))
+                .toList(),
             decoration: const InputDecoration(
               labelText: 'Religion',
               border: OutlineInputBorder(),
@@ -365,14 +365,14 @@ class _PatientsPageState extends State<PatientsPage> {
           ),
           const SizedBox(height: 16),
           TextFormField(
-            controller: _sukuController,
+            controller: _pekerjaanController,
             decoration: const InputDecoration(
-              labelText: 'Suku',
+              labelText: 'Pekerjaan',
               border: OutlineInputBorder(),
             ),
             validator: (value) {
               if (value == null || value.isEmpty) {
-                return 'Please enter your suku';
+                return 'Please enter your pekerjaan';
               }
               return null;
             },

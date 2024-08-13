@@ -2,7 +2,6 @@ import 'package:clima/UserView/RegisterLogin/Login/Login.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-import 'ManagementPage/HomePage.dart';
 import 'RegisterLogin/Login/InputDataKlinik.dart';
 
 class LandingPage extends StatelessWidget {
@@ -20,7 +19,7 @@ class LandingPage extends StatelessWidget {
               return const CircularProgressIndicator();
             }
             if (snapshot.hasData) {
-              return ClinicRegistrationPage(); // Jika pengguna sudah login, tampilkan HomePage
+              return const ClinicRegistrationPage(); // Jika pengguna sudah login, tampilkan HomePage
             } else {
               return LayoutBuilder(
                 builder: (context, constraints) {
