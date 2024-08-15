@@ -1,5 +1,6 @@
 // ignore_for_file: library_private_types_in_public_api, file_names, non_constant_identifier_names
 
+import 'package:clima/UserView/ManagementPage/ManagementControl/ManagementControl.dart';
 import 'package:flutter/material.dart';
 
 import '../RegisterLogin/LogOut.dart';
@@ -102,6 +103,7 @@ class _HomePageState extends State<HomePage> {
                   ReportPage(),
                   CustomerSupportPage(),
                   LogOut(),
+                  ManagementControl(),
                 ],
               ),
             ),

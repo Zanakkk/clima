@@ -1,11 +1,17 @@
-import 'package:flutter/material.dart';
+// ignore_for_file: library_private_types_in_public_api, use_build_context_synchronously
 
-class AddTreatmentPage extends StatelessWidget {
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+
+import '../../HomePage.dart';
+
+class AddTreatmentPage extends StatefulWidget {
   final Map<String, dynamic>? selectedPatient;
   final Map<String, dynamic>? selectedTindakan;
-  final String? selectedProcedure;
+  final Map<String, dynamic>? selectedProcedure; // Changed to Map
   final TextEditingController procedureExplanationController;
-  final Function(String?) onProcedureChanged;
+  final Function(Map<String, dynamic>?) onProcedureChanged;
   final Function() onAddProcedure;
 
   const AddTreatmentPage({
@@ -19,8 +25,49 @@ class AddTreatmentPage extends StatelessWidget {
   });
 
   @override
+  _AddTreatmentPageState createState() => _AddTreatmentPageState();
+}
+
+class _AddTreatmentPageState extends State<AddTreatmentPage> {
+  List<Map<String, dynamic>> _procedures = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchProcedures();
+  }
+
+  // Fetch procedures from API
+  Future<void> _fetchProcedures() async {
+    final url = Uri.parse(
+        '$FULLURL/pricelist.json');
+
+    final response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic>? data = json.decode(response.body);
+      if (data != null) {
+        setState(() {
+          // Mapping data dari API
+          _procedures = data.entries
+              .map<Map<String, dynamic>>((entry) => {
+            'id': entry.key,
+            'name': entry.value['name'] as String,
+            'price': entry.value['price'] as int,
+          })
+              .toList();
+        });
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to fetch procedures.')),
+      );
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    if (selectedPatient == null || selectedTindakan == null) {
+    if (widget.selectedPatient == null || widget.selectedTindakan == null) {
       return const Center(child: Text('Pilih pasien untuk melihat detail'));
     }
 
@@ -30,36 +77,38 @@ class AddTreatmentPage extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Nama: ${selectedPatient!['fullName'] ?? ''}',
+            'Nama: ${widget.selectedPatient!['fullName'] ?? ''}',
             style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
-          Text('NIK: ${selectedPatient!['nik'] ?? ''}'),
+          Text('NIK: ${widget.selectedPatient!['nik'] ?? ''}'),
           const SizedBox(height: 8),
-          Text('Alamat: ${selectedPatient!['address'] ?? ''}'),
+          Text('Alamat: ${widget.selectedPatient!['address'] ?? ''}'),
           const SizedBox(height: 8),
-          Text('Tanggal Lahir: ${selectedPatient!['dob'] ?? ''}'),
+          Text('Tanggal Lahir: ${widget.selectedPatient!['dob'] ?? ''}'),
           const SizedBox(height: 8),
-          Text('Jenis Kelamin: ${selectedPatient!['gender'] ?? ''}'),
+          Text('Jenis Kelamin: ${widget.selectedPatient!['gender'] ?? ''}'),
           const SizedBox(height: 8),
-          Text('Nomor Telepon: ${selectedPatient!['phone'] ?? ''}'),
+          Text('Nomor Telepon: ${widget.selectedPatient!['phone'] ?? ''}'),
           const SizedBox(height: 16),
           const Text(
             'Tambah Tindakan:',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
-          DropdownButtonFormField<String>(
+          _procedures.isEmpty
+              ? const Center(child: CircularProgressIndicator())
+              : DropdownButtonFormField<Map<String, dynamic>>(
             isExpanded: true,
-            value: selectedProcedure,
+            value: widget.selectedProcedure,
             hint: const Text('Pilih Tindakan'),
-            items: ['Tambal', 'Scaling', 'Cabut'].map((procedure) {
-              return DropdownMenuItem<String>(
+            items: _procedures.map((procedure) {
+              return DropdownMenuItem<Map<String, dynamic>>(
                 value: procedure,
-                child: Text(procedure),
+                child: Text(procedure['name']),
               );
             }).toList(),
-            onChanged: onProcedureChanged,
+            onChanged: widget.onProcedureChanged,
             decoration: InputDecoration(
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
@@ -68,7 +117,7 @@ class AddTreatmentPage extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           TextField(
-            controller: procedureExplanationController,
+            controller: widget.procedureExplanationController,
             decoration: InputDecoration(
               labelText: 'Keterangan (opsional)',
               border: OutlineInputBorder(
@@ -79,7 +128,7 @@ class AddTreatmentPage extends StatelessWidget {
           const SizedBox(height: 16),
           Center(
             child: ElevatedButton(
-              onPressed: onAddProcedure,
+              onPressed: widget.onAddProcedure,
               child: const Text('Add Treatment'),
             ),
           ),

@@ -1,5 +1,6 @@
 // ignore_for_file: avoid_web_libraries_in_flutter, library_private_types_in_public_api, use_build_context_synchronously
 
+import 'package:clima/UserView/RegisterLogin/Login/Login.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -10,8 +11,111 @@ import 'dart:math';
 import 'dart:html' as html;
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-
 import '../../ManagementPage/HomePage.dart';
+
+class RegisterUserPage extends StatefulWidget {
+  const RegisterUserPage({super.key});
+
+  @override
+  _RegisterUserPageState createState() => _RegisterUserPageState();
+}
+
+class _RegisterUserPageState extends State<RegisterUserPage> {
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
+
+  Future<void> _registerUser() async {
+    final String email = _emailController.text.trim();
+    final String password = _passwordController.text.trim();
+    final String confirmPassword = _confirmPasswordController.text.trim();
+
+    if (email.isEmpty || password.isEmpty || confirmPassword.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("All fields are required.")),
+      );
+      return;
+    }
+
+    if (password != confirmPassword) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Passwords do not match.")),
+      );
+      return;
+    }
+
+    try {
+      UserCredential userCredential =
+          await _auth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("User registered successfully!")),
+      );
+
+      // Navigate to the home page or dashboard after successful registration
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+            builder: (context) =>
+                const ClinicRegistrationPage()), // Define your HomePage
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error occurred: $e")),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Register User'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            TextField(
+              controller: _emailController,
+              decoration: const InputDecoration(labelText: 'Email'),
+              keyboardType: TextInputType.emailAddress,
+            ),
+            TextField(
+              controller: _passwordController,
+              decoration: const InputDecoration(labelText: 'Password'),
+              obscureText: true,
+            ),
+            TextField(
+              controller: _confirmPasswordController,
+              decoration: const InputDecoration(labelText: 'Confirm Password'),
+              obscureText: true,
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: _registerUser,
+              child: const Text('Register'),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (context) => const LoginPage()));
+              },
+              child: const Text('Login'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
 class ClinicRegistrationPage extends StatefulWidget {
   const ClinicRegistrationPage({super.key});
@@ -23,6 +127,8 @@ class ClinicRegistrationPage extends StatefulWidget {
 class _ClinicRegistrationPageState extends State<ClinicRegistrationPage> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _addressController = TextEditingController();
+  final TextEditingController _passwordManagementController =
+      TextEditingController();
   Uint8List? _imageBytes;
   File? _imageFile;
   final ImagePicker _picker = ImagePicker();
@@ -83,14 +189,31 @@ class _ClinicRegistrationPageState extends State<ClinicRegistrationPage> {
   Future<void> _registerClinic() async {
     final String clinicName = _nameController.text.trim();
     final String clinicAddress = _addressController.text.trim();
-    final String clinicEmail = FirebaseAuth.instance.currentUser!.email!;
-    final String endpoint = _generateEndpoint(clinicName);
+    final String passwordManagement = _passwordManagementController.text.trim();
+    final user = FirebaseAuth.instance.currentUser;
 
-    if (clinicName.isEmpty || clinicAddress.isEmpty || _downloadUrl == null) {
+    if (user == null) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-              content: Text("Please fill all the fields and upload a logo.")),
+              content: Text("User is not logged in. Please log in first.")),
+        );
+      }
+      return;
+    }
+
+    final String clinicEmail = user.email!;
+    final String endpoint = _generateEndpoint(clinicName);
+
+    if (clinicName.isEmpty ||
+        clinicAddress.isEmpty ||
+        _downloadUrl == null ||
+        passwordManagement.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text(
+                  "Please fill all the fields, upload a logo, and set a password.")),
         );
       }
       return;
@@ -107,6 +230,7 @@ class _ClinicRegistrationPageState extends State<ClinicRegistrationPage> {
           'address': clinicAddress,
           'email': clinicEmail,
           'logo': _downloadUrl,
+          'passwordManagement': passwordManagement,
         }),
       );
 
@@ -182,6 +306,15 @@ class _ClinicRegistrationPageState extends State<ClinicRegistrationPage> {
                 labelText: 'Clinic Address',
                 border: OutlineInputBorder(),
               ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _passwordManagementController,
+              decoration: const InputDecoration(
+                labelText: 'Management Password',
+                border: OutlineInputBorder(),
+              ),
+              obscureText: true,
             ),
             const SizedBox(height: 16),
             if (_imageBytes != null || _imageFile != null)

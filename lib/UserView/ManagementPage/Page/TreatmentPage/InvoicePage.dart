@@ -17,11 +17,7 @@ class InvoicePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (selectedPatient == null || selectedTindakan == null) {
-      return const Center(child: Text('Pilih pasien untuk melihat invoice'));
-    }
-
-    final procedures = selectedTindakan!['procedure'] as Map<String, dynamic>;
+    final procedures = selectedTindakan?['procedure'] as Map<String, dynamic>?;
 
     return Padding(
       padding: const EdgeInsets.all(16.0),
@@ -32,6 +28,7 @@ class InvoicePage extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Nama Pasien
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -40,12 +37,13 @@ class InvoicePage extends StatelessWidget {
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   Text(
-                    selectedPatient!['fullName'] ?? '',
+                    selectedPatient?['fullName'] ?? 'Tidak ada data',
                     style: const TextStyle(fontSize: 16),
                   ),
                 ],
               ),
               const SizedBox(height: 8),
+              // Dokter
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -54,12 +52,13 @@ class InvoicePage extends StatelessWidget {
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   Text(
-                    selectedTindakan!['doctor'] ?? '',
+                    selectedTindakan?['doctor'] ?? 'Tidak ada data',
                     style: const TextStyle(fontSize: 16),
                   ),
                 ],
               ),
               const SizedBox(height: 8),
+              // Tanggal
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -68,33 +67,64 @@ class InvoicePage extends StatelessWidget {
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   Text(
-                    selectedTindakan!['timestamp'] ?? '',
+                    selectedTindakan?['timestamp'] != null
+                        ? _formatDate(selectedTindakan!['timestamp'])
+                        : 'Tidak ada data',
+                    style: const TextStyle(fontSize: 16),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              // Pukul
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Pukul:',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  Text(
+                    selectedTindakan?['timestamp'] != null
+                        ? _formatTime(selectedTindakan!['timestamp'])
+                        : 'Tidak ada data',
                     style: const TextStyle(fontSize: 16),
                   ),
                 ],
               ),
               const Divider(height: 24),
+              // Detail Tindakan
               const Text(
                 'Detail Tindakan:',
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
-              Expanded(
+              procedures == null || procedures.isEmpty
+                  ? const Center(
+                child: Text(
+                  'Tidak ada tindakan yang tercatat',
+                  style: TextStyle(fontStyle: FontStyle.italic),
+                ),
+              )
+                  : Flexible(
                 child: SingleChildScrollView(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: procedures.entries.map<Widget>((entry) {
                       final procedure = entry.value;
                       return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4.0),
+                        padding:
+                        const EdgeInsets.symmetric(vertical: 4.0),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              mainAxisAlignment:
+                              MainAxisAlignment.spaceBetween,
                               children: [
-                                Text(procedure['procedure'] ?? ''),
-                                Text(formatCurrency(procedure['price'])),
+                                Text(procedure['procedure'] ??
+                                    'Tidak ada data'),
+                                Text(formatCurrency(
+                                    procedure['price'] ?? 0)),
                               ],
                             ),
                             if (procedure['explanation'] != null)
@@ -115,6 +145,7 @@ class InvoicePage extends StatelessWidget {
                 ),
               ),
               const Divider(height: 24),
+              // Total Biaya
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -123,13 +154,16 @@ class InvoicePage extends StatelessWidget {
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   Text(
-                    formatCurrency(_calculateTotalCost(procedures)),
+                    formatCurrency(procedures != null
+                        ? _calculateTotalCost(procedures)
+                        : 0),
                     style: const TextStyle(
                         fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                 ],
               ),
               const SizedBox(height: 16),
+              // Button Send to WhatsApp
               Center(
                 child: ElevatedButton.icon(
                   onPressed: onSendInvoice,
@@ -150,9 +184,62 @@ class InvoicePage extends StatelessWidget {
     );
   }
 
+  // Helper function to calculate the total cost of all procedures
   double _calculateTotalCost(Map<String, dynamic> procedures) {
     return procedures.values
-        .map<double>((procedure) => (procedure['price'] as num).toDouble())
+        .map<double>((procedure) =>
+    (procedure['price'] as num?)?.toDouble() ?? 0)
         .fold(0, (a, b) => a + b);
+  }
+
+  // Helper function to format timestamp into 'Tanggal: 16 Agustus 2024, Pukul: 03:10'
+  String _formatDateTime(String timestamp) {
+    try {
+      final DateTime dateTime = DateTime.parse(timestamp);
+      final String formattedDate = _formatDate(dateTime as String);
+      final String formattedTime = _formatTime(dateTime as String);
+      return '$formattedDate, Pukul: $formattedTime';
+    } catch (e) {
+      return 'Invalid date';
+    }
+  }
+
+  // Helper function to format date
+  String _formatDate(String timestamp) {
+    try {
+      final DateTime dateTime = DateTime.parse(timestamp);
+      final months = [
+        'Januari',
+        'Februari',
+        'Maret',
+        'April',
+        'Mei',
+        'Juni',
+        'Juli',
+        'Agustus',
+        'September',
+        'Oktober',
+        'November',
+        'Desember'
+      ];
+      final day = dateTime.day.toString().padLeft(2, '0');
+      final month = months[dateTime.month - 1];
+      final year = dateTime.year.toString();
+      return '$day $month $year';
+    } catch (e) {
+      return 'Invalid date';
+    }
+  }
+
+  // Helper function to format time
+  String _formatTime(String timestamp) {
+    try {
+      final DateTime dateTime = DateTime.parse(timestamp);
+      final hour = dateTime.hour.toString().padLeft(2, '0');
+      final minute = dateTime.minute.toString().padLeft(2, '0');
+      return '$hour:$minute';
+    } catch (e) {
+      return 'Invalid time';
+    }
   }
 }

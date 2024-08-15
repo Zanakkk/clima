@@ -65,7 +65,7 @@ class _DaftarTindakanPasienState extends State<DaftarTindakanPasien> {
 
   Future<void> _fetchDentists() async {
     final url = Uri.parse(
-        'https://clima-93a68-default-rtdb.asia-southeast1.firebasedatabase.app/clinics/zanakdental5651/dokter.json');
+        '$FULLURL/dokter.json');
 
     final response = await http.get(url);
 

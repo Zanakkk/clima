@@ -1,6 +1,7 @@
 // ignore_for_file: library_private_types_in_public_api, use_build_context_synchronously, deprecated_member_use
 
 import 'package:flutter/material.dart';
+import '../../HomePage.dart';
 import 'PasienListPage.dart';
 import 'AddTreatmentPage.dart';
 import 'InvoicePage.dart';
@@ -19,72 +20,61 @@ class _TreatmentsPageState extends State<TreatmentsPage> {
   List<Map<String, dynamic>> _patients = [];
   Map<String, dynamic>? _selectedPatient;
   Map<String, dynamic>? _selectedTindakan;
-  String? _selectedProcedure;
+  Map<String, dynamic>? _selectedProcedure; // Store both name and price
   final TextEditingController _procedureExplanationController =
       TextEditingController();
-
-  List<Map<String, dynamic>> _pricelist = [];
 
   @override
   void initState() {
     super.initState();
     _fetchPatients();
-    _fetchPricelist();
   }
 
-  // Fetch Pricelist dari API
-  Future<void> _fetchPricelist() async {
-    final url = Uri.parse(
-        'https://clima-93a68-default-rtdb.asia-southeast1.firebasedatabase.app/clinics/zanakdental5651/pricelist.json');
+  // Fetch patients from API
+  Future<void> _fetchPatients() async {
+    final url = Uri.parse('$FULLURL/datapasien.json');
 
     final response = await http.get(url);
 
     if (response.statusCode == 200) {
-      final List<dynamic>? data = json.decode(response.body);
+      final Map<String, dynamic>? data = json.decode(response.body);
       if (data != null) {
+        final patients = data.entries
+            .map<Map<String, dynamic>>(
+                (entry) => {'id': entry.key, ...entry.value})
+            .toList();
+
         setState(() {
-          _pricelist = data
-              .map<Map<String, dynamic>>((item) => {
-                    'name': item['name'],
-                    'price': item['price'],
-                  })
-              .toList();
+          _patients = patients;
         });
       }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to fetch pricelist.')),
+        const SnackBar(content: Text('Failed to fetch patients.')),
       );
     }
   }
 
-  // Mendapatkan harga berdasarkan nama prosedur
-  int _getProcedurePrice(String procedure) {
-    final item = _pricelist.firstWhere(
-      (item) => item['name'] == procedure,
-      orElse: () => {'price': 0},
-    );
-    return item['price'];
-  }
-
+  // Add procedure to tindakan
   Future<void> _addProcedure() async {
     if (_selectedPatient == null ||
         _selectedProcedure == null ||
         _selectedTindakan == null) return;
 
-    final int price = _getProcedurePrice(_selectedProcedure!);
+    final int price =
+        _selectedProcedure!['price']; // Use selected procedure price
     final String explanation = _procedureExplanationController.text.trim();
 
     // Buat body untuk POST
     final newProcedure = {
-      'procedure': _selectedProcedure,
+      'procedure': _selectedProcedure!['name'],
       'price': price,
       'explanation': explanation.isNotEmpty ? explanation : null,
       'timestamp': DateTime.now().toIso8601String(),
     };
 
     final url = Uri.parse(
-        'https://clima-93a68-default-rtdb.asia-southeast1.firebasedatabase.app/clinics/zanakdental5651/tindakan/${_selectedTindakan!['id']}/procedure.json');
+        '$FULLURL/tindakan/${_selectedTindakan!['id']}/procedure.json');
 
     final response = await http.post(
       url,
@@ -105,21 +95,20 @@ class _TreatmentsPageState extends State<TreatmentsPage> {
     }
   }
 
+  // Fetch tindakan data
   Future<void> _fetchTindakanData() async {
     if (_selectedPatient == null) return;
 
-    final url = Uri.parse(
-        'https://clima-93a68-default-rtdb.asia-southeast1.firebasedatabase.app/clinics/zanakdental5651/tindakan.json');
+    final url = Uri.parse('$FULLURL/tindakan.json');
 
     final response = await http.get(url);
 
     if (response.statusCode == 200) {
       final Map<String, dynamic>? data = json.decode(response.body);
       if (data != null) {
-        // Inisialisasi tindakanId dengan null
         String? tindakanId;
 
-        // Iterasi melalui tindakan untuk menemukan yang sesuai dengan idpasien
+        // Iterate over tindakan to find the one matching idpasien
         data.forEach((key, value) {
           if (value['idpasien'] == _selectedPatient!['id']) {
             tindakanId = key;
@@ -127,13 +116,13 @@ class _TreatmentsPageState extends State<TreatmentsPage> {
           }
         });
 
-        // Perbarui state dengan tindakanId yang ditemukan
+        // Update state with tindakanId found
         setState(() {
           if (tindakanId != null) {
             _selectedTindakan!['id'] =
-                tindakanId; // Simpan tindakanId ke _selectedTindakan
+                tindakanId; // Save tindakanId to _selectedTindakan
           } else {
-            _selectedTindakan = null; // Jika tidak ada tindakan ditemukan
+            _selectedTindakan = null; // If no tindakan found
           }
         });
       }
@@ -144,24 +133,32 @@ class _TreatmentsPageState extends State<TreatmentsPage> {
     }
   }
 
+  // Send invoice to WhatsApp
   Future<void> _sendInvoice() async {
-    if (_selectedPatient == null) return;
+    if (_selectedPatient == null || _selectedTindakan == null) return;
 
-    final String tindakanId = _selectedTindakan!['id']; // ID tindakan khusus
-    final String url =
-        'https://clima-93a68-default-rtdb.asia-southeast1.firebasedatabase.app/clinics/zanakdental5651/tindakan/$tindakanId/procedure.json';
+    final String tindakanId = _selectedTindakan!['id'];
+    final String url = '$FULLURL/tindakan/$tindakanId/procedure.json';
 
     final response = await http.get(Uri.parse(url));
 
     if (response.statusCode == 200) {
       final Map<String, dynamic>? data = json.decode(response.body);
       if (data != null) {
-        // Mulai membuat pesan invoice
+        // Build invoice message
         String message = '🧾 *Invoice* 🧾\n\n';
 
-        // Informasi Pasien
+        // Format Date and Time
+        final DateTime now = DateTime.now();
+        final String formattedDate = _formatDate(now);
+        final String formattedTime = _formatTime(now);
+
+        // Patient and Doctor Information
         message += '👤 *Nama Pasien:* ${_selectedPatient!['fullName']}\n';
-        message += '📅 *Tanggal:* ${DateTime.now().toIso8601String()}\n\n';
+        message +=
+            '🩺 *Dokter:* drg daffa\n'; // Assuming static doctor name for now
+        message += '📅 *Tanggal:* $formattedDate\n';
+        message += '🕒 *Pukul:* $formattedTime\n\n';
 
         // Detail Tindakan
         message += '📝 *Detail Tindakan:*\n';
@@ -181,7 +178,7 @@ class _TreatmentsPageState extends State<TreatmentsPage> {
           totalCost += price;
         });
 
-        // Total Biaya
+        // Total Cost
         message += '\n💵 *Total Biaya:* Rp${totalCost.toStringAsFixed(0)}\n';
 
         // WhatsApp URI
@@ -207,33 +204,33 @@ class _TreatmentsPageState extends State<TreatmentsPage> {
     }
   }
 
-  Future<void> _fetchPatients() async {
-    final url = Uri.parse(
-        'https://clima-93a68-default-rtdb.asia-southeast1.firebasedatabase.app/clinics/zanakdental5651/datapasien.json');
-
-    final response = await http.get(url);
-
-    if (response.statusCode == 200) {
-      final Map<String, dynamic>? data = json.decode(response.body);
-      if (data != null) {
-        final patients = data.entries
-            .map<Map<String, dynamic>>(
-                (entry) => {'id': entry.key, ...entry.value})
-            .toList();
-
-        setState(() {
-          _patients = patients;
-        });
-      }
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to fetch patients.')),
-      );
-    }
+  // Helper function to format date in '16 Agustus 2024' format
+  String _formatDate(DateTime dateTime) {
+    final months = [
+      'Januari',
+      'Februari',
+      'Maret',
+      'April',
+      'Mei',
+      'Juni',
+      'Juli',
+      'Agustus',
+      'September',
+      'Oktober',
+      'November',
+      'Desember'
+    ];
+    final day = dateTime.day.toString().padLeft(2, '0');
+    final month = months[dateTime.month - 1];
+    final year = dateTime.year.toString();
+    return '$day $month $year';
   }
 
-  String formatCurrency(double amount) {
-    return 'Rp ${amount.toStringAsFixed(2).replaceAll('.', ',').replaceAll(RegExp(r'(?<=\d)(?=(\d\d\d)+(?!\d))'), '.')}';
+  // Helper function to format time in '03:10' format
+  String _formatTime(DateTime dateTime) {
+    final hour = dateTime.hour.toString().padLeft(2, '0');
+    final minute = dateTime.minute.toString().padLeft(2, '0');
+    return '$hour:$minute';
   }
 
   @override
@@ -266,9 +263,10 @@ class _TreatmentsPageState extends State<TreatmentsPage> {
               selectedTindakan: _selectedTindakan,
               selectedProcedure: _selectedProcedure,
               procedureExplanationController: _procedureExplanationController,
-              onProcedureChanged: (value) {
+              onProcedureChanged: (Map<String, dynamic>? procedure) {
                 setState(() {
-                  _selectedProcedure = value;
+                  _selectedProcedure =
+                      procedure; // Store the selected procedure
                 });
               },
               onAddProcedure: _addProcedure,
@@ -287,4 +285,8 @@ class _TreatmentsPageState extends State<TreatmentsPage> {
       ),
     );
   }
+}
+
+String formatCurrency(double amount) {
+  return 'Rp ${amount.toStringAsFixed(2).replaceAll('.', ',').replaceAll(RegExp(r'(?<=\d)(?=(\d\d\d)+(?!\d))'), '.')}';
 }

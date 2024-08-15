@@ -27,3 +27,4 @@ String formatTanggalManual(DateTime date) {
 
   return "$day $month $year";
 }
+

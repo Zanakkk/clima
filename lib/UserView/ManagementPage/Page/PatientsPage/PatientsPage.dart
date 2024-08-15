@@ -1,6 +1,5 @@
 // ignore_for_file: use_build_context_synchronously
 
-import 'package:clima/UserView/ManagementPage/HomePage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:typed_data';
@@ -8,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:firebase_storage/firebase_storage.dart';
 
+import '../../HomePage.dart';
 import '../../SideBar/SideBar.dart';
 import 'DaftarPasien.dart';
 import 'LihatPasien.dart';
@@ -45,8 +45,7 @@ class _PatientsPageState extends State<PatientsPage> {
   }
 
   Future<void> _fetchMedicalRecordNumber() async {
-    final url = Uri.parse(
-        '$FULLURL/datapasien.json');
+    final url = Uri.parse('$FULLURL/datapasien.json');
 
     final response = await http.get(url);
 
@@ -102,8 +101,7 @@ class _PatientsPageState extends State<PatientsPage> {
 
   Future<void> _submitData() async {
     if (_formKey.currentState?.validate() ?? false) {
-      final url = Uri.parse(
-          '$FULLURL/datapasien.json');
+      final url = Uri.parse('$FULLURL/datapasien.json');
 
       final response = await http.post(
         url,
@@ -126,12 +124,32 @@ class _PatientsPageState extends State<PatientsPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Data successfully submitted!')),
         );
+        _resetForm(); // Reset form setelah submit
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Failed to submit data.')),
         );
       }
     }
+  }
+
+  // Fungsi untuk mereset form ke kondisi awal
+  void _resetForm() {
+    setState(() {
+      _fullNameController.clear();
+      _dobController.clear();
+      _nikController.clear();
+      _addressController.clear();
+      _phoneController.clear();
+      _emailController.clear();
+      _pekerjaanController.clear();
+      _selectedGender = null;
+      _selectedReligion = null;
+      _imageBytes = null;
+      _downloadUrl = null;
+      _medicalRecordNumber = null;
+      _fetchMedicalRecordNumber(); // Mengambil nomor rekam medis baru
+    });
   }
 
   Widget _buildSidebar() {
@@ -245,9 +263,9 @@ class _PatientsPageState extends State<PatientsPage> {
             value: _selectedGender,
             items: ['Male', 'Female']
                 .map((gender) => DropdownMenuItem(
-              value: gender,
-              child: Text(gender),
-            ))
+                      value: gender,
+                      child: Text(gender),
+                    ))
                 .toList(),
             decoration: const InputDecoration(
               labelText: 'Gender',
@@ -282,7 +300,7 @@ class _PatientsPageState extends State<PatientsPage> {
               if (pickedDate != null) {
                 setState(() {
                   _dobController.text =
-                  "${pickedDate.day}/${pickedDate.month}/${pickedDate.year}";
+                      "${pickedDate.day}/${pickedDate.month}/${pickedDate.year}";
                 });
               }
             },
@@ -341,12 +359,12 @@ class _PatientsPageState extends State<PatientsPage> {
           DropdownButtonFormField<String>(
             value: _selectedReligion,
             items:
-            ['Islam', 'Kristen', 'Katolik', 'Hindu', 'Buddha', 'Konghucu']
-                .map((religion) => DropdownMenuItem(
-              value: religion,
-              child: Text(religion),
-            ))
-                .toList(),
+                ['Islam', 'Kristen', 'Katolik', 'Hindu', 'Buddha', 'Konghucu']
+                    .map((religion) => DropdownMenuItem(
+                          value: religion,
+                          child: Text(religion),
+                        ))
+                    .toList(),
             decoration: const InputDecoration(
               labelText: 'Religion',
               border: OutlineInputBorder(),

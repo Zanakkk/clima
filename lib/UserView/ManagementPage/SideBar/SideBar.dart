@@ -174,6 +174,13 @@ class _SidebarState extends State<Sidebar> {
               isActive: _selectedIndex == 4,
               onTap: () => _handleItemSelected(4),
             ),
+            SidebarItem(
+              icon: Icons.person,
+              label: 'Management',
+              isExpanded: widget.isExpanded,
+              isActive: _selectedIndex == 15,
+              onTap: () => _handleItemSelected(15),
+            ),
           ],
         ),
         SidebarSection(

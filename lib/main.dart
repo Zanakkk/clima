@@ -59,7 +59,7 @@ class _MyAppState extends State<MyApp> {
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
-        builder: (context) => const ClinicRegistrationPage(),
+        builder: (context) => const RegisterUserPage(),
       ),
     );
   }
@@ -114,7 +114,7 @@ class _MyAppState extends State<MyApp> {
                     case UserStatus.loggedInRegistered:
                       return HomePage(id: routeClinicId);
                     case UserStatus.loggedInNotRegistered:
-                      return const ClinicRegistrationPage();
+                      return const RegisterUserPage();
                     case UserStatus.notLoggedIn:
                     default:
                       return const LandingPage();

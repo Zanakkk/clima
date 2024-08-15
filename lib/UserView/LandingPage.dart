@@ -19,7 +19,7 @@ class LandingPage extends StatelessWidget {
               return const CircularProgressIndicator();
             }
             if (snapshot.hasData) {
-              return const ClinicRegistrationPage(); // Jika pengguna sudah login, tampilkan HomePage
+              return  const RegisterUserPage(); // Jika pengguna sudah login, tampilkan HomePage
             } else {
               return LayoutBuilder(
                 builder: (context, constraints) {
