@@ -193,16 +193,6 @@ class InvoicePage extends StatelessWidget {
   }
 
   // Helper function to format timestamp into 'Tanggal: 16 Agustus 2024, Pukul: 03:10'
-  String _formatDateTime(String timestamp) {
-    try {
-      final DateTime dateTime = DateTime.parse(timestamp);
-      final String formattedDate = _formatDate(dateTime as String);
-      final String formattedTime = _formatTime(dateTime as String);
-      return '$formattedDate, Pukul: $formattedTime';
-    } catch (e) {
-      return 'Invalid date';
-    }
-  }
 
   // Helper function to format date
   String _formatDate(String timestamp) {

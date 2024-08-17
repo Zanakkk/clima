@@ -1,9 +1,10 @@
 // ignore_for_file: library_private_types_in_public_api
 
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:intl/intl.dart';
 
-import 'FetchData.dart';
-import 'Model.dart';
 import 'SalesTable.dart';
 
 class SalesPage extends StatefulWidget {
@@ -14,14 +15,66 @@ class SalesPage extends StatefulWidget {
 }
 
 class _SalesPageState extends State<SalesPage> {
-  late Future<Map<String, Treatment>> treatmentsFuture;
-  late Future<Map<String, Patient>> patientsFuture;
+  late Future<Map<String, ProcedureStat>> procedureStatsFuture;
+  String selectedMonth = DateFormat('MMMM').format(DateTime.now());
+  String selectedYear = DateFormat('yyyy').format(DateTime.now());
+  double totalRevenue = 0.0;
 
   @override
   void initState() {
     super.initState();
-    treatmentsFuture = fetchTreatments();
-    patientsFuture = fetchPatients();
+    procedureStatsFuture = fetchProcedureStats(selectedMonth, selectedYear);
+  }
+
+  Future<Map<String, ProcedureStat>> fetchProcedureStats(
+      String month, String year) async {
+    final response = await http.get(Uri.parse(
+        'https://clima-93a68-default-rtdb.asia-southeast1.firebasedatabase.app/clinics/klinikdaffa4775.json'));
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      final pricelist = data['pricelist'];
+      final tindakan = data['tindakan'];
+      final Map<String, ProcedureStat> procedureStats = {};
+
+      // Inisialisasi harga tindakan
+      pricelist.forEach((key, value) {
+        procedureStats[value['name']] = ProcedureStat(
+          procedureName: value['name'],
+          price: value['price'].toDouble(),
+          count: 0,
+        );
+      });
+
+      double calculatedRevenue = 0;
+
+      // Filter tindakan berdasarkan bulan dan tahun, hitung jumlah dan pendapatan
+      tindakan.forEach((tindakanKey, tindakanValue) {
+        final procedures = tindakanValue['procedure'];
+        final timestamp = tindakanValue['timestamp'];
+        final procedureDate = DateTime.parse(timestamp);
+        final procedureMonth = DateFormat('MMMM').format(procedureDate);
+        final procedureYear = DateFormat('yyyy').format(procedureDate);
+
+        if (procedureMonth == month && procedureYear == year) {
+          procedures.forEach((procedureKey, procedureValue) {
+            final procedureName = procedureValue['procedure'];
+            if (procedureStats.containsKey(procedureName)) {
+              procedureStats[procedureName]!.count++;
+              calculatedRevenue += procedureValue['price'];
+            }
+          });
+        }
+      });
+
+      setState(() {
+        totalRevenue = calculatedRevenue;
+      });
+
+      return procedureStats;
+    } else {
+      throw Exception('Failed to load procedure data');
+    }
   }
 
   @override
@@ -30,99 +83,134 @@ class _SalesPageState extends State<SalesPage> {
       appBar: AppBar(
         title: const Text('Sales Page'),
       ),
-      body: FutureBuilder(
-        future: Future.wait([treatmentsFuture, patientsFuture]),
-        builder: (context, AsyncSnapshot<List<dynamic>> snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          } else if (snapshot.hasData) {
-            final treatments = snapshot.data![0] as Map<String, Treatment>;
-            final patients = snapshot.data![1] as Map<String, Patient>;
-
-            return ListView.builder(
-              itemCount: treatments.length,
-              itemBuilder: (context, index) {
-                final treatmentKey = treatments.keys.elementAt(index);
-                final treatment = treatments[treatmentKey]!;
-                final patient = patients[treatment.idpasien]!;
-
-                return Card(
-                  margin: const EdgeInsets.all(8.0),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        ElevatedButton(
-                            onPressed: () {
-                              Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) =>
-                                          const SalesTablePage()));
-                            },
-                            child: const Text('tabel')),
-                        Row(
-                          children: [
-                            CircleAvatar(
-                              backgroundImage: NetworkImage(patient.imageUrl),
-                              radius: 30,
-                            ),
-                            const SizedBox(width: 16.0),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(patient.fullName,
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 18)),
-                                Text('Doctor: ${treatment.doctor}'),
-                                Text('Timestamp: ${treatment.timestamp}'),
-                              ],
-                            ),
-                          ],
-                        ),
-                        const Divider(),
-                        ListView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: treatment.procedures.length,
-                          itemBuilder: (context, procedureIndex) {
-                            final procedure =
-                                treatment.procedures[procedureIndex];
-                            return ListTile(
-                              title: Text(procedure.procedure),
-                              subtitle: procedure.explanation != null
-                                  ? Text(procedure.explanation!)
-                                  : null,
-                              trailing: Text('Rp ${procedure.price}'),
-                            );
-                          },
-                        ),
-                        const SizedBox(height: 8.0),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            Text(
-                              'Total: Rp ${treatment.procedures.fold<int>(0, (sum, item) => sum + item.price)}',
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                );
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                DropdownButton<String>(
+                  value: selectedMonth,
+                  items: [
+                    'January',
+                    'February',
+                    'March',
+                    'April',
+                    'May',
+                    'June',
+                    'July',
+                    'August',
+                    'September',
+                    'October',
+                    'November',
+                    'December'
+                  ]
+                      .map((month) => DropdownMenuItem<String>(
+                            value: month,
+                            child: Text(month),
+                          ))
+                      .toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      selectedMonth = value!;
+                      procedureStatsFuture =
+                          fetchProcedureStats(selectedMonth, selectedYear);
+                    });
+                  },
+                ),
+                DropdownButton<String>(
+                  value: selectedYear,
+                  items: List.generate(10, (index) {
+                    int year = DateTime.now().year - index;
+                    return DropdownMenuItem(
+                      value: year.toString(),
+                      child: Text(year.toString()),
+                    );
+                  }),
+                  onChanged: (value) {
+                    setState(() {
+                      selectedYear = value!;
+                      procedureStatsFuture =
+                          fetchProcedureStats(selectedMonth, selectedYear);
+                    });
+                  },
+                ),
+              ],
+            ),
+          ),
+          ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) =>
+                        const SalesTablePage()));
               },
-            );
-          } else {
-            return const Center(child: Text('No data available'));
-          }
-        },
+              child: const Text('tabel')),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Text(
+              'Total Revenue for $selectedMonth $selectedYear: Rp ${totalRevenue.toStringAsFixed(0)}',
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+          ),
+
+          Expanded(
+            child: FutureBuilder<Map<String, ProcedureStat>>(
+              future: procedureStatsFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                } else if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return const Center(
+                      child: Text('No procedure data available'));
+                } else {
+                  final procedureStats = snapshot.data!.values.toList();
+
+                  // Urutkan berdasarkan frekuensi
+                  procedureStats.sort((a, b) => b.count.compareTo(a.count));
+
+                  return ListView.builder(
+                    itemCount: procedureStats.length,
+                    itemBuilder: (context, index) {
+                      final procedureStat = procedureStats[index];
+                      double revenue =
+                          procedureStat.count * procedureStat.price;
+                      return ListTile(
+                        title: Text(procedureStat.procedureName),
+                        subtitle: Text(
+                            'Rp ${procedureStat.price.toStringAsFixed(0)} per procedure'),
+                        trailing: Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text('${procedureStat.count} times'),
+                            Text('Revenue: Rp ${revenue.toStringAsFixed(0)}'),
+                          ],
+                        ),
+                      );
+                    },
+                  );
+                }
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
+}
+
+class ProcedureStat {
+  final String procedureName;
+  final double price;
+  int count;
+
+  ProcedureStat({
+    required this.procedureName,
+    required this.price,
+    this.count = 0,
+  });
 }

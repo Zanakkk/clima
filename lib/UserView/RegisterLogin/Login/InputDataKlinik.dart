@@ -21,7 +21,6 @@ class RegisterUserPage extends StatefulWidget {
 }
 
 class _RegisterUserPageState extends State<RegisterUserPage> {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController =
@@ -47,11 +46,6 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
     }
 
     try {
-      UserCredential userCredential =
-          await _auth.createUserWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("User registered successfully!")),

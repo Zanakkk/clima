@@ -54,9 +54,10 @@ class _SalesTablePageState extends State<SalesTablePage> {
       String timestamp = value['timestamp'];
 
       int totalBayar = 0;
-      for (var procedure in value['procedures']) {
-        totalBayar += (procedure['price'] as num).toInt();
-      }
+
+      value['procedure'].forEach((procedureKey, procedureValue) {
+        totalBayar += (procedureValue['price'] as num).toInt();
+      });
 
       DateTime dateTime = DateTime.parse(timestamp);
 
@@ -126,7 +127,7 @@ class _SalesTablePageState extends State<SalesTablePage> {
 
     if (filteredData.isNotEmpty) {
       List<Map<String, dynamic>> tableData =
-          List<Map<String, dynamic>>.from(filteredData['data']);
+      List<Map<String, dynamic>>.from(filteredData['data']);
 
       if (tableData.isNotEmpty) {
         sheet.appendRow(
@@ -217,18 +218,18 @@ class _SalesTablePageState extends State<SalesTablePage> {
               child: data.isEmpty
                   ? const Center(child: CircularProgressIndicator())
                   : DataTable(
-                      columns: const <DataColumn>[
-                        DataColumn(label: Text('Nama Pasien')),
-                        DataColumn(label: Text('Dokter')),
-                        DataColumn(
-                          label: Text('Total Bayar'),
-                          numeric: true, // Align right by default for numbers
-                        ),
-                        DataColumn(label: Text('Tanggal')),
-                        DataColumn(label: Text('Waktu')),
-                      ],
-                      rows: _buildFilteredRows(),
-                    ),
+                columns: const <DataColumn>[
+                  DataColumn(label: Text('Nama Pasien')),
+                  DataColumn(label: Text('Dokter')),
+                  DataColumn(
+                    label: Text('Total Bayar'),
+                    numeric: true, // Align right by default for numbers
+                  ),
+                  DataColumn(label: Text('Tanggal')),
+                  DataColumn(label: Text('Waktu')),
+                ],
+                rows: _buildFilteredRows(),
+              ),
             ),
           ),
           Padding(
@@ -252,9 +253,9 @@ class _SalesTablePageState extends State<SalesTablePage> {
       String timestamp = value['timestamp'];
 
       int totalBayar = 0;
-      for (var procedure in value['procedures']) {
-        totalBayar += (procedure['price'] as num).toInt();
-      }
+      value['procedure'].forEach((procedureKey, procedureValue) {
+        totalBayar += (procedureValue['price'] as num).toInt();
+      });
 
       DateTime dateTime = DateTime.parse(timestamp);
       String formattedDate = formatTanggal(dateTime);

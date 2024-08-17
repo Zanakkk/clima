@@ -2,19 +2,14 @@
 
 import 'package:clima/UserView/ManagementPage/ManagementControl/ManagementControl.dart';
 import 'package:flutter/material.dart';
-
 import '../RegisterLogin/LogOut.dart';
-import 'Page/AccountsPage.dart';
 import 'Page/CustomerSupportPage.dart';
 import 'Page/Dashboard.dart';
+import 'Page/MedicalRecord/MedicalRecord.dart';
 import 'Page/PatientsPage/PatientsPage.dart';
-import 'Page/PaymentMethodPage.dart';
 import 'Page/PeripheralPage.dart';
-import 'Page/PurchasePage.dart';
 import 'Page/ReportsPage.dart';
 import 'Page/ReservationPage.dart';
-import 'Page/Sales/SalesAnalysis.dart';
-import 'Page/Sales/SalesPage.dart';
 import 'Page/StaffListPage.dart';
 import 'Page/StocksPage.dart';
 import 'Page/TreatmentPage/TreatmentPage.dart';
@@ -37,9 +32,7 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     // Gabungkan id dengan URL dasar
-    setState(() {
-
-    });
+    setState(() {});
     FULLURL =
         'https://clima-93a68-default-rtdb.asia-southeast1.firebasedatabase.app/clinics/${widget.id}';
     // Debugging output to check the URL
@@ -87,23 +80,24 @@ class _HomePageState extends State<HomePage> {
               padding: const EdgeInsets.all(16.0),
               child: IndexedStack(
                 index: selectedIndex,
-                children:const [
-                  DashboardPage(),
-                  ReservationsPage(),
-                  PatientsPage(),
-                  TreatmentsPage(),
-                  StaffListPage(),
-                  AccountsPage(),
-                  SalesPage(),
-                  SalesAnalysisPage(),
-                  PurchasesPage(),
-                  PaymentMethodPage(),
-                  StocksPage(),
-                  PeripheralsPage(),
-                  ReportPage(),
-                  CustomerSupportPage(),
-                  LogOut(),
-                  ManagementControl(),
+                children: [
+                  const DashboardPage(),
+                  const ReservationsPage(),
+                  const PatientsPage(),
+                  const TreatmentsPage(),
+                  const StaffListPage(),
+                  Container(),
+                  Container(),
+                  Container(),
+                  Container(),
+                  Container(),
+                  const StocksPage(),
+                  const PeripheralsPage(),
+                  const ReportPage(),
+                  const CustomerSupportPage(),
+                  const LogOut(),
+                  const ManagementControl(),
+                  const MedicalRecord(),
                 ],
               ),
             ),

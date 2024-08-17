@@ -5,6 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 import '../HomePage.dart';
+import '../Page/AccountsPage.dart';
+import '../Page/PaymentMethodPage.dart';
+import '../Page/PurchasePage.dart';
+import '../Page/Sales/SalesPage.dart';
 import 'ManageDoctor.dart';
 import 'ManagePricelist.dart';
 
@@ -27,12 +31,20 @@ class _ManagementControlState extends State<ManagementControl> {
   final List<String> pageTitles = [
     'Management Doctor',
     'Management Price List',
+    'Account Page',
+    'Sales Page',
+    'Purchase Page',
+    'Payment Method Page',
   ];
 
   // List of pages to navigate between
   final List<Widget> pages = [
     const ManagementDoctorPage(),
     const ManagementPriceListPage(),
+    const AccountsPage(),
+    const SalesPage(),
+    const PurchasesPage(),
+    const PaymentMethodPage(),
   ];
 
   @override
@@ -42,8 +54,7 @@ class _ManagementControlState extends State<ManagementControl> {
   }
 
   Future<void> _fetchManagementPassword() async {
-    final String url =
-        '$FULLURL.json';
+    final String url = '$FULLURL.json';
 
     try {
       final response = await http.get(Uri.parse(url));
@@ -86,96 +97,98 @@ class _ManagementControlState extends State<ManagementControl> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Management Control'),
+        centerTitle: true,
+        automaticallyImplyLeading: false,
       ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : isAuthenticated
-          ? Row(
-        children: [
-          // Sidebar
-          AnimatedContainer(
-            width: isSidebarExpanded ? 250 : 70,
-            duration: const Duration(milliseconds: 300),
-            color: Colors.blueGrey[900],
-            child: Column(
-              children: [
-                // Toggle button for expanding/shrinking sidebar
-                IconButton(
-                  icon: Icon(
-                    isSidebarExpanded
-                        ? Icons.arrow_back_ios
-                        : Icons.arrow_forward_ios,
-                    color: Colors.white,
+              ? Row(
+                  children: [
+                    // Sidebar
+                    AnimatedContainer(
+                      width: isSidebarExpanded ? 250 : 70,
+                      duration: const Duration(milliseconds: 300),
+                      color: Colors.blueGrey[900],
+                      child: Column(
+                        children: [
+                          // Toggle button for expanding/shrinking sidebar
+                          IconButton(
+                            icon: Icon(
+                              isSidebarExpanded
+                                  ? Icons.arrow_back_ios
+                                  : Icons.arrow_forward_ios,
+                              color: Colors.white,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                isSidebarExpanded = !isSidebarExpanded;
+                              });
+                            },
+                          ),
+                          // Sidebar items
+                          Expanded(
+                            child: ListView.builder(
+                              itemCount: pageTitles.length,
+                              itemBuilder: (context, index) {
+                                return ListTile(
+                                  leading: const Icon(Icons.dashboard,
+                                      color: Colors.white),
+                                  title: isSidebarExpanded
+                                      ? Text(
+                                          pageTitles[index],
+                                          style: const TextStyle(
+                                              color: Colors.white),
+                                        )
+                                      : null,
+                                  onTap: () {
+                                    setState(() {
+                                      selectedPageIndex = index;
+                                    });
+                                  },
+                                );
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Main content
+                    Expanded(
+                      child: pages[selectedPageIndex],
+                    ),
+                  ],
+                )
+              : Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const Text(
+                          "Enter Management Password",
+                          style: TextStyle(fontSize: 18),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 20),
+                        TextField(
+                          controller: _passwordController,
+                          decoration: const InputDecoration(
+                            labelText: 'Password',
+                            border: OutlineInputBorder(),
+                          ),
+                          obscureText: true,
+                        ),
+                        const SizedBox(height: 20),
+                        ElevatedButton(
+                          onPressed: _authenticateUser,
+                          child: const Text('Submit'),
+                        ),
+                      ],
+                    ),
                   ),
-                  onPressed: () {
-                    setState(() {
-                      isSidebarExpanded = !isSidebarExpanded;
-                    });
-                  },
                 ),
-                // Sidebar items
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: pageTitles.length,
-                    itemBuilder: (context, index) {
-                      return ListTile(
-                        leading: const Icon(Icons.dashboard,
-                            color: Colors.white),
-                        title: isSidebarExpanded
-                            ? Text(
-                          pageTitles[index],
-                          style: const TextStyle(
-                              color: Colors.white),
-                        )
-                            : null,
-                        onTap: () {
-                          setState(() {
-                            selectedPageIndex = index;
-                          });
-                        },
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // Main content
-          Expanded(
-            child: pages[selectedPageIndex],
-          ),
-        ],
-      )
-          : Center(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Text(
-                "Enter Management Password",
-                style: TextStyle(fontSize: 18),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 20),
-              TextField(
-                controller: _passwordController,
-                decoration: const InputDecoration(
-                  labelText: 'Password',
-                  border: OutlineInputBorder(),
-                ),
-                obscureText: true,
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _authenticateUser,
-                child: const Text('Submit'),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }
