@@ -24,8 +24,7 @@ class _ReportPageState extends State<ReportPage> {
   }
 
   Future<void> _fetchData() async {
-    final response = await http.get(Uri.parse(
-        '$FULLURL/.json'));
+    final response = await http.get(Uri.parse('$FULLURL/.json'));
     if (response.statusCode == 200) {
       setState(() {
         _data = json.decode(response.body);
@@ -46,24 +45,24 @@ class _ReportPageState extends State<ReportPage> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : Container(
-        color: Colors.blue[50],
-        padding: const EdgeInsets.all(16.0),
-        child: ListView(
-          children: [
-            _buildSectionTitle('Summary Report'),
-            _buildSummaryReport(),
-            const SizedBox(height: 20),
-            _buildSectionTitle('Inventory Report'),
-            _buildInventoryReport(),
-            const SizedBox(height: 20),
-            _buildSectionTitle('Patient Report'),
-            _buildPatientReport(),
-            const SizedBox(height: 20),
-            _buildSectionTitle('Procedures Report'),
-            _buildProceduresReport(),
-          ],
-        ),
-      ),
+              color: Colors.blue[50],
+              padding: const EdgeInsets.all(16.0),
+              child: ListView(
+                children: [
+                  _buildSectionTitle('Summary Report'),
+                  _buildSummaryReport(),
+                  const SizedBox(height: 20),
+                  _buildSectionTitle('Inventory Report'),
+                  _buildInventoryReport(),
+                  const SizedBox(height: 20),
+                  _buildSectionTitle('Patient Report'),
+                  _buildPatientReport(),
+                  const SizedBox(height: 20),
+                  _buildSectionTitle('Procedures Report'),
+                  _buildProceduresReport(),
+                ],
+              ),
+            ),
     );
   }
 
@@ -87,7 +86,8 @@ class _ReportPageState extends State<ReportPage> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             _buildSummaryItem('Total Patients', totalPatients.toString()),
-            _buildSummaryItem('Total Inventory Items', totalInventoryItems.toString()),
+            _buildSummaryItem(
+                'Total Inventory Items', totalInventoryItems.toString()),
             _buildSummaryItem('Total Procedures', totalProcedures.toString()),
           ],
         ),
@@ -99,7 +99,8 @@ class _ReportPageState extends State<ReportPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title, style: const TextStyle(fontSize: 16, color: Colors.black54)),
+        Text(title,
+            style: const TextStyle(fontSize: 16, color: Colors.black54)),
         Text(value,
             style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
       ],
@@ -113,7 +114,8 @@ class _ReportPageState extends State<ReportPage> {
         inventoryItems.add(
           ListTile(
             title: Text(value['name']),
-            subtitle: Text('Category: ${value['category']} | Expiry: ${value['expiryDate']}'),
+            subtitle: Text(
+                'Category: ${value['category']} | Expiry: ${value['expiryDate']}'),
             trailing: Text('Qty: ${value['quantity']} ${value['unit']}'),
           ),
         );
@@ -168,7 +170,8 @@ class _ReportPageState extends State<ReportPage> {
               trailing: Text('Price: ${procedure['price']}'),
             ),
           );
-          totalPrice += (procedure['price'] as num).toInt();  // Convert 'num' to 'int'
+          totalPrice +=
+              (procedure['price'] as num).toInt(); // Convert 'num' to 'int'
         }
         procedureItems.add(
           ExpansionTile(

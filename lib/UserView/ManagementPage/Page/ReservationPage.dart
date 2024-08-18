@@ -92,8 +92,7 @@ class _ReservationPageMasyarakatState extends State<ReservationPageMasyarakat> {
         'purpose': _purposeController.text,
       };
 
-      final url = Uri.parse(
-          '$FULLURL/reservation.json');
+      final url = Uri.parse('$FULLURL/reservation.json');
       final response = await http.post(
         url,
         body: json.encode(reservationData),
@@ -236,8 +235,7 @@ class _ReservationResultsPageState extends State<ReservationResultsPage> {
   }
 
   Future<void> _fetchReservations() async {
-    final url = Uri.parse(
-        '$FULLURL/reservation.json');
+    final url = Uri.parse('$FULLURL/reservation.json');
     final response = await http.get(url);
 
     if (response.statusCode == 200) {

@@ -1,61 +1,103 @@
-import 'package:flutter/material.dart';
+// ignore_for_file: library_private_types_in_public_api, empty_catches
 
+import 'package:flutter/material.dart';
 import '../CLIMACONTROL/PricingTableApp.dart';
 import 'Dashboard/ClimaLandingPage.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
-class DashboardPage extends StatelessWidget {
-  final Map<String, dynamic> clinicData;
+class DashboardPage extends StatefulWidget {
+  const DashboardPage({super.key});
 
-  const DashboardPage({super.key, required this.clinicData});
+  @override
+  _DashboardPageState createState() => _DashboardPageState();
+}
+
+class _DashboardPageState extends State<DashboardPage> {
+  late Map<String, dynamic> clinicData = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchClinicData();
+  }
+
+  Future<void> _fetchClinicData() async {
+    final url = Uri.parse(
+        'https://clima-93a68-default-rtdb.asia-southeast1.firebasedatabase.app/clinics/klinikdaffa4775.json');
+
+    try {
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        setState(() {
+          clinicData = json.decode(response.body) as Map<String, dynamic>;
+        });
+      } else {}
+    } catch (error) {}
+  }
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: GridView.count(
-        crossAxisCount: 4, // 3 columns
+        crossAxisCount: 4, // Number of columns
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
         children: [
           DashboardBox(
+            title: "Clinic Name",
+            value: clinicData.isNotEmpty && clinicData['name'] != null
+                ? clinicData['name']
+                : 'N/A',
+            color: Colors.blue,
+          ),
+          if (clinicData.isNotEmpty && clinicData['logo'] != null)
+            Image.network(
+              clinicData['logo'],
+              height: 100,
+              fit: BoxFit.cover,
+            ),
+          DashboardBox(
+            title: "Address",
+            value: clinicData.isNotEmpty && clinicData['address'] != null
+                ? clinicData['address']
+                : 'Unknown',
+            color: Colors.green,
+          ),
+          DashboardBox(
             title: "Total Patients",
-            value: clinicData['datapasien'] != null
+            value: clinicData.isNotEmpty && clinicData['datapasien'] != null
                 ? clinicData['datapasien'].length.toString()
                 : '0',
             color: Colors.blue,
           ),
           DashboardBox(
-            title: "Address",
-            value: clinicData['address'] ?? 'Unknown',
-            color: Colors.green,
-          ),
-          DashboardBox(
             title: "Doctors",
-            value: clinicData['dokter'] != null
+            value: clinicData.isNotEmpty && clinicData['dokter'] != null
                 ? clinicData['dokter'].length.toString()
                 : '0',
             color: Colors.orange,
           ),
           DashboardBox(
-            title: "Scaling Price",
-            value: clinicData['pricelist'] != null &&
-                    clinicData['pricelist']["-O4MVZ1mVnZ606Wxc2UG"] != null
-                ? clinicData['pricelist']["-O4MVZ1mVnZ606Wxc2UG"]["price"]
-                    .toString()
-                : 'N/A',
-            color: Colors.red,
-          ),
-          DashboardBox(
-            title: "Management Password",
-            value: clinicData['managementpassword'].toString(),
-            color: Colors.purple,
-          ),
-          DashboardBox(
             title: "Total Procedures",
-            value: clinicData['tindakan'] != null
+            value: clinicData.isNotEmpty && clinicData['tindakan'] != null
                 ? clinicData['tindakan'].length.toString()
                 : '0',
             color: Colors.teal,
+          ),
+          DashboardBox(
+            title: "Pricelist Count",
+            value: clinicData.isNotEmpty && clinicData['pricelist'] != null
+                ? clinicData['pricelist'].length.toString()
+                : '0',
+            color: Colors.purple,
+          ),
+          const DashboardBox(
+            title: "Plan CLIMA",
+            value: "Basic", // Placeholder since the plan info is not available
+            color: Colors.grey,
           ),
           ElevatedButton(
               onPressed: () {
@@ -73,7 +115,6 @@ class DashboardPage extends StatelessWidget {
                         builder: (context) => const ClimaLandingPage()));
               },
               child: const Text('Landing Page')),
-          // Add more boxes with other insights from the data
         ],
       ),
     );

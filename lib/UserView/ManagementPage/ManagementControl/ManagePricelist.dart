@@ -12,7 +12,11 @@ class Price {
   int price;
   String description;
 
-  Price({required this.id, required this.name, required this.price, required this.description});
+  Price(
+      {required this.id,
+      required this.name,
+      required this.price,
+      required this.description});
 
   // Factory method to create a Price object from a Map (JSON response)
   factory Price.fromMap(String id, Map<String, dynamic> data) {
@@ -34,8 +38,7 @@ class ManagementPriceListPage extends StatefulWidget {
 }
 
 class _ManagementPriceListPageState extends State<ManagementPriceListPage> {
-  final String databaseUrl =
-      '$FULLURL/pricelist.json';
+  final String databaseUrl = '$FULLURL/pricelist.json';
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _priceController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
@@ -94,7 +97,8 @@ class _ManagementPriceListPageState extends State<ManagementPriceListPage> {
     }
 
     try {
-      final body = json.encode({'name': name, 'price': price, 'description': description});
+      final body = json
+          .encode({'name': name, 'price': price, 'description': description});
 
       if (selectedPriceId == null) {
         // Add new price
@@ -108,8 +112,7 @@ class _ManagementPriceListPageState extends State<ManagementPriceListPage> {
         }
       } else {
         // Edit existing price
-        final editUrl =
-            '$FULLURL/pricelist/$selectedPriceId.json';
+        final editUrl = '$FULLURL/pricelist/$selectedPriceId.json';
         final response = await http.put(
           Uri.parse(editUrl),
           body: body,
@@ -130,8 +133,7 @@ class _ManagementPriceListPageState extends State<ManagementPriceListPage> {
 
   // Delete treatment
   Future<void> _deletePrice(String priceId) async {
-    final deleteUrl =
-        '$FULLURL/pricelist/$priceId.json';
+    final deleteUrl = '$FULLURL/pricelist/$priceId.json';
     try {
       final response = await http.delete(Uri.parse(deleteUrl));
 
@@ -176,60 +178,62 @@ class _ManagementPriceListPageState extends State<ManagementPriceListPage> {
         child: isLoading
             ? const Center(child: CircularProgressIndicator())
             : Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            TextField(
-              controller: _nameController,
-              decoration: const InputDecoration(labelText: 'Treatment Name'),
-            ),
-            TextField(
-              controller: _priceController,
-              decoration: const InputDecoration(labelText: 'Price'),
-              keyboardType: TextInputType.number,
-            ),
-            TextField(
-              controller: _descriptionController,
-              decoration: const InputDecoration(labelText: 'Description'),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _submitPrice,
-              child: Text(selectedPriceId == null
-                  ? 'Add Treatment'
-                  : 'Update Treatment'),
-            ),
-            const SizedBox(height: 20),
-            Expanded(
-              child: ListView.builder(
-                itemCount: priceList.length,
-                itemBuilder: (context, index) {
-                  final price = priceList[index];
-                  return ListTile(
-                    title: Text(price.name),
-                    subtitle: Text('Price: ${price.price}\nDescription: ${price.description}'),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.edit),
-                          onPressed: () {
-                            _editPrice(price);
-                          },
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.delete),
-                          onPressed: () {
-                            _deletePrice(price.id);
-                          },
-                        ),
-                      ],
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextField(
+                    controller: _nameController,
+                    decoration:
+                        const InputDecoration(labelText: 'Treatment Name'),
+                  ),
+                  TextField(
+                    controller: _priceController,
+                    decoration: const InputDecoration(labelText: 'Price'),
+                    keyboardType: TextInputType.number,
+                  ),
+                  TextField(
+                    controller: _descriptionController,
+                    decoration: const InputDecoration(labelText: 'Description'),
+                  ),
+                  const SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: _submitPrice,
+                    child: Text(selectedPriceId == null
+                        ? 'Add Treatment'
+                        : 'Update Treatment'),
+                  ),
+                  const SizedBox(height: 20),
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: priceList.length,
+                      itemBuilder: (context, index) {
+                        final price = priceList[index];
+                        return ListTile(
+                          title: Text(price.name),
+                          subtitle: Text(
+                              'Price: ${price.price}\nDescription: ${price.description}'),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.edit),
+                                onPressed: () {
+                                  _editPrice(price);
+                                },
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.delete),
+                                onPressed: () {
+                                  _deletePrice(price.id);
+                                },
+                              ),
+                            ],
+                          ),
+                        );
+                      },
                     ),
-                  );
-                },
+                  ),
+                ],
               ),
-            ),
-          ],
-        ),
       ),
     );
   }

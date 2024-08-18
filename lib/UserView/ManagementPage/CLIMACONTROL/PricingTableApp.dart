@@ -176,161 +176,200 @@ class PricingTableScreen extends StatelessWidget {
   }
 }
 
-
 class PricingCard extends StatelessWidget {
   final Map<String, dynamic> plan;
   final bool isHighlighted;
+  final bool
+      isAdvancedPlan; // Indicates if it's the most popular or worth-it plan
 
   const PricingCard({
     super.key,
     required this.plan,
     this.isHighlighted = false,
+    this.isAdvancedPlan = false,
   });
 
   @override
   Widget build(BuildContext context) {
     // Handle special case for the "Custom" plan
     bool isCustomPlan = plan['plan'] == 'Custom';
-    String priceText = isCustomPlan ? 'Rp 350.000' : formatCurrency(plan['price']);
+    String priceText =
+        isCustomPlan ? 'Rp 350.000' : formatCurrency(plan['price']);
     String tekssebelumpricecustom = 'Mulai dari';
     int? originalPrice = isCustomPlan ? null : plan['price'];
     int? discountedPrice = originalPrice != null
         ? (originalPrice * 0.5).toInt()
         : null; // Apply a 50% discount for non-custom plans
 
-    return SizedBox(
-      width: 300, // Fixed width for all pricing cards
-      height: 500, // Fixed height for all pricing cards
-      child: Card(
-        elevation: isHighlighted ? 12 : 4,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
-        ),
-        color: isHighlighted ? Colors.purple : Colors.white,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                plan['plan'],
-                style: TextStyle(
-                  fontSize: 20,
-                  color: isHighlighted ? Colors.white : Colors.purple,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 16),
-              // Pricing Text for Custom Plan and Discounted Price for Others
-              Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+    return Stack(
+      alignment: Alignment.topCenter,
+      children: [
+        SizedBox(
+          width: 300, // Fixed width for all pricing cards
+          height: 400, // Fixed height for all pricing cards
+          child: Card(
+            elevation: isHighlighted ? 12 : 4,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24),
+            ),
+            color: isHighlighted ? Colors.purple : Colors.white,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  if (originalPrice != null)
-                    Text(
-                      formatCurrency(originalPrice),
-                      style: TextStyle(
-                        fontSize: 18,
-                        color: isHighlighted ? Colors.white70 : Colors.grey,
-                        decoration: TextDecoration.lineThrough,
-                      ),
-                    ),
-                  const SizedBox(width: 8),
-                  isCustomPlan
-                      ? Column(
-                    children: [
-                      Text(
-                        tekssebelumpricecustom,
-                        style: TextStyle(
-                          fontSize: 20,
-                          color: isHighlighted ? Colors.white : Colors.purple,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(
-                        priceText,
-                        style: TextStyle(
-                          fontSize: 36,
-                          color: isHighlighted ? Colors.white : Colors.purple,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  )
-                      : Text(
-                    formatCurrency(discountedPrice!),
+                  // Plan Name
+                  const SizedBox(height: 16),
+                  Text(
+                    plan['plan'],
                     style: TextStyle(
-                      fontSize: 40,
+                      fontSize: 20,
                       color: isHighlighted ? Colors.white : Colors.purple,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
+                  const SizedBox(height: 16),
+
+                  // Pricing Text for Custom Plan and Discounted Price for Others
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      if (originalPrice != null)
+                        Text(
+                          formatCurrency(originalPrice),
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: isHighlighted ? Colors.white70 : Colors.grey,
+                            decoration: TextDecoration.lineThrough,
+                          ),
+                        ),
+                      const SizedBox(width: 8),
+                      isCustomPlan
+                          ? Column(
+                              children: [
+                                Text(
+                                  tekssebelumpricecustom,
+                                  style: const TextStyle(
+                                    fontSize: 20,
+                                    color: Colors.grey,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                Text(
+                                  priceText,
+                                  style: TextStyle(
+                                    fontSize: 36,
+                                    color: isHighlighted
+                                        ? Colors.white
+                                        : Colors.purple,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            )
+                          : Text(
+                              formatCurrency(discountedPrice!),
+                              style: TextStyle(
+                                fontSize: 40,
+                                color: isHighlighted
+                                    ? Colors.white
+                                    : Colors.purple,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'per month',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: isHighlighted ? Colors.white70 : Colors.grey,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: plan['features'].map<Widget>((feature) {
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 4.0),
+                            child: Text(
+                              feature,
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: isHighlighted
+                                    ? Colors.white
+                                    : Colors.black87,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  ElevatedButton(
+                    onPressed: () {
+                      if (plan['plan'] == 'Custom') {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => const CustomPlan()),
+                        );
+                      }
+                      // Handle button press for other plans
+                    },
+                    style: ElevatedButton.styleFrom(
+                      foregroundColor:
+                          isHighlighted ? Colors.purple : Colors.white,
+                      backgroundColor:
+                          isHighlighted ? Colors.white : Colors.purple,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30.0),
+                      ),
+                    ),
+                    child: const Text('Select Plan'),
+                  ),
                 ],
               ),
-              const SizedBox(height: 4),
-              Text(
-                'per month',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: isHighlighted ? Colors.white70 : Colors.grey,
-                ),
-              ),
-              const SizedBox(height: 24),
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: plan['features'].map<Widget>((feature) {
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4.0),
-                        child: Text(
-                          feature,
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: isHighlighted ? Colors.white : Colors.black87,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 12),
-              ElevatedButton(
-                onPressed: () {
-                  if (plan['plan'] == 'Custom') {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const CustomPlan()),
-                    );
-                  }
-                  // Handle button press for other plans
-                },
-                style: ElevatedButton.styleFrom(
-                  foregroundColor: isHighlighted ? Colors.purple : Colors.white,
-                  backgroundColor: isHighlighted ? Colors.white : Colors.purple,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30.0),
-                  ),
-                ),
-                child: const Text('Select Plan'),
-              ),
-            ],
+            ),
           ),
         ),
-      ),
+        // Advanced Plan Badge
+        if (isAdvancedPlan)
+          Positioned(
+            top: 0,
+            child: Container(
+              padding:
+                  const EdgeInsets.symmetric(vertical: 4.0, horizontal: 16.0),
+              decoration: BoxDecoration(
+                color: Colors.orangeAccent,
+                borderRadius: BorderRadius.circular(24),
+              ),
+              child: const Text(
+                'Most Popular',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 
   String formatCurrency(int price) {
     final formatCurrency =
-    NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
+        NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
     return formatCurrency.format(price);
   }
 }
-
 
 class PricingComparisonScreen extends StatelessWidget {
   final List<Map<String, dynamic>> pricingPlansFull = [

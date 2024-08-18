@@ -144,8 +144,7 @@ class _SalesPageState extends State<SalesPage> {
                 Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (context) =>
-                        const SalesTablePage()));
+                        builder: (context) => const SalesTablePage()));
               },
               child: const Text('tabel')),
           Padding(
@@ -155,7 +154,6 @@ class _SalesPageState extends State<SalesPage> {
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
           ),
-
           Expanded(
             child: FutureBuilder<Map<String, ProcedureStat>>(
               future: procedureStatsFuture,

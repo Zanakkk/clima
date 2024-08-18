@@ -39,8 +39,7 @@ class _AddTreatmentPageState extends State<AddTreatmentPage> {
 
   // Fetch procedures from API
   Future<void> _fetchProcedures() async {
-    final url = Uri.parse(
-        '$FULLURL/pricelist.json');
+    final url = Uri.parse('$FULLURL/pricelist.json');
 
     final response = await http.get(url);
 
@@ -51,10 +50,10 @@ class _AddTreatmentPageState extends State<AddTreatmentPage> {
           // Mapping data dari API
           _procedures = data.entries
               .map<Map<String, dynamic>>((entry) => {
-            'id': entry.key,
-            'name': entry.value['name'] as String,
-            'price': entry.value['price'] as int,
-          })
+                    'id': entry.key,
+                    'name': entry.value['name'] as String,
+                    'price': entry.value['price'] as int,
+                  })
               .toList();
         });
       }
@@ -99,22 +98,22 @@ class _AddTreatmentPageState extends State<AddTreatmentPage> {
           _procedures.isEmpty
               ? const Center(child: CircularProgressIndicator())
               : DropdownButtonFormField<Map<String, dynamic>>(
-            isExpanded: true,
-            value: widget.selectedProcedure,
-            hint: const Text('Pilih Tindakan'),
-            items: _procedures.map((procedure) {
-              return DropdownMenuItem<Map<String, dynamic>>(
-                value: procedure,
-                child: Text(procedure['name']),
-              );
-            }).toList(),
-            onChanged: widget.onProcedureChanged,
-            decoration: InputDecoration(
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-          ),
+                  isExpanded: true,
+                  value: widget.selectedProcedure,
+                  hint: const Text('Pilih Tindakan'),
+                  items: _procedures.map((procedure) {
+                    return DropdownMenuItem<Map<String, dynamic>>(
+                      value: procedure,
+                      child: Text(procedure['name']),
+                    );
+                  }).toList(),
+                  onChanged: widget.onProcedureChanged,
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
           const SizedBox(height: 8),
           TextField(
             controller: widget.procedureExplanationController,

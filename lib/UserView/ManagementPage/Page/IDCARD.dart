@@ -43,7 +43,6 @@ class IDCard extends StatelessWidget {
                   ),
                 ),
               ),
-
               const Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,

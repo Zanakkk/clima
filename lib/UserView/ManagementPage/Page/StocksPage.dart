@@ -28,8 +28,7 @@ class _StocksPageState extends State<StocksPage> {
   final _unitController = TextEditingController();
   final _expiryDateController = TextEditingController();
 
-  final String apiUrl =
-      '$FULLURL/stokbarang.json'; // Ganti dengan URL API Anda
+  final String apiUrl = '$FULLURL/stokbarang.json'; // Ganti dengan URL API Anda
 
   @override
   void initState() {
@@ -66,12 +65,9 @@ class _StocksPageState extends State<StocksPage> {
               };
             }).toList();
           });
-        } else {
-        }
-      } else {
-      }
-    } catch (e) {
-    }
+        } else {}
+      } else {}
+    } catch (e) {}
   }
 
   Future<void> _postStock(Map<String, dynamic> stockData) async {
@@ -84,10 +80,8 @@ class _StocksPageState extends State<StocksPage> {
 
       if (response.statusCode == 201) {
         _fetchStocks(); // Refresh data
-      } else {
-      }
-    } catch (e) {
-    }
+      } else {}
+    } catch (e) {}
   }
 
   // Fungsi untuk menambah atau mengedit stok barang
@@ -129,8 +123,12 @@ class _StocksPageState extends State<StocksPage> {
   // Fungsi untuk mendapatkan daftar stok yang difilter berdasarkan kategori dan kadaluarsa
   List<Map<String, dynamic>> _getFilteredStocks() {
     return _stocks.where((stock) {
-      final isCategoryMatch = _selectedCategory == null || _selectedCategory == 'Semua' || stock['category'] == _selectedCategory;
-      final isExpiryMatch = _expiryFilter == null || _expiryFilter == 'Semua' || _isExpiryMatch(stock);
+      final isCategoryMatch = _selectedCategory == null ||
+          _selectedCategory == 'Semua' ||
+          stock['category'] == _selectedCategory;
+      final isExpiryMatch = _expiryFilter == null ||
+          _expiryFilter == 'Semua' ||
+          _isExpiryMatch(stock);
 
       return isCategoryMatch && isExpiryMatch;
     }).toList();
@@ -214,8 +212,10 @@ class _StocksPageState extends State<StocksPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title, style: const TextStyle(fontSize: 16, color: Colors.black54)),
-        Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+        Text(title,
+            style: const TextStyle(fontSize: 16, color: Colors.black54)),
+        Text(value,
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
       ],
     );
   }
@@ -231,9 +231,9 @@ class _StocksPageState extends State<StocksPage> {
           hint: const Text('Pilih Kategori'),
           items: ['Semua', 'APD', 'Alat', 'Bahan']
               .map((category) => DropdownMenuItem<String>(
-            value: category,
-            child: Text(category),
-          ))
+                    value: category,
+                    child: Text(category),
+                  ))
               .toList(),
           onChanged: (value) {
             setState(() {
@@ -250,9 +250,9 @@ class _StocksPageState extends State<StocksPage> {
           hint: const Text('Pilih Status Kadaluarsa'),
           items: ['Semua', 'Kadaluarsa', 'Belum Kadaluarsa']
               .map((status) => DropdownMenuItem<String>(
-            value: status,
-            child: Text(status),
-          ))
+                    value: status,
+                    child: Text(status),
+                  ))
               .toList(),
           onChanged: (value) {
             setState(() {
@@ -283,9 +283,9 @@ class _StocksPageState extends State<StocksPage> {
               hint: const Text('Pilih Kategori'),
               items: ['APD', 'Alat', 'Bahan']
                   .map((category) => DropdownMenuItem<String>(
-                value: category,
-                child: Text(category),
-              ))
+                        value: category,
+                        child: Text(category),
+                      ))
                   .toList(),
               onChanged: (value) {
                 setState(() {
@@ -344,39 +344,39 @@ class _StocksPageState extends State<StocksPage> {
             rows: filteredStocks
                 .map(
                   (stock) => DataRow(
-                cells: [
-                  DataCell(Text(stock['name'])),
-                  DataCell(Text(stock['category'])),
-                  DataCell(Text(stock['quantity'].toString())),
-                  DataCell(Text(stock['unit'])),
-                  DataCell(Text(stock['expiryDate'])),
-                  DataCell(Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.edit),
-                        onPressed: () {
-                          _nameController.text = stock['name'];
-                          _selectedStockCategory = stock['category'];
-                          _quantityController.text =
-                              stock['quantity'].toString();
-                          _unitController.text = stock['unit'];
-                          _expiryDateController.text = stock['expiryDate'];
-                          // Implement edit functionality
-                        },
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.delete),
-                        onPressed: () {
-                          setState(() {
-                            _stocks.remove(stock);
-                          });
-                        },
-                      ),
+                    cells: [
+                      DataCell(Text(stock['name'])),
+                      DataCell(Text(stock['category'])),
+                      DataCell(Text(stock['quantity'].toString())),
+                      DataCell(Text(stock['unit'])),
+                      DataCell(Text(stock['expiryDate'])),
+                      DataCell(Row(
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.edit),
+                            onPressed: () {
+                              _nameController.text = stock['name'];
+                              _selectedStockCategory = stock['category'];
+                              _quantityController.text =
+                                  stock['quantity'].toString();
+                              _unitController.text = stock['unit'];
+                              _expiryDateController.text = stock['expiryDate'];
+                              // Implement edit functionality
+                            },
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.delete),
+                            onPressed: () {
+                              setState(() {
+                                _stocks.remove(stock);
+                              });
+                            },
+                          ),
+                        ],
+                      )),
                     ],
-                  )),
-                ],
-              ),
-            )
+                  ),
+                )
                 .toList(),
           ),
         ),

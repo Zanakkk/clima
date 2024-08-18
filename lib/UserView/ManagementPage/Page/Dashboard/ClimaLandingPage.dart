@@ -1,9 +1,8 @@
+// ignore_for_file: non_constant_identifier_names
+
 import 'package:clima/UserView/ManagementPage/Page/Dashboard/ServicesPage.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:image_network/image_network.dart';
-import 'package:line_icons/line_icons.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../CLIMACONTROL/PricingTableApp.dart';
 import 'Client Section.dart';
@@ -22,8 +21,6 @@ class ColorPalette {
   static const primaryTealDark = Colors.tealAccent;
 }
 
-const instagramUrl = 'https://www.instagram.com/adminprakarsa/';
-
 class ClimaLandingPage extends StatelessWidget {
   const ClimaLandingPage({super.key});
 
@@ -35,8 +32,8 @@ class ClimaLandingPage extends StatelessWidget {
         primaryColor: ColorPalette.primaryTeal,
         textTheme: GoogleFonts.robotoTextTheme(),
       ),
-      home: Scaffold(
-        body: const LandscapeView(),
+      home: const Scaffold(
+        body: LandscapeView(),
       ),
     );
   }
@@ -105,39 +102,49 @@ class LandscapeView extends StatelessWidget {
           const Heading(),
           _LandingPageCard(
               context,
-              PageSection(
+              const PageSection(
                 title: 'PRAKARSA',
                 subtitle:
-                    'Layanan Sistem Informasi Manajemen Rumah Sakit (SIM - RS)',
+                    'Layanan Sistem Informasi Manajemen KLINIK (SIM - KLINIK)',
               ),
               Colors.blue),
           _LandingPageCard(
               context,
-              ServicesPage(
+              const ServicesPage(
                 imageUrl: '',
-                description: 'Ini Servis kami',
+                description:
+                    'Klinik kami menyediakan berbagai layanan untuk memastikan kesehatan Anda terjaga dengan baik, mulai dari pendaftaran pasien yang mudah, penjadwalan janji temu online, hingga penyimpanan rekam medis elektronik yang aman. Kami juga menawarkan konsultasi dokter spesialis, pemeriksaan laboratorium yang akurat, serta layanan farmasi yang terintegrasi langsung dengan resep dokter. Selain itu, kami menyediakan pemeriksaan kesehatan berkala dan layanan vaksinasi untuk mendukung kesehatan Anda secara menyeluruh',
                 title: 'Service',
               ),
               Colors.red),
-
           _LandingPageCard(
               context,
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: pricingPlans.map((plan) {
-                  bool isHighlighted = plan['plan'] == 'Advanced';
+              Column(
+                children: [
+                  Text('Plan Klinik',
+                      style: GoogleFonts.roboto(
+                          fontSize: 36, fontWeight: FontWeight.w700)),
+                  const SizedBox(
+                    height: 12,
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: pricingPlans.map((plan) {
+                      bool isHighlighted = plan['plan'] == 'Advanced';
 
-                  return PricingCard(
-                    plan: plan,
-                    isHighlighted: isHighlighted,
-                  );
-                }).toList(),
+                      return PricingCard(
+                        plan: plan,
+                        isHighlighted: isHighlighted,
+                        isAdvancedPlan:
+                            isHighlighted, // Tandai jika ini adalah plan Advanced
+                      );
+                    }).toList(),
+                  ),
+                ],
               ),
               Colors.purple),
-
-
-          OurClientSection(),
-          Footer(),
+          const OurClientSection(),
+          const Footer(),
         ],
       ),
     );
@@ -159,10 +166,10 @@ class LandscapeView extends StatelessWidget {
             borderRadius: BorderRadius.circular(10),
           ),
           child: Padding(
-              padding: EdgeInsets.all(72),
+              padding: const EdgeInsets.all(72),
               child: SizedBox(
                 width: MediaQuery.of(context).size.width * 0.8,
-                height: MediaQuery.of(context).size.height * 0.6,
+                height: MediaQuery.of(context).size.height * 0.7,
                 child: widget,
               ))),
     );

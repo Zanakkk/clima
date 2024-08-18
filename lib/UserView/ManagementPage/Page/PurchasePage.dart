@@ -115,7 +115,8 @@ class _PurchasesPageState extends State<PurchasesPage> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             _buildDashboardItem('Total Pembelian', totalPembelian.toString()),
-            _buildDashboardItem('Total Pengeluaran', formatRupiahManual(totalPengeluaran)),
+            _buildDashboardItem(
+                'Total Pengeluaran', formatRupiahManual(totalPengeluaran)),
           ],
         ),
       ),
@@ -126,7 +127,8 @@ class _PurchasesPageState extends State<PurchasesPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title, style: const TextStyle(fontSize: 16, color: Colors.black54)),
+        Text(title,
+            style: const TextStyle(fontSize: 16, color: Colors.black54)),
         Text(value,
             style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
       ],

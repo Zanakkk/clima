@@ -199,154 +199,155 @@ class _MedicalRecordState extends State<MedicalRecord> {
 
   @override
   Widget build(BuildContext context) {
-    return
-      Scaffold(
-          appBar: AppBar(
-            title: const Text('Medical Record'),
-            centerTitle: true,
-            automaticallyImplyLeading: false,
-          ),
-      body:Row(
-      children: [
-        SizedBox(
-          width: 240,
-          child: isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : hasError
-                  ? const Center(child: Text("Gagal memuat data."))
-                  : patients.isEmpty
-                      ? const Center(child: Text("Tidak ada data pasien."))
-                      : ListView.builder(
-                          itemCount: patients.length,
-                          itemBuilder: (context, index) {
-                            return ListTile(
-                              title: Text(patients[index]['namapasien']),
-                              subtitle:
-                                  Text('Dokter: ${patients[index]['doctor']}'),
-                              onTap: () {
-                                _fetchMedicalRecord(
-                                    patients[index]['idpasien']);
+    return Scaffold(
+        appBar: AppBar(
+          title: const Text('Medical Record'),
+          centerTitle: true,
+          automaticallyImplyLeading: false,
+        ),
+        body: Row(
+          children: [
+            SizedBox(
+              width: 240,
+              child: isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : hasError
+                      ? const Center(child: Text("Gagal memuat data."))
+                      : patients.isEmpty
+                          ? const Center(child: Text("Tidak ada data pasien."))
+                          : ListView.builder(
+                              itemCount: patients.length,
+                              itemBuilder: (context, index) {
+                                return ListTile(
+                                  title: Text(patients[index]['namapasien']),
+                                  subtitle: Text(
+                                      'Dokter: ${patients[index]['doctor']}'),
+                                  onTap: () {
+                                    _fetchMedicalRecord(
+                                        patients[index]['idpasien']);
+                                  },
+                                );
                               },
-                            );
-                          },
-                        ),
-        ),
-        Expanded(
-          child: SingleChildScrollView(
-            child: Column(
-              children: [
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Header
-                      Row(
-                        children: [
-                          _buildDataCell('No', width: 50),
-                          _buildDataCell('Tanggal', width: 150),
-                          _buildDataCell('S/O/A/P Tindakan', width: 320),
-                          _buildDataCell('Perawatan', width: 200),
-                          _buildDataCell('Tanda Tangan', width: 150),
-                          _buildDataCell('Keterangan', width: 150),
-                        ],
-                      ),
-                      // Data Rows
-                      ...records.map((record) {
-                        return Row(
-                          children: [
-                            _buildDataCell(record['no'], width: 50),
-                            _buildDataCell(record['tanggal'], width: 150),
-                            _buildDataCell(
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text('S: ${record['s']}'),
-                                  Text('O: ${record['o']}'),
-                                  Text('A: ${record['a']}'),
-                                  Text('P: ${record['p']}'),
-                                ],
-                              ),
-                              width: 320,
                             ),
-                            _buildDataCell(record['treatment'], width: 200),
-                            _buildDataCell(
-                              record['urlTandaTangan'] != null
-                                  ? Image.memory(base64Decode(
-                                      record['urlTandaTangan'] ?? ''))
-                                  : const Text(''),
-                              width: 150,
-                            ),
-                            _buildDataCell(record['keterangan'], width: 150),
-                          ],
-                        );
-                      }),
-                    ],
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    children: [
-                      TextFormField(
-                        controller: sController,
-                        decoration: const InputDecoration(labelText: 'S'),
-                      ),
-                      TextFormField(
-                        controller: oController,
-                        decoration: const InputDecoration(labelText: 'O'),
-                      ),
-                      TextFormField(
-                        controller: aController,
-                        decoration: const InputDecoration(labelText: 'A'),
-                      ),
-                      TextFormField(
-                        controller: pController,
-                        decoration: const InputDecoration(labelText: 'P'),
-                      ),
-                      TextFormField(
-                        controller: treatmentController,
-                        decoration:
-                            const InputDecoration(labelText: 'Treatment'),
-                      ),
-                      TextFormField(
-                        controller: keteranganController,
-                        decoration:
-                            const InputDecoration(labelText: 'Keterangan'),
-                      ),
-                      const SizedBox(height: 20),
-                      const Text("Tanda Tangan:"),
-                      Signature(
-                        controller: _signatureController,
-                        height: 300,
-                        width: 300,
-                        backgroundColor: Colors.grey[200]!,
-                      ),
-                      const SizedBox(height: 20),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          ElevatedButton(
-                            onPressed: () {
-                              _signatureController.clear();
-                            },
-                            child: const Text("Hapus Tanda Tangan"),
-                          ),
-                          ElevatedButton(
-                            onPressed: _addRecord,
-                            child: const Text('Tambah Rekam Medis'),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ],
             ),
-          ),
-        ),
-      ],
-    ));
+            Expanded(
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Header
+                          Row(
+                            children: [
+                              _buildDataCell('No', width: 50),
+                              _buildDataCell('Tanggal', width: 150),
+                              _buildDataCell('S/O/A/P Tindakan', width: 320),
+                              _buildDataCell('Perawatan', width: 200),
+                              _buildDataCell('Tanda Tangan', width: 150),
+                              _buildDataCell('Keterangan', width: 150),
+                            ],
+                          ),
+                          // Data Rows
+                          ...records.map((record) {
+                            return Row(
+                              children: [
+                                _buildDataCell(record['no'], width: 50),
+                                _buildDataCell(record['tanggal'], width: 150),
+                                _buildDataCell(
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text('S: ${record['s']}'),
+                                      Text('O: ${record['o']}'),
+                                      Text('A: ${record['a']}'),
+                                      Text('P: ${record['p']}'),
+                                    ],
+                                  ),
+                                  width: 320,
+                                ),
+                                _buildDataCell(record['treatment'], width: 200),
+                                _buildDataCell(
+                                  record['urlTandaTangan'] != null
+                                      ? Image.memory(base64Decode(
+                                          record['urlTandaTangan'] ?? ''))
+                                      : const Text(''),
+                                  width: 150,
+                                ),
+                                _buildDataCell(record['keterangan'],
+                                    width: 150),
+                              ],
+                            );
+                          }),
+                        ],
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        children: [
+                          TextFormField(
+                            controller: sController,
+                            decoration: const InputDecoration(labelText: 'S'),
+                          ),
+                          TextFormField(
+                            controller: oController,
+                            decoration: const InputDecoration(labelText: 'O'),
+                          ),
+                          TextFormField(
+                            controller: aController,
+                            decoration: const InputDecoration(labelText: 'A'),
+                          ),
+                          TextFormField(
+                            controller: pController,
+                            decoration: const InputDecoration(labelText: 'P'),
+                          ),
+                          TextFormField(
+                            controller: treatmentController,
+                            decoration:
+                                const InputDecoration(labelText: 'Treatment'),
+                          ),
+                          TextFormField(
+                            controller: keteranganController,
+                            decoration:
+                                const InputDecoration(labelText: 'Keterangan'),
+                          ),
+                          const SizedBox(height: 20),
+                          const Text("Tanda Tangan:"),
+                          Signature(
+                            controller: _signatureController,
+                            height: 300,
+                            width: 300,
+                            backgroundColor: Colors.grey[200]!,
+                          ),
+                          const SizedBox(height: 20),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              ElevatedButton(
+                                onPressed: () {
+                                  _signatureController.clear();
+                                },
+                                child: const Text("Hapus Tanda Tangan"),
+                              ),
+                              ElevatedButton(
+                                onPressed: _addRecord,
+                                child: const Text('Tambah Rekam Medis'),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ));
   }
 
   Widget _buildDataCell(dynamic content, {required double width}) {

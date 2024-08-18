@@ -32,8 +32,7 @@ class _SalesTablePageState extends State<SalesTablePage> {
   }
 
   Future<void> fetchData() async {
-    final response = await http.get(Uri.parse(
-        '$FULLURL/tindakan.json'));
+    final response = await http.get(Uri.parse('$FULLURL/tindakan.json'));
 
     if (response.statusCode == 200) {
       setState(() {
@@ -127,7 +126,7 @@ class _SalesTablePageState extends State<SalesTablePage> {
 
     if (filteredData.isNotEmpty) {
       List<Map<String, dynamic>> tableData =
-      List<Map<String, dynamic>>.from(filteredData['data']);
+          List<Map<String, dynamic>>.from(filteredData['data']);
 
       if (tableData.isNotEmpty) {
         sheet.appendRow(
@@ -155,8 +154,7 @@ class _SalesTablePageState extends State<SalesTablePage> {
       final url = html.Url.createObjectUrlFromBlob(blob);
 
       html.Url.revokeObjectUrl(url);
-    } else {
-    }
+    } else {}
   }
 
   @override
@@ -218,18 +216,18 @@ class _SalesTablePageState extends State<SalesTablePage> {
               child: data.isEmpty
                   ? const Center(child: CircularProgressIndicator())
                   : DataTable(
-                columns: const <DataColumn>[
-                  DataColumn(label: Text('Nama Pasien')),
-                  DataColumn(label: Text('Dokter')),
-                  DataColumn(
-                    label: Text('Total Bayar'),
-                    numeric: true, // Align right by default for numbers
-                  ),
-                  DataColumn(label: Text('Tanggal')),
-                  DataColumn(label: Text('Waktu')),
-                ],
-                rows: _buildFilteredRows(),
-              ),
+                      columns: const <DataColumn>[
+                        DataColumn(label: Text('Nama Pasien')),
+                        DataColumn(label: Text('Dokter')),
+                        DataColumn(
+                          label: Text('Total Bayar'),
+                          numeric: true, // Align right by default for numbers
+                        ),
+                        DataColumn(label: Text('Tanggal')),
+                        DataColumn(label: Text('Waktu')),
+                      ],
+                      rows: _buildFilteredRows(),
+                    ),
             ),
           ),
           Padding(

@@ -84,4 +84,3 @@ class _AccountsPageState extends State<AccountsPage> {
     );
   }
 }
-

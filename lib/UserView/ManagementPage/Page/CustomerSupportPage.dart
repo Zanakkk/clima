@@ -87,15 +87,18 @@ class _CustomerSupportPageState extends State<CustomerSupportPage> {
           children: [
             ListTile(
               title: Text('How do I reset my password?'),
-              subtitle: Text('You can reset your password by going to the Settings page and selecting "Forgot Password".'),
+              subtitle: Text(
+                  'You can reset your password by going to the Settings page and selecting "Forgot Password".'),
             ),
             ListTile(
               title: Text('How do I update my profile information?'),
-              subtitle: Text('You can update your profile information from the Profile page in the app.'),
+              subtitle: Text(
+                  'You can update your profile information from the Profile page in the app.'),
             ),
             ListTile(
               title: Text('What should I do if I find a bug?'),
-              subtitle: Text('If you find a bug, please report it to us using the contact form below.'),
+              subtitle: Text(
+                  'If you find a bug, please report it to us using the contact form below.'),
             ),
           ],
         ),
@@ -138,9 +141,9 @@ class _CustomerSupportPageState extends State<CustomerSupportPage> {
                 decoration: const InputDecoration(labelText: 'Issue Type'),
                 items: ['Technical Issue', 'Billing Issue', 'General Inquiry']
                     .map((issue) => DropdownMenuItem<String>(
-                  value: issue,
-                  child: Text(issue),
-                ))
+                          value: issue,
+                          child: Text(issue),
+                        ))
                     .toList(),
                 onChanged: (value) {
                   setState(() {

@@ -1,3 +1,5 @@
+// ignore_for_file: library_private_types_in_public_api
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -55,7 +57,11 @@ class _CustomPlanState extends State<CustomPlan> {
         {'name': 'Laporan Keuangan Klinik', 'price': 50000, 'isFixed': true},
         {'name': 'Laporan Alat Bahan', 'price': 50000, 'isFixed': false},
         {'name': 'Laporan Stok', 'price': 50000, 'isFixed': false},
-        {'name': 'Laporan Pembayaran Dokter & Staff (Payroll)', 'price': 50000, 'isFixed': false},
+        {
+          'name': 'Laporan Pembayaran Dokter & Staff (Payroll)',
+          'price': 50000,
+          'isFixed': false
+        },
         {'name': 'Laporan Stok Obat', 'price': 50000, 'isFixed': false},
       ]
     },
@@ -66,14 +72,8 @@ class _CustomPlanState extends State<CustomPlan> {
         {'name': 'Ekspor Laporan ke Excel', 'price': 50000, 'isFixed': false},
       ]
     },
-    {
-      'category': 'Management Cabang',
-      'features': []
-    },
-    {
-      'category': 'Web Informasi Klinik',
-      'features': []
-    }
+    {'category': 'Management Cabang', 'features': []},
+    {'category': 'Web Informasi Klinik', 'features': []}
   ];
 
   List<Map<String, dynamic>> selectedFeatures = [];
@@ -137,10 +137,12 @@ class _CustomPlanState extends State<CustomPlan> {
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
                         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: MediaQuery.of(context).size.width > 600 ? 6 : 3,
+                          crossAxisCount:
+                              MediaQuery.of(context).size.width > 600 ? 6 : 3,
                           crossAxisSpacing: 16,
                           mainAxisSpacing: 16,
-                          childAspectRatio: 2, // Adjusted to allow more vertical space
+                          childAspectRatio:
+                              2, // Adjusted to allow more vertical space
                         ),
                         itemCount: category['features'].length,
                         itemBuilder: (context, featureIndex) {
@@ -163,11 +165,16 @@ class _CustomPlanState extends State<CustomPlan> {
                                         style: TextStyle(
                                           fontSize: 16,
                                           fontWeight: FontWeight.w600,
-                                          color: feature['isFixed'] ? Colors.grey : Colors.black,
+                                          color: feature['isFixed']
+                                              ? Colors.grey
+                                              : Colors.black,
                                         ),
-                                        textAlign: TextAlign.center, // Center align the text
-                                        maxLines: 2, // Allow a maximum of 2 lines for wrapping
-                                        overflow: TextOverflow.ellipsis, // Truncate text if too long
+                                        textAlign: TextAlign
+                                            .center, // Center align the text
+                                        maxLines:
+                                            2, // Allow a maximum of 2 lines for wrapping
+                                        overflow: TextOverflow
+                                            .ellipsis, // Truncate text if too long
                                       ),
                                     ),
                                     const SizedBox(height: 8),
@@ -183,13 +190,13 @@ class _CustomPlanState extends State<CustomPlan> {
                                       feature['isFixed']
                                           ? Icons.lock
                                           : selectedFeatures.contains(feature)
-                                          ? Icons.check_box
-                                          : Icons.check_box_outline_blank,
+                                              ? Icons.check_box
+                                              : Icons.check_box_outline_blank,
                                       color: feature['isFixed']
                                           ? Colors.grey
                                           : selectedFeatures.contains(feature)
-                                          ? Colors.green
-                                          : null,
+                                              ? Colors.green
+                                              : null,
                                     ),
                                   ],
                                 ),
@@ -229,7 +236,7 @@ class _CustomPlanState extends State<CustomPlan> {
 
   String formatCurrency(int price) {
     final formatCurrency =
-    NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
+        NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
     return formatCurrency.format(price);
   }
 }

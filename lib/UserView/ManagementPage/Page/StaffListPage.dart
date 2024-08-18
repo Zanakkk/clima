@@ -45,8 +45,7 @@ class _StaffListPageState extends State<StaffListPage> {
   }
 
   Future<void> _fetchAttendanceStatus() async {
-    final url = Uri.parse(
-        '$FULLURL/absen.json');
+    final url = Uri.parse('$FULLURL/absen.json');
 
     final response = await http.get(url);
 

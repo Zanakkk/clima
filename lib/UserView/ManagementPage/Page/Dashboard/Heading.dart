@@ -1,6 +1,4 @@
-
 import 'package:flutter/material.dart';
-
 
 class Heading extends StatelessWidget {
   const Heading({super.key});

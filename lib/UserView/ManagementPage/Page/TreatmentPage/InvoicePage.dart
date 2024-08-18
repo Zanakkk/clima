@@ -100,50 +100,50 @@ class InvoicePage extends StatelessWidget {
               const SizedBox(height: 8),
               procedures == null || procedures.isEmpty
                   ? const Center(
-                child: Text(
-                  'Tidak ada tindakan yang tercatat',
-                  style: TextStyle(fontStyle: FontStyle.italic),
-                ),
-              )
+                      child: Text(
+                        'Tidak ada tindakan yang tercatat',
+                        style: TextStyle(fontStyle: FontStyle.italic),
+                      ),
+                    )
                   : Flexible(
-                child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: procedures.entries.map<Widget>((entry) {
-                      final procedure = entry.value;
-                      return Padding(
-                        padding:
-                        const EdgeInsets.symmetric(vertical: 4.0),
+                      child: SingleChildScrollView(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment:
-                              MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(procedure['procedure'] ??
-                                    'Tidak ada data'),
-                                Text(formatCurrency(
-                                    procedure['price'] ?? 0)),
-                              ],
-                            ),
-                            if (procedure['explanation'] != null)
-                              Padding(
-                                padding: const EdgeInsets.only(top: 2.0),
-                                child: Text(
-                                  'Keterangan: ${procedure['explanation']}',
-                                  style: const TextStyle(
-                                    fontStyle: FontStyle.italic,
+                          children: procedures.entries.map<Widget>((entry) {
+                            final procedure = entry.value;
+                            return Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 4.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(procedure['procedure'] ??
+                                          'Tidak ada data'),
+                                      Text(formatCurrency(
+                                          procedure['price'] ?? 0)),
+                                    ],
                                   ),
-                                ),
+                                  if (procedure['explanation'] != null)
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 2.0),
+                                      child: Text(
+                                        'Keterangan: ${procedure['explanation']}',
+                                        style: const TextStyle(
+                                          fontStyle: FontStyle.italic,
+                                        ),
+                                      ),
+                                    ),
+                                ],
                               ),
-                          ],
+                            );
+                          }).toList(),
                         ),
-                      );
-                    }).toList(),
-                  ),
-                ),
-              ),
+                      ),
+                    ),
               const Divider(height: 24),
               // Total Biaya
               Row(
@@ -187,8 +187,8 @@ class InvoicePage extends StatelessWidget {
   // Helper function to calculate the total cost of all procedures
   double _calculateTotalCost(Map<String, dynamic> procedures) {
     return procedures.values
-        .map<double>((procedure) =>
-    (procedure['price'] as num?)?.toDouble() ?? 0)
+        .map<double>(
+            (procedure) => (procedure['price'] as num?)?.toDouble() ?? 0)
         .fold(0, (a, b) => a + b);
   }
 

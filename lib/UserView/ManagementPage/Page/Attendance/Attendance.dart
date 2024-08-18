@@ -11,8 +11,7 @@ class AttendancePage extends StatelessWidget {
   const AttendancePage({super.key, required this.id});
 
   Future<void> _updateAttendance(String id) async {
-    final url = Uri.parse(
-        '$FULLURL/absen/$id.json');
+    final url = Uri.parse('$FULLURL/absen/$id.json');
 
     final response = await http.put(
       url,
@@ -26,8 +25,7 @@ class AttendancePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final qrData =
-        '$FULLURL/absen/$id.json';
+    final qrData = '$FULLURL/absen/$id.json';
 
     return Scaffold(
       appBar: AppBar(

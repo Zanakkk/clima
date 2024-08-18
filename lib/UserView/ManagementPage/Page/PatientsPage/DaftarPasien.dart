@@ -64,8 +64,7 @@ class _DaftarTindakanPasienState extends State<DaftarTindakanPasien> {
   }
 
   Future<void> _fetchDentists() async {
-    final url = Uri.parse(
-        '$FULLURL/dokter.json');
+    final url = Uri.parse('$FULLURL/dokter.json');
 
     final response = await http.get(url);
 

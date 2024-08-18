@@ -21,11 +21,17 @@ class Treatment {
   final List<Procedure> procedures;
   final String timestamp;
 
-  Treatment({required this.doctor, required this.idpasien, required this.namapasien, required this.procedures, required this.timestamp});
+  Treatment(
+      {required this.doctor,
+      required this.idpasien,
+      required this.namapasien,
+      required this.procedures,
+      required this.timestamp});
 
   factory Treatment.fromJson(Map<String, dynamic> json) {
     var proceduresJson = json['procedures'] as List;
-    List<Procedure> proceduresList = proceduresJson.map((i) => Procedure.fromJson(i)).toList();
+    List<Procedure> proceduresList =
+        proceduresJson.map((i) => Procedure.fromJson(i)).toList();
 
     return Treatment(
       doctor: json['doctor'],
@@ -48,7 +54,16 @@ class Patient {
   final String religion;
   final String pekerjaan;
 
-  Patient({required this.fullName, required this.address, required this.dob, required this.email, required this.gender, required this.imageUrl, required this.phone, required this.religion, required this.pekerjaan});
+  Patient(
+      {required this.fullName,
+      required this.address,
+      required this.dob,
+      required this.email,
+      required this.gender,
+      required this.imageUrl,
+      required this.phone,
+      required this.religion,
+      required this.pekerjaan});
 
   factory Patient.fromJson(Map<String, dynamic> json) {
     return Patient(

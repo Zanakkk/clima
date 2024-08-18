@@ -40,7 +40,6 @@ class AuthServices {
     }
   }
 
-
   static Future<UserCredential?> signInWithGoogleWEB() async {
     try {
       GoogleAuthProvider googleProvider = GoogleAuthProvider();

@@ -74,12 +74,9 @@ class _HomePageState extends State<HomePage> {
             pageVisibility =
                 data.map((item) => item is bool ? item : false).toList();
           });
-        } else {
-        }
-      } else {
-      }
-    } catch (error) {
-    }
+        } else {}
+      } else {}
+    } catch (error) {}
   }
 
   Future<void> getclinicData() async {
@@ -95,11 +92,8 @@ class _HomePageState extends State<HomePage> {
         setState(() {
           clinicData = data;
         });
-
-      } else {
-      }
-    } catch (error) {
-    }
+      } else {}
+    } catch (error) {}
   }
 
   @override
@@ -134,11 +128,7 @@ class _HomePageState extends State<HomePage> {
                 child: IndexedStack(
                   index: selectedIndex,
                   children: [
-                    (pageVisibility[0])
-                        ? const DashboardPage(
-                            clinicData: {},
-                          )
-                        : Container(),
+                    (pageVisibility[0]) ? const DashboardPage() : Container(),
                     (pageVisibility[1])
                         ? const ReservationsPage()
                         : Container(),

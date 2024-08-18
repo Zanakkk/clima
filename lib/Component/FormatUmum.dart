@@ -1,4 +1,3 @@
-
 String formatRupiahManual(int amount) {
   String result = amount.toString().replaceAllMapped(
       RegExp(r'(\d)(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.');
@@ -27,4 +26,3 @@ String formatTanggalManual(DateTime date) {
 
   return "$day $month $year";
 }
-

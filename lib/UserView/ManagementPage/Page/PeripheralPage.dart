@@ -152,9 +152,8 @@ class _PeripheralsPageState extends State<PeripheralsPage> {
 
   Widget _buildSummaryDashboard() {
     int totalItems = _peripherals.length;
-    int operationalItems = _peripherals
-        .where((item) => item['status'] == 'Operasional')
-        .length;
+    int operationalItems =
+        _peripherals.where((item) => item['status'] == 'Operasional').length;
     int needsMaintenanceItems = _peripherals
         .where((item) => item['status'] == 'Butuh Perawatan')
         .length;
@@ -180,7 +179,8 @@ class _PeripheralsPageState extends State<PeripheralsPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title, style: const TextStyle(fontSize: 16, color: Colors.black54)),
+        Text(title,
+            style: const TextStyle(fontSize: 16, color: Colors.black54)),
         Text(value,
             style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
       ],
@@ -198,9 +198,9 @@ class _PeripheralsPageState extends State<PeripheralsPage> {
           hint: const Text('Pilih Kategori'),
           items: ['Semua', 'Teknologi', 'Peralatan Medis', 'Alat Kantor']
               .map((category) => DropdownMenuItem<String>(
-            value: category,
-            child: Text(category),
-          ))
+                    value: category,
+                    child: Text(category),
+                  ))
               .toList(),
           onChanged: (value) {
             setState(() {
@@ -231,9 +231,9 @@ class _PeripheralsPageState extends State<PeripheralsPage> {
               hint: const Text('Pilih Kategori'),
               items: ['Teknologi', 'Peralatan Medis', 'Alat Kantor']
                   .map((category) => DropdownMenuItem<String>(
-                value: category,
-                child: Text(category),
-              ))
+                        value: category,
+                        child: Text(category),
+                      ))
                   .toList(),
               onChanged: (value) {
                 setState(() {
@@ -262,7 +262,8 @@ class _PeripheralsPageState extends State<PeripheralsPage> {
             ),
             TextField(
               controller: _statusController,
-              decoration: const InputDecoration(labelText: 'Status Operasional'),
+              decoration:
+                  const InputDecoration(labelText: 'Status Operasional'),
             ),
             const SizedBox(height: 10),
             ElevatedButton(
@@ -297,42 +298,42 @@ class _PeripheralsPageState extends State<PeripheralsPage> {
             rows: filteredPeripherals
                 .map(
                   (peripheral) => DataRow(
-                cells: [
-                  DataCell(Text(peripheral['name'])),
-                  DataCell(Text(peripheral['category'])),
-                  DataCell(Text(peripheral['quantity'].toString())),
-                  DataCell(Text(peripheral['unit'])),
-                  DataCell(Text(peripheral['expiryDate'])),
-                  DataCell(Text(peripheral['status'])),
-                  DataCell(Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.edit),
-                        onPressed: () {
-                          _nameController.text = peripheral['name'];
-                          _selectedPeripheralCategory =
-                          peripheral['category'];
-                          _quantityController.text =
-                              peripheral['quantity'].toString();
-                          _unitController.text = peripheral['unit'];
-                          _expiryDateController.text =
-                          peripheral['expiryDate'];
-                          _statusController.text = peripheral['status'];
-                        },
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.delete),
-                        onPressed: () {
-                          setState(() {
-                            _peripherals.remove(peripheral);
-                          });
-                        },
-                      ),
+                    cells: [
+                      DataCell(Text(peripheral['name'])),
+                      DataCell(Text(peripheral['category'])),
+                      DataCell(Text(peripheral['quantity'].toString())),
+                      DataCell(Text(peripheral['unit'])),
+                      DataCell(Text(peripheral['expiryDate'])),
+                      DataCell(Text(peripheral['status'])),
+                      DataCell(Row(
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.edit),
+                            onPressed: () {
+                              _nameController.text = peripheral['name'];
+                              _selectedPeripheralCategory =
+                                  peripheral['category'];
+                              _quantityController.text =
+                                  peripheral['quantity'].toString();
+                              _unitController.text = peripheral['unit'];
+                              _expiryDateController.text =
+                                  peripheral['expiryDate'];
+                              _statusController.text = peripheral['status'];
+                            },
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.delete),
+                            onPressed: () {
+                              setState(() {
+                                _peripherals.remove(peripheral);
+                              });
+                            },
+                          ),
+                        ],
+                      )),
                     ],
-                  )),
-                ],
-              ),
-            )
+                  ),
+                )
                 .toList(),
           ),
         ),

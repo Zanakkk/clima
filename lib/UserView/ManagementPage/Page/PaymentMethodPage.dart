@@ -84,7 +84,8 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
             const SizedBox(height: 10),
             TextField(
               controller: _nameController,
-              decoration: const InputDecoration(labelText: 'Nama Metode Pembayaran'),
+              decoration:
+                  const InputDecoration(labelText: 'Nama Metode Pembayaran'),
             ),
             TextField(
               controller: _descriptionController,
