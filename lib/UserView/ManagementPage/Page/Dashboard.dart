@@ -1,334 +1,131 @@
-// ignore_for_file: library_private_types_in_public_api
-
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import '../HomePage.dart';
 
-class DashboardPage extends StatefulWidget {
-  const DashboardPage({super.key});
+import '../CLIMACONTROL/PricingTableApp.dart';
+import 'Dashboard/ClimaLandingPage.dart';
 
-  @override
-  _DashboardPageState createState() => _DashboardPageState();
-}
+class DashboardPage extends StatelessWidget {
+  final Map<String, dynamic> clinicData;
 
-class _DashboardPageState extends State<DashboardPage> {
-  Map<String, dynamic>? _data;
-  bool _isLoading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _fetchData();
-  }
-
-  Future<void> _fetchData() async {
-    final response = await http.get(Uri.parse(
-        '$FULLURL/.json'));
-
-    if (response.statusCode == 200) {
-      setState(() {
-        _data = json.decode(response.body);
-        _isLoading = false;
-      });
-    } else {
-      setState(() {
-        _isLoading = false;
-      });
-    }
-  }
+  const DashboardPage({super.key, required this.clinicData});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Dashboard'),
-        automaticallyImplyLeading: false, // Nonaktifkan tombol kembali
-        centerTitle: true,
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _data != null
-              ? SingleChildScrollView(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    children: [
-                      LayoutBuilder(
-                        builder: (context, constraints) {
-                          if (constraints.maxWidth > 600) {
-                            // For larger screens, show items in a grid with 4 columns
-                            return Row(
-                              children: [
-                                Expanded(
-                                  child: _buildDashboardCard(
-                                    title: 'Total Patients',
-                                    value: _data!['datapasien']
-                                            ?.length
-                                            .toString() ??
-                                        '0',
-                                    color: Colors.blue[100],
-                                    icon: Icons.people,
-                                  ),
-                                ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: _buildDashboardCard(
-                                    title: 'Total Reservations',
-                                    value: _data!['reservation']
-                                            ?.length
-                                            .toString() ??
-                                        '0',
-                                    color: Colors.blue[200],
-                                    icon: Icons.calendar_today,
-                                  ),
-                                ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: _buildDashboardCard(
-                                    title: 'Total Stock Items',
-                                    value: _data!['stokbarang']
-                                            ?.length
-                                            .toString() ??
-                                        '0',
-                                    color: Colors.blue[300],
-                                    icon: Icons.inventory,
-                                  ),
-                                ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: _buildDashboardCard(
-                                    title: 'Total Procedures',
-                                    value:
-                                        _data!['tindakan']?.length.toString() ??
-                                            '0',
-                                    color: Colors.blue[400],
-                                    icon: Icons.medical_services,
-                                  ),
-                                ),
-                              ],
-                            );
-                          } else if (constraints.maxWidth > 400) {
-                            // For medium screens, show items in a grid with 2 columns
-                            return Column(
-                              children: [
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: _buildDashboardCard(
-                                        title: 'Total Patients',
-                                        value: _data!['datapasien']
-                                                ?.length
-                                                .toString() ??
-                                            '0',
-                                        color: Colors.blue[100],
-                                        icon: Icons.people,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 16),
-                                    Expanded(
-                                      child: _buildDashboardCard(
-                                        title: 'Total Reservations',
-                                        value: _data!['reservation']
-                                                ?.length
-                                                .toString() ??
-                                            '0',
-                                        color: Colors.blue[200],
-                                        icon: Icons.calendar_today,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 16),
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: _buildDashboardCard(
-                                        title: 'Total Stock Items',
-                                        value: _data!['stokbarang']
-                                                ?.length
-                                                .toString() ??
-                                            '0',
-                                        color: Colors.blue[300],
-                                        icon: Icons.inventory,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 16),
-                                    Expanded(
-                                      child: _buildDashboardCard(
-                                        title: 'Total Procedures',
-                                        value: _data!['tindakan']
-                                                ?.length
-                                                .toString() ??
-                                            '0',
-                                        color: Colors.blue[400],
-                                        icon: Icons.medical_services,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            );
-                          } else {
-                            // For small screens, show items in a single column
-                            return Column(
-                              children: [
-                                _buildDashboardCard(
-                                  title: 'Total Patients',
-                                  value:
-                                      _data!['datapasien']?.length.toString() ??
-                                          '0',
-                                  color: Colors.blue[100],
-                                  icon: Icons.people,
-                                ),
-                                const SizedBox(height: 16),
-                                _buildDashboardCard(
-                                  title: 'Total Reservations',
-                                  value: _data!['reservation']
-                                          ?.length
-                                          .toString() ??
-                                      '0',
-                                  color: Colors.blue[200],
-                                  icon: Icons.calendar_today,
-                                ),
-                                const SizedBox(height: 16),
-                                _buildDashboardCard(
-                                  title: 'Total Stock Items',
-                                  value:
-                                      _data!['stokbarang']?.length.toString() ??
-                                          '0',
-                                  color: Colors.blue[300],
-                                  icon: Icons.inventory,
-                                ),
-                                const SizedBox(height: 16),
-                                _buildDashboardCard(
-                                  title: 'Total Procedures',
-                                  value:
-                                      _data!['tindakan']?.length.toString() ??
-                                          '0',
-                                  color: Colors.blue[400],
-                                  icon: Icons.medical_services,
-                                ),
-                              ],
-                            );
-                          }
-                        },
-                      ),
-                      const SizedBox(height: 20),
-                      _buildPatientsSection(),
-                      const SizedBox(height: 20),
-                      _buildReservationsSection(),
-                    ],
-                  ),
-                )
-              : const Center(child: Text('Failed to load data')),
-    );
-  }
-
-  Widget _buildDashboardCard({
-    required String title,
-    required String value,
-    required Color? color,
-    required IconData icon,
-  }) {
-    return Container(
+    return Padding(
       padding: const EdgeInsets.all(16.0),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(15),
-      ),
-      child: Row(
+      child: GridView.count(
+        crossAxisCount: 4, // 3 columns
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
         children: [
-          Icon(icon, size: 40, color: Colors.white),
-          const SizedBox(width: 20),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(fontSize: 20, color: Colors.white),
-              ),
-              const SizedBox(height: 5),
-              Text(
-                value,
-                style: const TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white),
-              ),
-            ],
+          DashboardBox(
+            title: "Total Patients",
+            value: clinicData['datapasien'] != null
+                ? clinicData['datapasien'].length.toString()
+                : '0',
+            color: Colors.blue,
           ),
+          DashboardBox(
+            title: "Address",
+            value: clinicData['address'] ?? 'Unknown',
+            color: Colors.green,
+          ),
+          DashboardBox(
+            title: "Doctors",
+            value: clinicData['dokter'] != null
+                ? clinicData['dokter'].length.toString()
+                : '0',
+            color: Colors.orange,
+          ),
+          DashboardBox(
+            title: "Scaling Price",
+            value: clinicData['pricelist'] != null &&
+                    clinicData['pricelist']["-O4MVZ1mVnZ606Wxc2UG"] != null
+                ? clinicData['pricelist']["-O4MVZ1mVnZ606Wxc2UG"]["price"]
+                    .toString()
+                : 'N/A',
+            color: Colors.red,
+          ),
+          DashboardBox(
+            title: "Management Password",
+            value: clinicData['managementpassword'].toString(),
+            color: Colors.purple,
+          ),
+          DashboardBox(
+            title: "Total Procedures",
+            value: clinicData['tindakan'] != null
+                ? clinicData['tindakan'].length.toString()
+                : '0',
+            color: Colors.teal,
+          ),
+          ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const PricingTableApp()));
+              },
+              child: const Text('pricing')),
+          ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const ClimaLandingPage()));
+              },
+              child: const Text('Landing Page')),
+          // Add more boxes with other insights from the data
         ],
       ),
     );
   }
+}
 
-  Widget _buildPatientsSection() {
-    List<Widget> patientCards = [];
-    if (_data!['datapasien'] != null) {
-      _data!['datapasien'].forEach((key, value) {
-        patientCards.add(
-          SizedBox(
-            width: MediaQuery.of(context).size.width / 2 -
-                24, // Adjust the width to make it rectangular
-            child: Card(
-              child: ListTile(
-                leading: CircleAvatar(
-                  backgroundImage: NetworkImage(value['imageUrl']),
-                ),
-                title: Text(value['fullName']),
-                subtitle: Text(
-                    'Phone: ${value['phone']}\nAddress: ${value['address']}'),
+class DashboardBox extends StatelessWidget {
+  final String title;
+  final String value;
+  final Color color;
+
+  const DashboardBox({
+    super.key,
+    required this.title,
+    required this.value,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withOpacity(0.6), width: 2),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: color,
               ),
             ),
-          ),
-        );
-      });
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text('Patients',
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 10),
-        Wrap(
-          spacing: 16.0, // Space between cards
-          runSpacing: 16.0, // Space between rows
-          children: patientCards,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildReservationsSection() {
-    List<Widget> reservationCards = [];
-    if (_data!['reservation'] != null) {
-      _data!['reservation'].forEach((key, value) {
-        reservationCards.add(
-          Card(
-            child: ListTile(
-              leading: const Icon(Icons.calendar_today),
-              title: Text('${value['name']} - ${value['date']}'),
-              subtitle:
-                  Text('Time: ${value['time']}\nPurpose: ${value['purpose']}'),
+            const SizedBox(height: 8),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: color.withOpacity(0.8),
+              ),
             ),
-          ),
-        );
-      });
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text('Reservations',
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 10),
-        Wrap(
-          spacing: 16.0, // Space between cards
-          runSpacing: 16.0, // Space between rows
-          children: reservationCards,
+          ],
         ),
-      ],
+      ),
     );
   }
 }

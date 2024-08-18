@@ -46,7 +46,6 @@ class _RegisterUserPageState extends State<RegisterUserPage> {
     }
 
     try {
-
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("User registered successfully!")),
       );
