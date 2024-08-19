@@ -46,7 +46,8 @@ class _CustomerSupportPageState extends State<CustomerSupportPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Customer Support'),
-        backgroundColor: Colors.blue,
+        centerTitle: true,
+        automaticallyImplyLeading: false,
       ),
       body: Container(
         color: Colors.blue[50],
@@ -56,12 +57,15 @@ class _CustomerSupportPageState extends State<CustomerSupportPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildSectionTitle('How can we help you?'),
+              const SizedBox(height: 10),
               _buildFAQSection(),
               const SizedBox(height: 20),
               _buildSectionTitle('Contact Us'),
+              const SizedBox(height: 10),
               _buildContactForm(),
               const SizedBox(height: 20),
               _buildSectionTitle('Our Contact Information'),
+              const SizedBox(height: 10),
               _buildContactDetails(),
             ],
           ),
@@ -73,13 +77,18 @@ class _CustomerSupportPageState extends State<CustomerSupportPage> {
   Widget _buildSectionTitle(String title) {
     return Text(
       title,
-      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+      style: const TextStyle(
+        fontSize: 22,
+        fontWeight: FontWeight.bold,
+        color: Colors.blueAccent,
+      ),
     );
   }
 
   Widget _buildFAQSection() {
     return const Card(
       color: Colors.white,
+      elevation: 2,
       child: Padding(
         padding: EdgeInsets.all(16.0),
         child: ExpansionTile(
@@ -111,6 +120,7 @@ class _CustomerSupportPageState extends State<CustomerSupportPage> {
       key: _formKey,
       child: Card(
         color: Colors.white,
+        elevation: 2,
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
@@ -126,6 +136,7 @@ class _CustomerSupportPageState extends State<CustomerSupportPage> {
                   return null;
                 },
               ),
+              const SizedBox(height: 16),
               TextFormField(
                 controller: _emailController,
                 decoration: const InputDecoration(labelText: 'Email'),
@@ -136,6 +147,7 @@ class _CustomerSupportPageState extends State<CustomerSupportPage> {
                   return null;
                 },
               ),
+              const SizedBox(height: 16),
               DropdownButtonFormField<String>(
                 value: _selectedIssueType,
                 decoration: const InputDecoration(labelText: 'Issue Type'),
@@ -157,6 +169,7 @@ class _CustomerSupportPageState extends State<CustomerSupportPage> {
                   return null;
                 },
               ),
+              const SizedBox(height: 16),
               TextFormField(
                 controller: _messageController,
                 decoration: const InputDecoration(labelText: 'Message'),
@@ -168,10 +181,12 @@ class _CustomerSupportPageState extends State<CustomerSupportPage> {
                   return null;
                 },
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: _submitForm,
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                ),
                 child: const Text('Send Message'),
               ),
             ],
@@ -184,6 +199,7 @@ class _CustomerSupportPageState extends State<CustomerSupportPage> {
   Widget _buildContactDetails() {
     return const Card(
       color: Colors.white,
+      elevation: 2,
       child: Padding(
         padding: EdgeInsets.all(16.0),
         child: Column(

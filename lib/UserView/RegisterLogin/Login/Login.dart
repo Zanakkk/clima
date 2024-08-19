@@ -49,6 +49,7 @@ class _LoginPageState extends State<LoginPage> {
       }
     }
   }
+
   Future<void> _loginWithEmailPassword() async {
     setState(() {
       _isLoading = true;
@@ -76,7 +77,8 @@ class _LoginPageState extends State<LoginPage> {
         data.forEach((id, clinic) {
           if (clinic['email'] == email) {
             clinicId = id;
-            climaActive = clinic['ClimaActive'] ?? false; // Ambil ClimaActive dari data
+            climaActive =
+                clinic['ClimaActive'] ?? false; // Ambil ClimaActive dari data
           }
         });
 
@@ -128,7 +130,6 @@ class _LoginPageState extends State<LoginPage> {
       });
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -263,7 +264,8 @@ class _LoginPageState extends State<LoginPage> {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (context) => const RegisterUserPage(),
+                                      builder: (context) =>
+                                          const RegisterUserPage(),
                                     ),
                                   );
                                 },

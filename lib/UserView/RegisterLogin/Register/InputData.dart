@@ -125,9 +125,12 @@ class _ClinicRegistrationPageState extends State<ClinicRegistrationPage> {
           'email': clinicEmail,
           'logo': _downloadUrl,
           'passwordManagement': passwordManagement,
-          'ClimaPlan': _selectedPlan,
-          'ClimaActive': false, // Default false for activation
-          'controllerclinic': listcontroller,
+          'Clima': {
+            'ClimaPlan': _selectedPlan,
+            'ClimaActive': false, // Default false for activation
+            'ClimaDate': '',
+            'controllerclinic': listcontroller,
+          },
         }),
       );
 

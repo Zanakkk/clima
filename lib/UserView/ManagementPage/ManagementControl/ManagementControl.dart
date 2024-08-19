@@ -34,7 +34,7 @@ class _ManagementControlState extends State<ManagementControl> {
   Map<String, dynamic> clinicData = {};
   // List untuk menyimpan nilai true/false dari Firebase
   List<bool> pageVisibility =
-      List.filled(12, false); // Inisialisasi dengan 12 item bernilai false
+      List.filled(21, false); // Inisialisasi dengan 12 item bernilai false
 
   @override
   void initState() {
@@ -83,7 +83,7 @@ class _ManagementControlState extends State<ManagementControl> {
   }
 
   Future<void> getData() async {
-    final url = Uri.parse('$FULLURL/controllerclinic.json');
+    final url = Uri.parse('$FULLURL/CLIMA/controllerclinic.json');
 
     try {
       // Mengirim GET request ke Firebase
@@ -98,7 +98,6 @@ class _ManagementControlState extends State<ManagementControl> {
           setState(() {
             pageVisibility =
                 data.map((item) => item is bool ? item : false).toList();
-
           });
         } else {}
       } else {}
@@ -133,9 +132,9 @@ class _ManagementControlState extends State<ManagementControl> {
             leading: const Icon(Icons.dashboard, color: Colors.white),
             title: isSidebarExpanded
                 ? Text(
-                    pageTitles[i - 13], // Disesuaikan dengan pageTitles
-                    style: const TextStyle(color: Colors.white),
-                  )
+              pageTitles[i - 13], // Disesuaikan dengan pageTitles
+              style: const TextStyle(color: Colors.white),
+            )
                 : null,
             onTap: () {
               setState(() {
@@ -146,6 +145,7 @@ class _ManagementControlState extends State<ManagementControl> {
         );
       }
     }
+
 
     return Scaffold(
         appBar: AppBar(

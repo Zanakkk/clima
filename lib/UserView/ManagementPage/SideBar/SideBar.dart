@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:line_icons/line_icons.dart';
 import 'dart:convert';
 
 import '../HomePage.dart';
@@ -182,72 +183,88 @@ class _SidebarState extends State<Sidebar> {
               ),
             if (widget.pageVisibility[5])
               SidebarItem(
-                icon: Icons.person,
-                label: 'Staff List',
+                icon: Icons.receipt,
+                label: 'Receipt',
                 isExpanded: widget.isExpanded,
                 isActive: _selectedIndex == 5,
                 onTap: () => _handleItemSelected(5),
               ),
-            if (widget.pageVisibility[6])
-              SidebarItem(
-                icon: Icons.admin_panel_settings,
-                label: 'Management',
-                isExpanded: widget.isExpanded,
-                isActive: _selectedIndex == 6,
-                onTap: () => _handleItemSelected(6),
-              ),
+            SidebarItem(
+              icon: Icons.admin_panel_settings,
+              label: 'Management',
+              isExpanded: widget.isExpanded,
+              isActive: _selectedIndex == 6,
+              onTap: () => _handleItemSelected(6),
+            ),
           ],
         ),
+        if (widget.pageVisibility[7] ||
+            widget.pageVisibility[8] ||
+            widget.pageVisibility[9])
+          SidebarSection(
+            title: 'PHYSICAL ASSET',
+            isExpanded: widget.isExpanded,
+            items: [
+              if (widget.pageVisibility[7])
+                SidebarItem(
+                  icon: Icons.person,
+                  label: 'Staff List',
+                  isExpanded: widget.isExpanded,
+                  isActive: _selectedIndex == 7,
+                  onTap: () => _handleItemSelected(7),
+                ),
+              if (widget.pageVisibility[8])
+                SidebarItem(
+                  icon: Icons.store,
+                  label: 'Stocks',
+                  isExpanded: widget.isExpanded,
+                  isActive: _selectedIndex == 8,
+                  onTap: () => _handleItemSelected(8),
+                ),
+              if (widget.pageVisibility[9])
+                SidebarItem(
+                  icon: Icons.devices,
+                  label: 'Peripherals',
+                  isExpanded: widget.isExpanded,
+                  isActive: _selectedIndex == 9,
+                  onTap: () => _handleItemSelected(9),
+                ),
+              if (widget.pageVisibility[10])
+                SidebarItem(
+                  icon: Icons.report,
+                  label: 'Report',
+                  isExpanded: widget.isExpanded,
+                  isActive: _selectedIndex == 10,
+                  onTap: () => _handleItemSelected(10),
+                ),
+            ],
+          ),
         SidebarSection(
-          title: 'PHYSICAL ASSET',
+          title: 'CLIMA',
           isExpanded: widget.isExpanded,
           items: [
-            if (widget.pageVisibility[7])
-              SidebarItem(
-                icon: Icons.store,
-                label: 'Stocks',
-                isExpanded: widget.isExpanded,
-                isActive: _selectedIndex == 7,
-                onTap: () => _handleItemSelected(7),
-              ),
-            if (widget.pageVisibility[8])
-              SidebarItem(
-                icon: Icons.devices,
-                label: 'Peripherals',
-                isExpanded: widget.isExpanded,
-                isActive: _selectedIndex == 8,
-                onTap: () => _handleItemSelected(8),
-              ),
-          ],
-        ),
-        SidebarSection(
-          title: '',
-          isExpanded: widget.isExpanded,
-          items: [
-            if (widget.pageVisibility[9])
-              SidebarItem(
-                icon: Icons.report,
-                label: 'Report',
-                isExpanded: widget.isExpanded,
-                isActive: _selectedIndex == 9,
-                onTap: () => _handleItemSelected(9),
-              ),
-            if (widget.pageVisibility[10])
+            if (widget.pageVisibility[11])
               SidebarItem(
                 icon: Icons.support,
                 label: 'Customer Support',
                 isExpanded: widget.isExpanded,
-                isActive: _selectedIndex == 10,
-                onTap: () => _handleItemSelected(10),
-              ),
-            if (widget.pageVisibility[11])
-              SidebarItem(
-                icon: Icons.warning_amber,
-                label: 'Log Out',
-                isExpanded: widget.isExpanded,
                 isActive: _selectedIndex == 11,
                 onTap: () => _handleItemSelected(11),
               ),
+            SidebarItem(
+              icon: Icons.warning_amber,
+              label: 'Log Out',
+              isExpanded: widget.isExpanded,
+              isActive: _selectedIndex == 12,
+              onTap: () => _handleItemSelected(12),
+            ),
+            SidebarItem(
+              icon: LineIcons.medicalClinic,
+              label: 'CLIMA',
+              isExpanded: widget.isExpanded,
+              isActive: _selectedIndex == 100, // Check if 100 is selected
+              onTap: () => _handleItemSelected(100), // Set selectedIndex to 100
+            ),
           ],
         ),
       ],

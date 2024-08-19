@@ -30,6 +30,8 @@ Ketentuan
 8 Stocks Page
 9 Peripheral Page
 10 Report Page
+
+
 11 Customer Support Page
 12 Logout Page
 

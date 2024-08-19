@@ -3,6 +3,7 @@
 import 'package:clima/UserView/ManagementPage/ManagementControl/ManagementControl.dart';
 import 'package:flutter/material.dart';
 import '../RegisterLogin/LogOut.dart';
+import 'CLIMACONTROL/ClimaClinicPageControl.dart';
 import 'Page/CustomerSupportPage.dart';
 import 'Page/Dashboard.dart';
 import 'Page/MedicalRecord/MedicalRecord.dart';
@@ -33,7 +34,7 @@ class _HomePageState extends State<HomePage> {
   Map<String, dynamic> clinicData = {};
   // List untuk menyimpan nilai true/false dari Firebase
   List<bool> pageVisibility =
-      List.filled(12, false); // Inisialisasi dengan 12 item bernilai false
+      List.filled(21, false); // Inisialisasi dengan 12 item bernilai false
 
   @override
   void initState() {
@@ -57,7 +58,7 @@ class _HomePageState extends State<HomePage> {
 
   // Fungsi untuk mengambil data dari Firebase dan mengontrol tampilan halaman
   Future<void> getData() async {
-    final url = Uri.parse('$FULLURL/controllerclinic.json');
+    final url = Uri.parse('$FULLURL/CLIMA/controllerclinic.json');
 
     try {
       // Mengirim GET request ke Firebase
@@ -72,7 +73,6 @@ class _HomePageState extends State<HomePage> {
           setState(() {
             pageVisibility =
                 data.map((item) => item is bool ? item : false).toList();
-
           });
         } else {}
       } else {}
@@ -107,31 +107,45 @@ class _HomePageState extends State<HomePage> {
           ),
           Expanded(
             child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: IndexedStack(
-                  index: selectedIndex,
-                  children: [
-                    (pageVisibility[0]) ? const DashboardPage() : Container(),
-                    (pageVisibility[1])
-                        ? const ReservationsPage()
-                        : Container(),
-                    (pageVisibility[2]) ? const PatientsPage() : Container(),
-                    (pageVisibility[3]) ? const TreatmentsPage() : Container(),
-                    (pageVisibility[4]) ? const MedicalRecord() : Container(),
-                    (pageVisibility[5]) ? const Receipt() : Container(),
-                    (pageVisibility[6])
-                        ? const ManagementControl()
-                        : Container(),
-                    (pageVisibility[7]) ? const StaffListPage() : Container(),
-                    (pageVisibility[8]) ? const StocksPage() : Container(),
-                    (pageVisibility[9]) ? const PeripheralsPage() : Container(),
-                    (pageVisibility[10]) ? const ReportPage() : Container(),
-                    (pageVisibility[11])
-                        ? const CustomerSupportPage()
-                        : Container(),
-                    const LogOut(),
-                  ],
-                )),
+              padding: const EdgeInsets.all(16.0),
+              child: (selectedIndex == 100)
+                  ? const ClimaClinicPageControl()
+                  : IndexedStack(
+                      index: selectedIndex,
+                      children: [
+                        (pageVisibility[0])
+                            ? const DashboardPage()
+                            : Container(),
+                        (pageVisibility[1])
+                            ? const ReservationsPage()
+                            : Container(),
+                        (pageVisibility[2])
+                            ? const PatientsPage()
+                            : Container(),
+                        (pageVisibility[3])
+                            ? const TreatmentsPage()
+                            : Container(),
+                        (pageVisibility[4])
+                            ? const MedicalRecord()
+                            : Container(),
+                        (pageVisibility[5]) ? const Receipt() : Container(),
+                        const ManagementControl(),
+                        (pageVisibility[7])
+                            ? const StaffListPage()
+                            : Container(),
+                        (pageVisibility[8]) ? const StocksPage() : Container(),
+                        (pageVisibility[9])
+                            ? const PeripheralsPage()
+                            : Container(),
+                        (pageVisibility[10]) ? const ReportPage() : Container(),
+                        (pageVisibility[11])
+                            ? const CustomerSupportPage()
+                            : Container(),
+                        const LogOut(),
+                        // Ensure CLIMA page appears here when selectedIndex == 100
+                      ],
+                    ),
+            ),
           ),
         ],
       ),
