@@ -7,7 +7,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'UserView/LandingPage.dart';
 import 'UserView/ManagementPage/HomePage.dart';
-import 'UserView/RegisterLogin/Login/InputDataKlinik.dart';
+import 'UserView/RegisterLogin/Register/Register.dart';
 import 'firebase_options.dart';
 import 'package:http/http.dart' as http;
 

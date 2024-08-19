@@ -1,6 +1,7 @@
 // ignore_for_file: library_private_types_in_public_api, use_build_context_synchronously, deprecated_member_use
 
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../../HomePage.dart';
 import 'PasienListPage.dart';
 import 'AddTreatmentPage.dart';
@@ -30,25 +31,65 @@ class _TreatmentsPageState extends State<TreatmentsPage> {
     _fetchPatients();
   }
 
-  // Fetch patients from API
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _fetchPatients(); // Memastikan data selalu diambil setiap kali halaman diakses kembali
+  }
+
   Future<void> _fetchPatients() async {
-    final url = Uri.parse('$FULLURL/datapasien.json');
+    final pasienUrl = Uri.parse('$FULLURL/datapasien.json');
+    final tindakanUrl = Uri.parse('$FULLURL/tindakan.json');
+    final now = DateTime.now();
+    final today = DateFormat('yyyy-MM-dd').format(now);
 
-    final response = await http.get(url);
+    // Ambil data pasien terlebih dahulu
+    final pasienResponse = await http.get(pasienUrl);
 
-    if (response.statusCode == 200) {
-      final Map<String, dynamic>? data = json.decode(response.body);
-      if (data != null) {
-        final patients = data.entries
-            .map<Map<String, dynamic>>(
-                (entry) => {'id': entry.key, ...entry.value})
-            .toList();
+    if (pasienResponse.statusCode == 200) {
+      final Map<String, dynamic>? pasienData = json.decode(pasienResponse.body);
+      if (pasienData != null) {
+        // Ambil data tindakan
+        final tindakanResponse = await http.get(tindakanUrl);
 
-        setState(() {
-          _patients = patients;
-        });
+        if (tindakanResponse.statusCode == 200) {
+          final Map<String, dynamic>? tindakanData =
+              json.decode(tindakanResponse.body);
+          if (tindakanData != null) {
+            // Buat daftar untuk menyimpan data pasien yang relevan dengan tindakan hari ini
+            List<Map<String, dynamic>> patients = [];
+
+            for (var entry in tindakanData.entries) {
+              final tindakanItem = entry.value;
+              final tindakanTimestamp =
+                  DateTime.parse(tindakanItem['timestamp']);
+
+              // Cek apakah tindakan terjadi pada hari ini
+              if (DateFormat('yyyy-MM-dd').format(tindakanTimestamp) == today) {
+                final idpasien = tindakanItem['idpasien'];
+
+                // Ambil data pasien berdasarkan idpasien
+                if (pasienData.containsKey(idpasien)) {
+                  final pasien = pasienData[idpasien];
+                  patients.add({'id': idpasien, ...pasien});
+                }
+              }
+            }
+
+            // Update state dengan data pasien yang relevan
+            setState(() {
+              _patients = patients;
+            });
+          }
+        } else {
+          // Handle error jika gagal mengambil data tindakan
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Failed to fetch tindakan data.')),
+          );
+        }
       }
     } else {
+      // Handle error jika gagal mengambil data pasien
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Failed to fetch patients.')),
       );
@@ -240,6 +281,7 @@ class _TreatmentsPageState extends State<TreatmentsPage> {
         title: const Text('Treatments Page'),
         centerTitle: true,
         automaticallyImplyLeading: false,
+
       ),
       body: Row(
         children: [
@@ -254,6 +296,7 @@ class _TreatmentsPageState extends State<TreatmentsPage> {
                 });
               },
               selectedPatient: _selectedPatient,
+              onRefresh: _fetchPatients, // Tambahkan fungsi refresh di sini
             ),
           ),
           Expanded(

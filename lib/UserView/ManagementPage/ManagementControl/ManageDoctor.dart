@@ -157,60 +157,102 @@ class _ManagementDoctorPageState extends State<ManagementDoctorPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Manage Doctors'),
+        centerTitle: true,
+        automaticallyImplyLeading: false,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  TextField(
-                    controller: _nameController,
-                    decoration: const InputDecoration(labelText: 'Doctor Name'),
-                  ),
-                  TextField(
-                    controller: _sipController,
-                    decoration: const InputDecoration(labelText: 'SIP'),
-                  ),
-                  const SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: _submitDoctor,
-                    child: Text(selectedDoctorId == null
-                        ? 'Add Doctor'
-                        : 'Update Doctor'),
-                  ),
-                  Expanded(
-                    child: ListView.builder(
-                      itemCount: doctors.length,
-                      itemBuilder: (context, index) {
-                        final doctor = doctors[index];
-                        return ListTile(
-                          title: Text(doctor.name),
-                          subtitle: Text(doctor.sip),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                icon: const Icon(Icons.edit),
-                                onPressed: () {
-                                  _editDoctor(doctor);
-                                },
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.delete),
-                                onPressed: () {
-                                  _deleteDoctor(doctor.id);
-                                },
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ],
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Form Container
+            Container(
+              width: 400,
+              height: 200,
+              decoration: BoxDecoration(
+                color: Colors.teal.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.teal.withOpacity(0.6), width: 2),
               ),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    isLoading
+                        ? const Center(child: CircularProgressIndicator())
+                        : Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        TextField(
+                          controller: _nameController,
+                          decoration: const InputDecoration(
+                            labelText: 'Doctor Name',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                        const SizedBox(height: 16.0),
+                        TextField(
+                          controller: _sipController,
+                          decoration: const InputDecoration(
+                            labelText: 'SIP',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                        const SizedBox(height: 20.0),
+                        ElevatedButton(
+                          onPressed: _submitDoctor,
+                          child: Text(selectedDoctorId == null
+                              ? 'Add Doctor'
+                              : 'Update Doctor'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(width: 20.0),
+            // List Container
+            Expanded(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.teal.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.teal.withOpacity(0.6), width: 2),
+                ),
+                child: ListView.builder(
+                  itemCount: doctors.length,
+                  itemBuilder: (context, index) {
+                    final doctor = doctors[index];
+                    return ListTile(
+                      title: Text(doctor.name),
+                      subtitle: Text(doctor.sip),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.edit),
+                            onPressed: () {
+                              _editDoctor(doctor);
+                            },
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.delete),
+                            onPressed: () {
+                              _deleteDoctor(doctor.id);
+                            },
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+          ],
+        )
+
       ),
     );
   }

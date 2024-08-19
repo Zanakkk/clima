@@ -8,6 +8,7 @@ import 'Page/Dashboard.dart';
 import 'Page/MedicalRecord/MedicalRecord.dart';
 import 'Page/PatientsPage/PatientsPage.dart';
 import 'Page/PeripheralPage.dart';
+import 'Page/Receipt/Receipt.dart';
 import 'Page/ReportsPage.dart';
 import 'Page/ReservationPage.dart';
 import 'Page/StaffListPage.dart';
@@ -40,7 +41,6 @@ class _HomePageState extends State<HomePage> {
     FULLURL =
         'https://clima-93a68-default-rtdb.asia-southeast1.firebasedatabase.app/clinics/${widget.id}';
     getData();
-    getclinicData();
   }
 
   void toggleSidebar() {
@@ -57,8 +57,7 @@ class _HomePageState extends State<HomePage> {
 
   // Fungsi untuk mengambil data dari Firebase dan mengontrol tampilan halaman
   Future<void> getData() async {
-    final url = Uri.parse(
-        'https://clima-93a68-default-rtdb.asia-southeast1.firebasedatabase.app/clinics/klinikdaffa4775/controllerclinic.json');
+    final url = Uri.parse('$FULLURL/controllerclinic.json');
 
     try {
       // Mengirim GET request ke Firebase
@@ -73,25 +72,9 @@ class _HomePageState extends State<HomePage> {
           setState(() {
             pageVisibility =
                 data.map((item) => item is bool ? item : false).toList();
+
           });
         } else {}
-      } else {}
-    } catch (error) {}
-  }
-
-  Future<void> getclinicData() async {
-    final url = Uri.parse(
-        'https://clima-93a68-default-rtdb.asia-southeast1.firebasedatabase.app/clinics/klinikdaffa4775.json');
-
-    try {
-      final response = await http.get(url);
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-
-        setState(() {
-          clinicData = data;
-        });
       } else {}
     } catch (error) {}
   }
@@ -135,17 +118,18 @@ class _HomePageState extends State<HomePage> {
                     (pageVisibility[2]) ? const PatientsPage() : Container(),
                     (pageVisibility[3]) ? const TreatmentsPage() : Container(),
                     (pageVisibility[4]) ? const MedicalRecord() : Container(),
-                    (pageVisibility[5]) ? const StaffListPage() : Container(),
+                    (pageVisibility[5]) ? const Receipt() : Container(),
                     (pageVisibility[6])
                         ? const ManagementControl()
                         : Container(),
-                    (pageVisibility[7]) ? const StocksPage() : Container(),
-                    (pageVisibility[8]) ? const PeripheralsPage() : Container(),
-                    (pageVisibility[9]) ? const ReportPage() : Container(),
-                    (pageVisibility[10])
+                    (pageVisibility[7]) ? const StaffListPage() : Container(),
+                    (pageVisibility[8]) ? const StocksPage() : Container(),
+                    (pageVisibility[9]) ? const PeripheralsPage() : Container(),
+                    (pageVisibility[10]) ? const ReportPage() : Container(),
+                    (pageVisibility[11])
                         ? const CustomerSupportPage()
                         : Container(),
-                    (pageVisibility[11]) ? const LogOut() : Container(),
+                    const LogOut(),
                   ],
                 )),
           ),

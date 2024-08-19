@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:intl/intl.dart';
 
+import '../../HomePage.dart';
 import 'SalesTable.dart';
 
 class SalesPage extends StatefulWidget {
@@ -28,42 +29,53 @@ class _SalesPageState extends State<SalesPage> {
 
   Future<Map<String, ProcedureStat>> fetchProcedureStats(
       String month, String year) async {
-    final response = await http.get(Uri.parse(
-        'https://clima-93a68-default-rtdb.asia-southeast1.firebasedatabase.app/clinics/klinikdaffa4775.json'));
+    final response = await http.get(Uri.parse('$FULLURL.json'));
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
-      final pricelist = data['pricelist'];
-      final tindakan = data['tindakan'];
+      if (data == null || data.isEmpty) {
+        throw Exception('Data is empty');
+      }
+
+      final pricelist = data['pricelist'] ?? {};
+      final tindakan = data['tindakan'] ?? {};
       final Map<String, ProcedureStat> procedureStats = {};
 
       // Inisialisasi harga tindakan
       pricelist.forEach((key, value) {
-        procedureStats[value['name']] = ProcedureStat(
-          procedureName: value['name'],
-          price: value['price'].toDouble(),
-          count: 0,
-        );
+        if (value != null && value['name'] != null && value['price'] != null) {
+          procedureStats[value['name']] = ProcedureStat(
+            procedureName: value['name'],
+            price: value['price'].toDouble(),
+            count: 0,
+          );
+        }
       });
 
       double calculatedRevenue = 0;
 
       // Filter tindakan berdasarkan bulan dan tahun, hitung jumlah dan pendapatan
       tindakan.forEach((tindakanKey, tindakanValue) {
-        final procedures = tindakanValue['procedure'];
-        final timestamp = tindakanValue['timestamp'];
-        final procedureDate = DateTime.parse(timestamp);
-        final procedureMonth = DateFormat('MMMM').format(procedureDate);
-        final procedureYear = DateFormat('yyyy').format(procedureDate);
+        if (tindakanValue != null && tindakanValue['timestamp'] != null) {
+          final timestamp = tindakanValue['timestamp'];
+          final DateTime procedureDate = DateTime.parse(timestamp);
+          final String procedureMonth =
+              DateFormat('MMMM').format(procedureDate);
+          final String procedureYear = DateFormat('yyyy').format(procedureDate);
 
-        if (procedureMonth == month && procedureYear == year) {
-          procedures.forEach((procedureKey, procedureValue) {
-            final procedureName = procedureValue['procedure'];
-            if (procedureStats.containsKey(procedureName)) {
-              procedureStats[procedureName]!.count++;
-              calculatedRevenue += procedureValue['price'];
-            }
-          });
+          if (procedureMonth == month && procedureYear == year) {
+            final procedures = tindakanValue['procedure'] ?? {};
+            procedures.forEach((procedureKey, procedureValue) {
+              final procedureName = procedureValue['procedure'];
+              final procedurePrice = procedureValue['price'];
+
+              if (procedureName != null &&
+                  procedureStats.containsKey(procedureName)) {
+                procedureStats[procedureName]!.count++;
+                calculatedRevenue += procedurePrice?.toDouble() ?? 0;
+              }
+            });
+          }
         }
       });
 
@@ -82,6 +94,8 @@ class _SalesPageState extends State<SalesPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Sales Page'),
+        centerTitle: true,
+        automaticallyImplyLeading: false,
       ),
       body: Column(
         children: [
@@ -146,7 +160,7 @@ class _SalesPageState extends State<SalesPage> {
                     MaterialPageRoute(
                         builder: (context) => const SalesTablePage()));
               },
-              child: const Text('tabel')),
+              child: const Text('Tabel')),
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Text(

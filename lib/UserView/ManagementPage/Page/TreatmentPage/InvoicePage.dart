@@ -26,157 +26,14 @@ class InvoicePage extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Nama Pasien
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Nama Pasien:',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  Text(
-                    selectedPatient?['fullName'] ?? 'Tidak ada data',
-                    style: const TextStyle(fontSize: 16),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              // Dokter
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Dokter:',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  Text(
-                    selectedTindakan?['doctor'] ?? 'Tidak ada data',
-                    style: const TextStyle(fontSize: 16),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              // Tanggal
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Tanggal:',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  Text(
-                    selectedTindakan?['timestamp'] != null
-                        ? _formatDate(selectedTindakan!['timestamp'])
-                        : 'Tidak ada data',
-                    style: const TextStyle(fontSize: 16),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              // Pukul
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Pukul:',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  Text(
-                    selectedTindakan?['timestamp'] != null
-                        ? _formatTime(selectedTindakan!['timestamp'])
-                        : 'Tidak ada data',
-                    style: const TextStyle(fontSize: 16),
-                  ),
-                ],
-              ),
+              _buildPatientInfo(),
               const Divider(height: 24),
-              // Detail Tindakan
-              const Text(
-                'Detail Tindakan:',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              procedures == null || procedures.isEmpty
-                  ? const Center(
-                      child: Text(
-                        'Tidak ada tindakan yang tercatat',
-                        style: TextStyle(fontStyle: FontStyle.italic),
-                      ),
-                    )
-                  : Flexible(
-                      child: SingleChildScrollView(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: procedures.entries.map<Widget>((entry) {
-                            final procedure = entry.value;
-                            return Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 4.0),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text(procedure['procedure'] ??
-                                          'Tidak ada data'),
-                                      Text(formatCurrency(
-                                          procedure['price'] ?? 0)),
-                                    ],
-                                  ),
-                                  if (procedure['explanation'] != null)
-                                    Padding(
-                                      padding: const EdgeInsets.only(top: 2.0),
-                                      child: Text(
-                                        'Keterangan: ${procedure['explanation']}',
-                                        style: const TextStyle(
-                                          fontStyle: FontStyle.italic,
-                                        ),
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            );
-                          }).toList(),
-                        ),
-                      ),
-                    ),
+              _buildProceduresList(procedures),
               const Divider(height: 24),
-              // Total Biaya
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Total:',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  Text(
-                    formatCurrency(procedures != null
-                        ? _calculateTotalCost(procedures)
-                        : 0),
-                    style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                ],
-              ),
+              _buildTotalCost(procedures),
               const SizedBox(height: 16),
-              // Button Send to WhatsApp
-              Center(
-                child: ElevatedButton.icon(
-                  onPressed: onSendInvoice,
-                  icon: const Icon(
-                    LineIcons.whatSApp,
-                    color: Colors.white,
-                  ),
-                  label: const Text('Send to WhatsApp'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF25D366),
-                  ),
-                ),
-              ),
+              _buildSendInvoiceButton(),
             ],
           ),
         ),
@@ -184,7 +41,139 @@ class InvoicePage extends StatelessWidget {
     );
   }
 
-  // Helper function to calculate the total cost of all procedures
+  Widget _buildPatientInfo() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildRow(
+          'Nama Pasien:',
+          selectedPatient?['fullName'] ?? 'Tidak ada data',
+        ),
+        const SizedBox(height: 8),
+        _buildRow(
+          'Dokter:',
+          selectedTindakan?['doctor'] ?? 'Tidak ada data',
+        ),
+        const SizedBox(height: 8),
+        _buildRow(
+          'Tanggal:',
+          selectedTindakan?['timestamp'] != null
+              ? _formatDate(selectedTindakan!['timestamp'])
+              : 'Tidak ada data',
+        ),
+        const SizedBox(height: 8),
+        _buildRow(
+          'Pukul:',
+          selectedTindakan?['timestamp'] != null
+              ? _formatTime(selectedTindakan!['timestamp'])
+              : 'Tidak ada data',
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRow(String label, String value) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+        Text(
+          value,
+          style: const TextStyle(fontSize: 16),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildProceduresList(Map<String, dynamic>? procedures) {
+    if (procedures == null || procedures.isEmpty) {
+      return const Center(
+        child: Text(
+          'Tidak ada tindakan yang tercatat',
+          style: TextStyle(fontStyle: FontStyle.italic),
+        ),
+      );
+    }
+
+    return Flexible(
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: procedures.entries.map<Widget>((entry) {
+            final procedure = entry.value;
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(procedure['procedure'] ?? 'Tidak ada data'),
+                      Text(formatCurrency(procedure['price'] ?? 0)),
+                    ],
+                  ),
+                  if (procedure['explanation'] != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2.0),
+                      child: Text(
+                        'Keterangan: ${procedure['explanation']}',
+                        style: const TextStyle(
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            );
+          }).toList(),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTotalCost(Map<String, dynamic>? procedures) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        const Text(
+          'Total:',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+        Text(
+          formatCurrency(
+              procedures != null ? _calculateTotalCost(procedures) : 0),
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSendInvoiceButton() {
+    return Center(
+      child: ElevatedButton.icon(
+        onPressed: onSendInvoice,
+        icon: const Icon(
+          LineIcons.whatSApp,
+          color: Colors.white,
+        ),
+        label: const Text(
+          'Send to WhatsApp',
+          style: TextStyle(color: Colors.white),
+        ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF25D366),
+        ),
+      ),
+    );
+  }
+
   double _calculateTotalCost(Map<String, dynamic> procedures) {
     return procedures.values
         .map<double>(
@@ -192,9 +181,6 @@ class InvoicePage extends StatelessWidget {
         .fold(0, (a, b) => a + b);
   }
 
-  // Helper function to format timestamp into 'Tanggal: 16 Agustus 2024, Pukul: 03:10'
-
-  // Helper function to format date
   String _formatDate(String timestamp) {
     try {
       final DateTime dateTime = DateTime.parse(timestamp);
@@ -221,7 +207,6 @@ class InvoicePage extends StatelessWidget {
     }
   }
 
-  // Helper function to format time
   String _formatTime(String timestamp) {
     try {
       final DateTime dateTime = DateTime.parse(timestamp);

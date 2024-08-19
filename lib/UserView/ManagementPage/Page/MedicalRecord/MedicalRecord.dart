@@ -6,6 +6,8 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:intl/intl.dart';
 
+import '../../HomePage.dart';
+
 class MedicalRecord extends StatefulWidget {
   const MedicalRecord({super.key});
 
@@ -23,14 +25,10 @@ class _MedicalRecordState extends State<MedicalRecord> {
 
   List<Map<String, dynamic>> records = [];
   List<Map<String, dynamic>> patients = [];
-  late String selectedPatientId;
+  String selectedPatientId = '';
   bool isLoading = false;
   bool hasError = false;
 
-  final String baseUrl =
-      "https://clima-93a68-default-rtdb.asia-southeast1.firebasedatabase.app/clinics/klinikdaffa4775";
-
-  // Signature Controller
   final SignatureController _signatureController = SignatureController(
     penStrokeWidth: 5,
     penColor: Colors.black,
@@ -39,7 +37,13 @@ class _MedicalRecordState extends State<MedicalRecord> {
 
   @override
   void dispose() {
-    _signatureController.dispose(); // Clean up the controller
+    _signatureController.dispose();
+    sController.dispose();
+    oController.dispose();
+    aController.dispose();
+    pController.dispose();
+    treatmentController.dispose();
+    keteranganController.dispose();
     super.dispose();
   }
 
@@ -50,151 +54,175 @@ class _MedicalRecordState extends State<MedicalRecord> {
   }
 
   Future<void> _fetchPatients() async {
-    setState(() {
-      isLoading = true;
-      hasError = false;
-    });
+    setState(() => isLoading = true);
 
     try {
-      final response = await http.get(Uri.parse("$baseUrl/tindakan.json"));
-
+      final response = await http.get(Uri.parse("$FULLURL/tindakan.json"));
       if (response.statusCode == 200 && response.body.isNotEmpty) {
-        Map<String, dynamic> data = json.decode(response.body);
+        final Map<String, dynamic> data = json.decode(response.body);
+        final String today = DateFormat('yyyy-MM-dd').format(DateTime.now());
 
-        if (data.isNotEmpty) {
-          List<Map<String, dynamic>> fetchedPatients = [];
-          String today = DateFormat('yyyy-MM-dd').format(DateTime.now());
+        final fetchedPatients = data.entries
+            .where((entry) => entry.value['timestamp'].split('T')[0] == today)
+            .map((entry) {
+          return {
+            'id': entry.key,
+            'idpasien': entry.value['idpasien'],
+            'namapasien': entry.value['namapasien'],
+            'doctor': entry.value['doctor'],
+            'timestamp': entry.value['timestamp'],
+          };
+        }).toList();
 
-          data.forEach((key, value) {
-            String timestamp = value['timestamp'];
-            String date =
-                timestamp.split('T')[0]; // Ambil tanggal dari timestamp
+        fetchedPatients
+            .sort((a, b) => a['timestamp'].compareTo(b['timestamp']));
 
-            // Filter hanya untuk data yang sesuai dengan hari ini
-            if (date == today) {
-              fetchedPatients.add({
-                'id': key,
-                'idpasien': value['idpasien'],
-                'namapasien': value['namapasien'],
-                'doctor': value['doctor'],
-                'timestamp': timestamp,
-              });
-            }
-          });
-
-          // Urutkan berdasarkan timestamp secara ascending
-          fetchedPatients.sort((a, b) {
-            return a['timestamp'].compareTo(b['timestamp']);
-          });
-
-          setState(() {
-            patients = fetchedPatients;
-          });
-        }
+        setState(() {
+          patients = fetchedPatients;
+          hasError = false;
+        });
       }
     } catch (e) {
-      setState(() {
-        hasError = true;
-      });
+      setState(() => hasError = true);
     } finally {
-      setState(() {
-        isLoading = false;
-      });
+      setState(() => isLoading = false);
     }
   }
 
   Future<void> _fetchMedicalRecord(String patientId) async {
-    setState(() {
-      isLoading = true;
-      hasError = false;
-    });
+    setState(() => isLoading = true);
 
     try {
       final response = await http
-          .get(Uri.parse("$baseUrl/datapasien/$patientId/medicalrecord.json"));
+          .get(Uri.parse("$FULLURL/datapasien/$patientId/medicalrecord.json"));
 
-      if (response.statusCode == 200 && response.body.isNotEmpty) {
-        Map<String, dynamic> data = json.decode(response.body);
+      if (response.statusCode == 200) {
+        if (response.body.isNotEmpty) {
+          final Map<String, dynamic> data = json.decode(response.body);
 
-        List<Map<String, dynamic>> fetchedRecords = [];
+          if (data.isNotEmpty) {
+            // Memetakan setiap entry ke dalam list records
+            final List<Map<String, dynamic>> fetchedRecords =
+                data.entries.map((entry) {
+              final procedureData = entry.value as Map<String, dynamic>;
 
-        data.forEach((key, value) {
-          fetchedRecords.add({
-            'no': value['no'],
-            'tanggal': value['tanggal'],
-            's': value['s'],
-            'o': value['o'],
-            'a': value['a'],
-            'p': value['p'],
-            'treatment': value['treatment'],
-            'urlTandaTangan': value['urlTandaTangan'],
-            'keterangan': value['keterangan'],
+              return {
+                'timestamp': procedureData['tanggal'],
+                's': procedureData['s'],
+                'o': procedureData['o'],
+                'a': procedureData['a'],
+                'p': procedureData['p'],
+                'treatment': procedureData['treatment'],
+                'keterangan': procedureData['keterangan'],
+                'urlTandaTangan': procedureData['urlTandaTangan'],
+              };
+            }).toList();
+
+            // Urutkan berdasarkan timestamp
+            fetchedRecords
+                .sort((a, b) => a['timestamp'].compareTo(b['timestamp']));
+
+            // Format tanggal dan waktu
+            final DateFormat dateFormat = DateFormat('d MMMM yyyy');
+            final DateFormat timeFormat = DateFormat('HH : mm');
+
+            // Tambahkan nomor urut
+            final List<Map<String, dynamic>> numberedRecords =
+                fetchedRecords.asMap().entries.map((entry) {
+              final index = (entry.key + 1)
+                  .toString(); // Menambahkan 1 agar mulai dari 1, bukan 0
+              final record = entry.value;
+
+              // Mengubah format tanggal dan waktu
+              final DateTime dateTime = DateTime.parse(record['timestamp']);
+              final String formattedDate = dateFormat.format(dateTime);
+              final String formattedTime = timeFormat.format(dateTime);
+
+              return {
+                'no': index,
+                'tanggal': formattedDate,
+                'waktu': formattedTime,
+                's': record['s'],
+                'o': record['o'],
+                'a': record['a'],
+                'p': record['p'],
+                'treatment': record['treatment'],
+                'keterangan': record['keterangan'],
+                'urlTandaTangan': record['urlTandaTangan'],
+              };
+            }).toList();
+
+            setState(() {
+              records = numberedRecords;
+              selectedPatientId = patientId;
+              hasError = false; // Tidak ada error karena data valid
+            });
+          } else {
+            // Data kosong, kosongkan records
+            setState(() {
+              records = [];
+              selectedPatientId = patientId;
+              hasError = false; // Tidak ada data, tapi bukan error
+            });
+          }
+        } else {
+          // Jika respons kosong, kosongkan records
+          setState(() {
+            records = [];
+            selectedPatientId = patientId;
+            hasError = false; // Respons kosong, bukan error
           });
-        });
-
+        }
+      } else {
+        // Jika status bukan 200, anggap sebagai error
         setState(() {
-          records = fetchedRecords;
-          selectedPatientId = patientId;
+          hasError = true;
         });
       }
-    } catch (e) {
-      setState(() {
-        hasError = true;
-      });
     } finally {
-      setState(() {
-        isLoading = false;
-      });
+      setState(() => isLoading = false);
     }
   }
 
   Future<void> _addRecord() async {
     if (selectedPatientId.isEmpty) return;
 
+    final String timestamp = DateTime.now().toIso8601String();
+    final signature = await _signatureController.toPngBytes();
+
     try {
-      // Ambil nomor baru (increment dari nomor terakhir)
-      final int newNo = records.isEmpty ? 1 : records.length + 1;
-
-      // Ambil timestamp saat ini
-      final String timestamp = DateTime.now().toIso8601String();
-
-      // Simpan tanda tangan sebagai PNG bytes
-      var signature = await _signatureController.toPngBytes();
-
       final response = await http.post(
-        Uri.parse("$baseUrl/datapasien/$selectedPatientId/medicalrecord.json"),
+        Uri.parse("$FULLURL/datapasien/$selectedPatientId/medicalrecord.json"),
         body: json.encode({
-          'no': newNo.toString(),
           'tanggal': timestamp,
           's': sController.text,
           'o': oController.text,
           'a': aController.text,
           'p': pController.text,
           'treatment': treatmentController.text,
-          'urlTandaTangan': signature != null
-              ? base64Encode(signature)
-              : null, // Simpan dalam format base64
+          'urlTandaTangan': signature != null ? base64Encode(signature) : null,
           'keterangan': keteranganController.text,
         }),
       );
 
       if (response.statusCode == 200) {
-        _fetchMedicalRecord(selectedPatientId);
+        _fetchMedicalRecord(selectedPatientId); // Refresh the records
       }
     } catch (e) {
-      setState(() {
-        hasError = true;
-      });
+      setState(() => hasError = true);
     }
 
-    // Clear the text fields and signature after adding the record
+    _clearFields();
+  }
+
+  void _clearFields() {
     sController.clear();
     oController.clear();
     aController.clear();
     pController.clear();
     treatmentController.clear();
     keteranganController.clear();
-    _signatureController.clear(); // Clear signature after saving
+    _signatureController.clear();
   }
 
   @override
@@ -223,8 +251,13 @@ class _MedicalRecordState extends State<MedicalRecord> {
                                   subtitle: Text(
                                       'Dokter: ${patients[index]['doctor']}'),
                                   onTap: () {
-                                    _fetchMedicalRecord(
-                                        patients[index]['idpasien']);
+                                    setState(() {
+                                      selectedPatientId =
+                                          patients[index]['idpasien'];
+
+                                      _fetchMedicalRecord(
+                                          patients[index]['idpasien']);
+                                    });
                                   },
                                 );
                               },
@@ -234,87 +267,21 @@ class _MedicalRecordState extends State<MedicalRecord> {
               child: SingleChildScrollView(
                 child: Column(
                   children: [
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Header
-                          Row(
-                            children: [
-                              _buildDataCell('No', width: 50),
-                              _buildDataCell('Tanggal', width: 150),
-                              _buildDataCell('S/O/A/P Tindakan', width: 320),
-                              _buildDataCell('Perawatan', width: 200),
-                              _buildDataCell('Tanda Tangan', width: 150),
-                              _buildDataCell('Keterangan', width: 150),
-                            ],
-                          ),
-                          // Data Rows
-                          ...records.map((record) {
-                            return Row(
-                              children: [
-                                _buildDataCell(record['no'], width: 50),
-                                _buildDataCell(record['tanggal'], width: 150),
-                                _buildDataCell(
-                                  Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text('S: ${record['s']}'),
-                                      Text('O: ${record['o']}'),
-                                      Text('A: ${record['a']}'),
-                                      Text('P: ${record['p']}'),
-                                    ],
-                                  ),
-                                  width: 320,
-                                ),
-                                _buildDataCell(record['treatment'], width: 200),
-                                _buildDataCell(
-                                  record['urlTandaTangan'] != null
-                                      ? Image.memory(base64Decode(
-                                          record['urlTandaTangan'] ?? ''))
-                                      : const Text(''),
-                                  width: 150,
-                                ),
-                                _buildDataCell(record['keterangan'],
-                                    width: 150),
-                              ],
-                            );
-                          }),
-                        ],
-                      ),
-                    ),
+                    _buildRecordTable(),
                     Padding(
                       padding: const EdgeInsets.all(16.0),
                       child: Column(
                         children: [
-                          TextFormField(
-                            controller: sController,
-                            decoration: const InputDecoration(labelText: 'S'),
-                          ),
-                          TextFormField(
-                            controller: oController,
-                            decoration: const InputDecoration(labelText: 'O'),
-                          ),
-                          TextFormField(
-                            controller: aController,
-                            decoration: const InputDecoration(labelText: 'A'),
-                          ),
-                          TextFormField(
-                            controller: pController,
-                            decoration: const InputDecoration(labelText: 'P'),
-                          ),
-                          TextFormField(
-                            controller: treatmentController,
-                            decoration:
-                                const InputDecoration(labelText: 'Treatment'),
-                          ),
-                          TextFormField(
-                            controller: keteranganController,
-                            decoration:
-                                const InputDecoration(labelText: 'Keterangan'),
-                          ),
+                          _buildTextField(controller: sController, label: 'S'),
+                          _buildTextField(controller: oController, label: 'O'),
+                          _buildTextField(controller: aController, label: 'A'),
+                          _buildTextField(controller: pController, label: 'P'),
+                          _buildTextField(
+                              controller: treatmentController,
+                              label: 'Treatment'),
+                          _buildTextField(
+                              controller: keteranganController,
+                              label: 'Keterangan'),
                           const SizedBox(height: 20),
                           const Text("Tanda Tangan:"),
                           Signature(
@@ -328,9 +295,7 @@ class _MedicalRecordState extends State<MedicalRecord> {
                             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             children: [
                               ElevatedButton(
-                                onPressed: () {
-                                  _signatureController.clear();
-                                },
+                                onPressed: _signatureController.clear,
                                 child: const Text("Hapus Tanda Tangan"),
                               ),
                               ElevatedButton(
@@ -348,6 +313,69 @@ class _MedicalRecordState extends State<MedicalRecord> {
             ),
           ],
         ));
+  }
+
+  Widget _buildRecordTable() {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildTableHeader(),
+          ...records.map((record) {
+            return Row(
+              children: [
+                _buildDataCell(record['no'], width: 50),
+                _buildDataCell('${record['tanggal']} ${record['waktu']}',
+                    width: 150),
+                _buildDataCell(
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('S: ${record['s']}'),
+                      Text('O: ${record['o']}'),
+                      Text('A: ${record['a']}'),
+                      Text('P: ${record['p']}'),
+                    ],
+                  ),
+                  width: 320,
+                ),
+                _buildDataCell(record['treatment'], width: 200),
+                _buildDataCell(
+                  record['urlTandaTangan'] != null
+                      ? Image.memory(
+                          base64Decode(record['urlTandaTangan'] ?? ''))
+                      : const Text(''),
+                  width: 150,
+                ),
+                _buildDataCell(record['keterangan'], width: 150),
+              ],
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTableHeader() {
+    return Row(
+      children: [
+        _buildDataCell('No', width: 50),
+        _buildDataCell('Tanggal', width: 150),
+        _buildDataCell('S/O/A/P Tindakan', width: 320),
+        _buildDataCell('Perawatan', width: 200),
+        _buildDataCell('Tanda Tangan', width: 150),
+        _buildDataCell('Keterangan', width: 150),
+      ],
+    );
+  }
+
+  Widget _buildTextField(
+      {required TextEditingController controller, required String label}) {
+    return TextFormField(
+      controller: controller,
+      decoration: InputDecoration(labelText: label),
+    );
   }
 
   Widget _buildDataCell(dynamic content, {required double width}) {

@@ -1,4 +1,4 @@
-// ignore_for_file: library_private_types_in_public_api
+// ignore_for_file: library_private_types_in_public_api, unused_local_variable
 
 import 'dart:convert';
 // ignore: avoid_web_libraries_in_flutter
@@ -54,9 +54,11 @@ class _SalesTablePageState extends State<SalesTablePage> {
 
       int totalBayar = 0;
 
-      value['procedure'].forEach((procedureKey, procedureValue) {
-        totalBayar += (procedureValue['price'] as num).toInt();
-      });
+      if (value['procedure'] != null) {
+        value['procedure'].forEach((procedureKey, procedureValue) {
+          totalBayar += (procedureValue['price'] as num).toInt();
+        });
+      }
 
       DateTime dateTime = DateTime.parse(timestamp);
 
@@ -126,7 +128,7 @@ class _SalesTablePageState extends State<SalesTablePage> {
 
     if (filteredData.isNotEmpty) {
       List<Map<String, dynamic>> tableData =
-          List<Map<String, dynamic>>.from(filteredData['data']);
+      List<Map<String, dynamic>>.from(filteredData['data']);
 
       if (tableData.isNotEmpty) {
         sheet.appendRow(
@@ -153,8 +155,13 @@ class _SalesTablePageState extends State<SalesTablePage> {
           'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
       final url = html.Url.createObjectUrlFromBlob(blob);
 
+      // Membuat link download
+      final anchor = html.AnchorElement(href: url)
+        ..setAttribute("download", generateFileName())
+        ..click();
+
       html.Url.revokeObjectUrl(url);
-    } else {}
+    }
   }
 
   @override
@@ -176,7 +183,6 @@ class _SalesTablePageState extends State<SalesTablePage> {
                     onChanged: (String? newValue) {
                       setState(() {
                         selectedMonth = newValue;
-                        // Update JSON after filter change
                         jsonString = jsonEncode(_generateJsonFromTable());
                       });
                     },
@@ -191,7 +197,6 @@ class _SalesTablePageState extends State<SalesTablePage> {
                     onChanged: (String? newValue) {
                       setState(() {
                         selectedYear = newValue;
-                        // Update JSON after filter change
                         jsonString = jsonEncode(_generateJsonFromTable());
                       });
                     },
@@ -204,7 +209,7 @@ class _SalesTablePageState extends State<SalesTablePage> {
                     onPressed: () => _selectDate(context),
                     child: Text(selectedDate == null
                         ? 'Select Date'
-                        : formatTanggalManual(selectedDate!)),
+                        : formatTanggal(selectedDate!)),
                   ),
                 ),
               ],
@@ -221,7 +226,7 @@ class _SalesTablePageState extends State<SalesTablePage> {
                         DataColumn(label: Text('Dokter')),
                         DataColumn(
                           label: Text('Total Bayar'),
-                          numeric: true, // Align right by default for numbers
+                          numeric: true,
                         ),
                         DataColumn(label: Text('Tanggal')),
                         DataColumn(label: Text('Waktu')),
@@ -246,14 +251,16 @@ class _SalesTablePageState extends State<SalesTablePage> {
     List<DataRow> rows = [];
 
     data.forEach((key, value) {
-      String namaPasien = value['namapasien'];
-      String doctor = value['doctor'];
+      String namaPasien = value['namapasien'] ?? 'Tidak ada nama';
+      String doctor = value['doctor'] ?? 'Tidak ada dokter';
       String timestamp = value['timestamp'];
 
       int totalBayar = 0;
-      value['procedure'].forEach((procedureKey, procedureValue) {
-        totalBayar += (procedureValue['price'] as num).toInt();
-      });
+      if (value['procedure'] != null) {
+        value['procedure'].forEach((procedureKey, procedureValue) {
+          totalBayar += (procedureValue['price'] as num).toInt();
+        });
+      }
 
       DateTime dateTime = DateTime.parse(timestamp);
       String formattedDate = formatTanggal(dateTime);
@@ -263,28 +270,14 @@ class _SalesTablePageState extends State<SalesTablePage> {
       // Terapkan filter pada setiap baris
       if (_applyFilters(dateTime)) {
         rows.add(DataRow(cells: [
-          DataCell(Text(
-            namaPasien,
-            textAlign: TextAlign.center,
+          DataCell(Text(namaPasien, textAlign: TextAlign.center)),
+          DataCell(Text(doctor, textAlign: TextAlign.center)),
+          DataCell(Align(
+            alignment: Alignment.centerRight,
+            child: Text(formattedTotalBayar),
           )),
-          DataCell(Text(
-            doctor,
-            textAlign: TextAlign.center,
-          )),
-          DataCell(
-            Align(
-              alignment: Alignment.centerRight, // Align to the right
-              child: Text(formattedTotalBayar),
-            ),
-          ),
-          DataCell(Text(
-            formattedDate,
-            textAlign: TextAlign.center,
-          )),
-          DataCell(Text(
-            formattedTime,
-            textAlign: TextAlign.center,
-          )),
+          DataCell(Text(formattedDate, textAlign: TextAlign.center)),
+          DataCell(Text(formattedTime, textAlign: TextAlign.center)),
         ]));
       }
     });
@@ -337,7 +330,6 @@ class _SalesTablePageState extends State<SalesTablePage> {
     if (picked != null && picked != selectedDate) {
       setState(() {
         selectedDate = picked;
-        // Update JSON after date selection
         jsonString = jsonEncode(_generateJsonFromTable());
       });
     }

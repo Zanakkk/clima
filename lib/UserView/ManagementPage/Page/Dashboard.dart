@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import '../CLIMACONTROL/PricingTableApp.dart';
+import '../HomePage.dart';
 import 'Dashboard/ClimaLandingPage.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -23,8 +24,7 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Future<void> _fetchClinicData() async {
-    final url = Uri.parse(
-        'https://clima-93a68-default-rtdb.asia-southeast1.firebasedatabase.app/clinics/klinikdaffa4775.json');
+    final url = Uri.parse('$FULLURL.json');
 
     try {
       final response = await http.get(url);

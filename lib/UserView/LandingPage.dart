@@ -1,8 +1,7 @@
 import 'package:clima/UserView/RegisterLogin/Login/Login.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-
-import 'RegisterLogin/Login/InputDataKlinik.dart';
+import 'RegisterLogin/Register/Register.dart';
 
 class LandingPage extends StatelessWidget {
   const LandingPage({super.key});

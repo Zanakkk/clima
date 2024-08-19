@@ -172,68 +172,120 @@ class _ManagementPriceListPageState extends State<ManagementPriceListPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Manage Price List'),
+        centerTitle: true,
+        automaticallyImplyLeading: false,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  TextField(
-                    controller: _nameController,
-                    decoration:
-                        const InputDecoration(labelText: 'Treatment Name'),
-                  ),
-                  TextField(
-                    controller: _priceController,
-                    decoration: const InputDecoration(labelText: 'Price'),
-                    keyboardType: TextInputType.number,
-                  ),
-                  TextField(
-                    controller: _descriptionController,
-                    decoration: const InputDecoration(labelText: 'Description'),
-                  ),
-                  const SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: _submitPrice,
-                    child: Text(selectedPriceId == null
-                        ? 'Add Treatment'
-                        : 'Update Treatment'),
-                  ),
-                  const SizedBox(height: 20),
-                  Expanded(
-                    child: ListView.builder(
-                      itemCount: priceList.length,
-                      itemBuilder: (context, index) {
-                        final price = priceList[index];
-                        return ListTile(
-                          title: Text(price.name),
-                          subtitle: Text(
-                              'Price: ${price.price}\nDescription: ${price.description}'),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Form Container
+            Container(
+              width: 400,
+              height: 300,
+              decoration: BoxDecoration(
+                color: Colors.red.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+                border:
+                    Border.all(color: Colors.red.withOpacity(0.6), width: 2),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    isLoading
+                        ? const Center(child: CircularProgressIndicator())
+                        : Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              IconButton(
-                                icon: const Icon(Icons.edit),
-                                onPressed: () {
-                                  _editPrice(price);
-                                },
+                              TextField(
+                                controller: _nameController,
+                                decoration: const InputDecoration(
+                                  labelText: 'Treatment Name',
+                                  border: OutlineInputBorder(),
+                                ),
                               ),
-                              IconButton(
-                                icon: const Icon(Icons.delete),
-                                onPressed: () {
-                                  _deletePrice(price.id);
-                                },
+                              const SizedBox(height: 16.0),
+                              TextField(
+                                controller: _priceController,
+                                decoration: const InputDecoration(
+                                  labelText: 'Price',
+                                  border: OutlineInputBorder(),
+                                ),
+                                keyboardType: TextInputType.number,
+                              ),
+                              const SizedBox(height: 16.0),
+                              TextField(
+                                controller: _descriptionController,
+                                decoration: const InputDecoration(
+                                  labelText: 'Description',
+                                  border: OutlineInputBorder(),
+                                ),
+                              ),
+                              const SizedBox(height: 20.0),
+                              ElevatedButton(
+                                onPressed: _submitPrice,
+                                child: Text(selectedPriceId == null
+                                    ? 'Add Treatment'
+                                    : 'Update Treatment'),
                               ),
                             ],
                           ),
-                        );
-                      },
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
+            ),
+            const SizedBox(width: 20.0),
+            // List Container
+            Expanded(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.red.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border:
+                      Border.all(color: Colors.red.withOpacity(0.6), width: 2),
+                ),
+                child: ListView.builder(
+                  itemCount: priceList.length,
+                  itemBuilder: (context, index) {
+                    final price = priceList[index];
+                    return Card(
+                      elevation: 4,
+                      clipBehavior: Clip.antiAlias,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: ListTile(
+                        title: Text(price.name),
+                        subtitle: Text(
+                            'Price: ${price.price}\nDescription: ${price.description}'),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.edit),
+                              onPressed: () {
+                                _editPrice(price);
+                              },
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete),
+                              onPressed: () {
+                                _deletePrice(price.id);
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
