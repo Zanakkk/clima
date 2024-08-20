@@ -10,7 +10,7 @@ import 'Page/MedicalRecord/MedicalRecord.dart';
 import 'Page/PatientsPage/PatientsPage.dart';
 import 'Page/PeripheralPage.dart';
 import 'Page/Receipt/Receipt.dart';
-import 'Page/ReportsPage.dart';
+import 'Page/AbsenPage.dart';
 import 'Page/ReservationPage.dart';
 import 'Page/StaffListPage.dart';
 import 'Page/StocksPage.dart';
@@ -137,7 +137,7 @@ class _HomePageState extends State<HomePage> {
                         (pageVisibility[9])
                             ? const PeripheralsPage()
                             : Container(),
-                        (pageVisibility[10]) ? const ReportPage() : Container(),
+                        (pageVisibility[10]) ? const Absen() : Container(),
                         (pageVisibility[11])
                             ? const CustomerSupportPage()
                             : Container(),

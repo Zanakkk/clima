@@ -200,7 +200,8 @@ class _SidebarState extends State<Sidebar> {
         ),
         if (widget.pageVisibility[7] ||
             widget.pageVisibility[8] ||
-            widget.pageVisibility[9])
+            widget.pageVisibility[9] ||
+            widget.pageVisibility[10])
           SidebarSection(
             title: 'PHYSICAL ASSET',
             isExpanded: widget.isExpanded,
@@ -232,7 +233,7 @@ class _SidebarState extends State<Sidebar> {
               if (widget.pageVisibility[10])
                 SidebarItem(
                   icon: Icons.report,
-                  label: 'Report',
+                  label: 'Absen',
                   isExpanded: widget.isExpanded,
                   isActive: _selectedIndex == 10,
                   onTap: () => _handleItemSelected(10),

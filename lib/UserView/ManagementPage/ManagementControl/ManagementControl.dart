@@ -1,11 +1,11 @@
 // ignore_for_file: use_build_context_synchronously, empty_catches
 
 import 'dart:convert';
+import 'package:clima/UserView/ManagementPage/ManagementControl/ManagementStaff.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 import '../HomePage.dart';
-import '../Page/PurchasePage.dart';
 import '../Page/Receipt/LaporanStokObat.dart';
 import '../Page/Sales/SalesPage.dart';
 import '../Payroll/Payroll.dart';
@@ -108,14 +108,15 @@ class _ManagementControlState extends State<ManagementControl> {
   Widget build(BuildContext context) {
     final List<Widget> pages = [
       (pageVisibility[13]) ? const ManagementDoctorPage() : Container(),
-      (pageVisibility[14]) ? const ManagementPriceListPage() : Container(),
-      (pageVisibility[15]) ? const LaporanStokObat() : Container(),
-      (pageVisibility[16]) ? const SalesPage() : Container(),
-      (pageVisibility[17]) ? const PurchasesPage() : Container(),
+      (pageVisibility[14]) ? const ManagementStaffPage() : Container(),
+      (pageVisibility[15]) ? const ManagementPriceListPage() : Container(),
+      (pageVisibility[16]) ? const LaporanStokObat() : Container(),
+      (pageVisibility[17]) ? const SalesPage() : Container(),
       (pageVisibility[18]) ? const Payroll() : Container(),
     ];
     final List<String> pageTitles = [
       'Management Doctor',
+      'Management Staff',
       'Management Price List',
       'Laporan Stok Obat',
       'Sales Page',
@@ -132,9 +133,9 @@ class _ManagementControlState extends State<ManagementControl> {
             leading: const Icon(Icons.dashboard, color: Colors.white),
             title: isSidebarExpanded
                 ? Text(
-              pageTitles[i - 13], // Disesuaikan dengan pageTitles
-              style: const TextStyle(color: Colors.white),
-            )
+                    pageTitles[i - 13], // Disesuaikan dengan pageTitles
+                    style: const TextStyle(color: Colors.white),
+                  )
                 : null,
             onTap: () {
               setState(() {
@@ -145,7 +146,6 @@ class _ManagementControlState extends State<ManagementControl> {
         );
       }
     }
-
 
     return Scaffold(
         appBar: AppBar(

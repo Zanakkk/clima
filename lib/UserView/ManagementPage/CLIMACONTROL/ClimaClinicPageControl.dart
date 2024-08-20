@@ -1,3 +1,5 @@
+// ignore_for_file: empty_catches
+
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -29,14 +31,14 @@ class _ClimaClinicPageControlState extends State<ClimaClinicPageControl> {
     'Staff List Page',
     'Stocks Page',
     'Peripheral Page',
-    'Report Page',
+    'Absen Page',
     'Customer Support Page',
     'Logout Page',
     'Management Doctor',
+    'Management Staff',
     'Management Price List',
     'Laporan Stok Obat',
     'Sales Page',
-    'Purchase Page',
     'Payroll',
     'Cetak Invoice',
     'Kirim Invoice WA',
@@ -65,17 +67,15 @@ class _ClimaClinicPageControlState extends State<ClimaClinicPageControl> {
           controllerClinic = List<bool>.from(data['controllerclinic'] ?? []);
         });
       } else {
-        print('Failed to load data. Status code: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error: $e');
     }
   }
 
   @override
   Widget build(BuildContext context) {
     // Ensure that climaActive is non-null before using it
-    final isClimaActive = climaActive ?? false;
+    final isClimaActive = climaActive;
 
     return Scaffold(
       appBar: AppBar(
@@ -83,7 +83,7 @@ class _ClimaClinicPageControlState extends State<ClimaClinicPageControl> {
         centerTitle: true,
         automaticallyImplyLeading: false,
       ),
-      body: climaActive == null || controllerClinic == null
+      body: controllerClinic == null
           ? const Center(child: CircularProgressIndicator())
           : Padding(
         padding: const EdgeInsets.all(16.0),
@@ -117,13 +117,12 @@ class _ClimaClinicPageControlState extends State<ClimaClinicPageControl> {
                 ),const SizedBox(width: 16),
                 Expanded(
                   child: InkWell(
-                    child: DashboardBox(
+                    child: const DashboardBox(
                       title: 'Upgrade plan Clinic',
                       value: 'Klik Disini',
                       color: Colors.black
                     ),
                     onTap: (){
-                      print('upgrdade');
                     },
                   )
                   )

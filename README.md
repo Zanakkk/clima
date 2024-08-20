@@ -29,7 +29,7 @@ Ketentuan
 7 Staff List Page
 8 Stocks Page
 9 Peripheral Page
-10 Report Page
+10 Absen
 
 
 11 Customer Support Page
@@ -37,10 +37,10 @@ Ketentuan
 
 Management
 13 Management Doctor
-14 Management Price List
-15 Laporan Stok Obat
-16 Sales page
-17 Purchase Page
+14 Management Staff
+15 Management Price List
+16 Laporan Stok Obat
+17 Sales page
 18 Payroll
 
 AddOn

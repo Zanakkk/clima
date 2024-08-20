@@ -6,65 +6,66 @@ import 'package:http/http.dart' as http;
 
 import '../HomePage.dart';
 
-class Doctor {
+class Staff {
   String id;
   String name;
-  String sip;
+  String position;
+  String password; // Tambahkan password di model
 
-  Doctor({required this.id, required this.name, required this.sip});
+  Staff({required this.id, required this.name, required this.position, required this.password});
 
-  factory Doctor.fromMap(String id, Map<String, dynamic> data) {
-    return Doctor(
+  factory Staff.fromMap(String id, Map<String, dynamic> data) {
+    return Staff(
       id: id,
       name: data['name'] as String,
-      sip: data['sip'] as String,
+      position: data['position'] as String,
+      password: data['password'] as String, // Tambahkan password dalam fromMap
     );
   }
 }
 
-class ManagementDoctorPage extends StatefulWidget {
-  const ManagementDoctorPage({super.key});
+class ManagementStaffPage extends StatefulWidget {
+  const ManagementStaffPage({super.key});
 
   @override
-  _ManagementDoctorPageState createState() => _ManagementDoctorPageState();
+  _ManagementStaffPageState createState() => _ManagementStaffPageState();
 }
 
-class _ManagementDoctorPageState extends State<ManagementDoctorPage> {
-  final String databaseUrl = '$FULLURL/dokter.json';
+class _ManagementStaffPageState extends State<ManagementStaffPage> {
+  final String databaseUrl = '$FULLURL/staff.json';
 
   final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _sipController = TextEditingController();
-  final TextEditingController _passwordController =
-      TextEditingController(); // Add this line
+  final TextEditingController _positionController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController(); // Tambahkan controller untuk password
 
-  List<Doctor> doctors = [];
-  String? selectedDoctorId;
+  List<Staff> staffList = [];
+  String? selectedStaffId;
   bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _fetchDoctors();
+    _fetchStaff();
   }
 
-  Future<void> _fetchDoctors() async {
+  Future<void> _fetchStaff() async {
     try {
       final response = await http.get(Uri.parse(databaseUrl));
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body) as Map<String, dynamic>;
-        List<Doctor> doctorList = [];
+        List<Staff> staffMembers = [];
 
         data.forEach((key, value) {
-          doctorList.add(Doctor.fromMap(key, value));
+          staffMembers.add(Staff.fromMap(key, value));
         });
 
         setState(() {
-          doctors = doctorList;
+          staffList = staffMembers;
           isLoading = false;
         });
       } else {
-        throw Exception('Failed to load doctors');
+        throw Exception('Failed to load staff');
       }
     } catch (e) {
       setState(() {
@@ -76,15 +77,15 @@ class _ManagementDoctorPageState extends State<ManagementDoctorPage> {
     }
   }
 
-  void _deleteDoctor(String doctorId) async {
-    final deleteUrl = '$FULLURL/dokter/$doctorId.json';
+  void _deleteStaff(String staffId) async {
+    final deleteUrl = '$FULLURL/staff/$staffId.json';
     try {
       final response = await http.delete(Uri.parse(deleteUrl));
 
       if (response.statusCode == 200) {
-        _fetchDoctors();
+        _fetchStaff();
       } else {
-        throw Exception('Failed to delete doctor');
+        throw Exception('Failed to delete staff');
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -93,13 +94,12 @@ class _ManagementDoctorPageState extends State<ManagementDoctorPage> {
     }
   }
 
-  void _submitDoctor() async {
+  void _submitStaff() async {
     final String name = _nameController.text.trim();
-    final String sip = _sipController.text.trim();
-    final String password = _passwordController.text.trim(); // Add this line
+    final String position = _positionController.text.trim();
+    final String password = _passwordController.text.trim(); // Tambahkan password
 
-    if (name.isEmpty || sip.isEmpty || password.isEmpty) {
-      // Update validation
+    if (name.isEmpty || position.isEmpty || password.isEmpty) { // Periksa validasi password
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Please fill out all fields")),
       );
@@ -109,30 +109,30 @@ class _ManagementDoctorPageState extends State<ManagementDoctorPage> {
     try {
       final body = json.encode({
         'name': name,
-        'sip': sip,
-        'password': password, // Include the password in the request body
+        'position': position,
+        'password': password, // Tambahkan password ke dalam request body
       });
 
-      if (selectedDoctorId == null) {
-        // Add new doctor
+      if (selectedStaffId == null) {
+        // Tambah staf baru
         final response = await http.post(
           Uri.parse(databaseUrl),
           body: body,
           headers: {"Content-Type": "application/json"},
         );
         if (response.statusCode == 200) {
-          _fetchDoctors();
+          _fetchStaff();
         }
       } else {
-        // Edit existing doctor
-        final editUrl = '$FULLURL/dokter/$selectedDoctorId.json';
+        // Edit staf yang sudah ada
+        final editUrl = '$FULLURL/staff/$selectedStaffId.json';
         final response = await http.put(
           Uri.parse(editUrl),
           body: body,
           headers: {"Content-Type": "application/json"},
         );
         if (response.statusCode == 200) {
-          _fetchDoctors();
+          _fetchStaff();
         }
       }
 
@@ -146,19 +146,19 @@ class _ManagementDoctorPageState extends State<ManagementDoctorPage> {
 
   void _clearForm() {
     _nameController.clear();
-    _sipController.clear();
-    _passwordController.clear(); // Clear password field
+    _positionController.clear();
+    _passwordController.clear(); // Bersihkan password setelah submit
     setState(() {
-      selectedDoctorId = null;
+      selectedStaffId = null;
     });
   }
 
-  void _editDoctor(Doctor doctor) {
+  void _editStaff(Staff staff) {
     setState(() {
-      selectedDoctorId = doctor.id;
-      _nameController.text = doctor.name;
-      _sipController.text = doctor.sip;
-      // You may or may not set the password here depending on the flow you want
+      selectedStaffId = staff.id;
+      _nameController.text = staff.name;
+      _positionController.text = staff.position;
+      _passwordController.text = staff.password; // Tambahkan password ke form jika diedit
     });
   }
 
@@ -166,7 +166,7 @@ class _ManagementDoctorPageState extends State<ManagementDoctorPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Manage Doctors'),
+        title: const Text('Manage Staff'),
         centerTitle: true,
         automaticallyImplyLeading: false,
       ),
@@ -178,12 +178,12 @@ class _ManagementDoctorPageState extends State<ManagementDoctorPage> {
             // Form Container
             Container(
               width: 400,
-              height: 300, // Adjust height for the new password field
+              height: 320, // Sesuaikan tinggi untuk memasukkan password
               decoration: BoxDecoration(
                 color: Colors.teal.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12),
                 border:
-                    Border.all(color: Colors.teal.withOpacity(0.6), width: 2),
+                Border.all(color: Colors.teal.withOpacity(0.6), width: 2),
               ),
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -193,42 +193,41 @@ class _ManagementDoctorPageState extends State<ManagementDoctorPage> {
                     isLoading
                         ? const Center(child: CircularProgressIndicator())
                         : Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              TextField(
-                                controller: _nameController,
-                                decoration: const InputDecoration(
-                                  labelText: 'Doctor Name',
-                                  border: OutlineInputBorder(),
-                                ),
-                              ),
-                              const SizedBox(height: 16.0),
-                              TextField(
-                                controller: _sipController,
-                                decoration: const InputDecoration(
-                                  labelText: 'SIP',
-                                  border: OutlineInputBorder(),
-                                ),
-                              ),
-                              const SizedBox(height: 16.0),
-                              TextField(
-                                controller:
-                                    _passwordController, // Add password input
-                                decoration: const InputDecoration(
-                                  labelText: 'Password',
-                                  border: OutlineInputBorder(),
-                                ),
-                                obscureText: true, // To hide password text
-                              ),
-                              const SizedBox(height: 20.0),
-                              ElevatedButton(
-                                onPressed: _submitDoctor,
-                                child: Text(selectedDoctorId == null
-                                    ? 'Add Doctor'
-                                    : 'Update Doctor'),
-                              ),
-                            ],
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        TextField(
+                          controller: _nameController,
+                          decoration: const InputDecoration(
+                            labelText: 'Staff Name',
+                            border: OutlineInputBorder(),
                           ),
+                        ),
+                        const SizedBox(height: 16.0),
+                        TextField(
+                          controller: _positionController,
+                          decoration: const InputDecoration(
+                            labelText: 'Position',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                        const SizedBox(height: 16.0),
+                        TextField(
+                          controller: _passwordController, // Tambahkan TextField untuk password
+                          decoration: const InputDecoration(
+                            labelText: 'Password',
+                            border: OutlineInputBorder(),
+                          ),
+                          obscureText: true, // Password tersembunyi
+                        ),
+                        const SizedBox(height: 20.0),
+                        ElevatedButton(
+                          onPressed: _submitStaff,
+                          child: Text(selectedStaffId == null
+                              ? 'Add Staff'
+                              : 'Update Staff'),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),
@@ -241,28 +240,28 @@ class _ManagementDoctorPageState extends State<ManagementDoctorPage> {
                   color: Colors.teal.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
                   border:
-                      Border.all(color: Colors.teal.withOpacity(0.6), width: 2),
+                  Border.all(color: Colors.teal.withOpacity(0.6), width: 2),
                 ),
                 child: ListView.builder(
-                  itemCount: doctors.length,
+                  itemCount: staffList.length,
                   itemBuilder: (context, index) {
-                    final doctor = doctors[index];
+                    final staff = staffList[index];
                     return ListTile(
-                      title: Text(doctor.name),
-                      subtitle: Text(doctor.sip),
+                      title: Text(staff.name),
+                      subtitle: Text(staff.position),
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           IconButton(
                             icon: const Icon(Icons.edit),
                             onPressed: () {
-                              _editDoctor(doctor);
+                              _editStaff(staff);
                             },
                           ),
                           IconButton(
                             icon: const Icon(Icons.delete),
                             onPressed: () {
-                              _deleteDoctor(doctor.id);
+                              _deleteStaff(staff.id);
                             },
                           ),
                         ],
