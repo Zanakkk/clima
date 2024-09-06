@@ -18,8 +18,7 @@ class PasienListPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // Tambahkan tombol refresh di bagian atas
-        Padding(
+        Padding (
           padding: const EdgeInsets.all(8.0),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
