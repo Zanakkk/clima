@@ -6,25 +6,27 @@ import 'DetailPage.dart';
 import 'Posterior.dart';
 import 'RCT.dart';
 
-class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+class Odontogram extends StatefulWidget {
+  const Odontogram({super.key});
 
   @override
-  _HomePageState createState() => _HomePageState();
+  State<Odontogram> createState() => _OdontogramState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _OdontogramState extends State<Odontogram> {
   String? selectedLabel;
   List<Map<String, dynamic>> toothConditions = List.generate(
     32,
     (index) => {
-      'label': '',
+      'label': '', // Pastikan label diisi dengan benar saat inisialisasi
       'mesial': null,
       'distal': null,
       'bukal': null,
       'palatal': null,
       'oclusal': null,
       'rct': false,
+      'teks_atas': null, // Menambahkan teks atas
+      'teks_bawah': null, // Menambahkan teks bawah
     },
   );
 
@@ -46,6 +48,12 @@ class _HomePageState extends State<HomePage> {
           toothConditions.indexWhere((element) => element['label'] == label);
       if (index != -1) {
         toothConditions[index][part] = condition;
+        if (part == 'teks_atas') {
+          toothConditions[index]['teks_atas'] = condition;
+        }
+        if (part == 'teks_bawah') {
+          toothConditions[index]['teks_bawah'] = condition;
+        }
         if (rct != null) {
           toothConditions[index]['rct'] = rct;
         }
@@ -58,6 +66,8 @@ class _HomePageState extends State<HomePage> {
           'palatal': part == 'palatal' ? condition : null,
           'oclusal': part == 'oclusal' ? condition : null,
           'rct': rct ?? false,
+          'teks_atas': part == 'teks_atas' ? condition : null,
+          'teks_bawah': part == 'teks_bawah' ? condition : null,
         });
       }
     });
@@ -68,6 +78,7 @@ class _HomePageState extends State<HomePage> {
       selectedLabel = null;
     });
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -194,13 +205,14 @@ class _ShapeGridPageState extends State<ShapeGridPage> {
 
     final double screenWidth = MediaQuery.of(context).size.width;
     final double itemSize = screenWidth / 16 * 0.75;
-
     Widget buildToothItem(int index, String label) {
+      // Mendapatkan kondisi gigi yang sesuai dengan label
       final toothCondition = widget.toothConditions.firstWhere(
-        (element) => element['label'] == label,
+            (element) => element['label'] == label,
         orElse: () => {'label': label},
       );
 
+      // Cek apakah gigi adalah posterior atau anterior
       final isPosterior = [
         '18',
         '17',
@@ -221,58 +233,101 @@ class _ShapeGridPageState extends State<ShapeGridPage> {
         '35',
         '36',
         '37',
-        '38',
+        '38'
       ].contains(label);
 
+      // Menentukan painter sesuai dengan jenis gigi
       final painter = isPosterior
           ? Posterior(
-              isBlue: _isBlueList[index],
-              conditions: toothCondition,
-              label: label,
-            )
+        isBlue: _isBlueList[index],
+        conditions: toothCondition,
+        label: label,
+      )
           : Anterior(
-              isBlue: _isBlueList[index],
-              conditions: toothCondition,
-              label: label,
-            );
+        isBlue: _isBlueList[index],
+        conditions: toothCondition,
+        label: label,
+      );
 
+      // Cek apakah RCT harus ditampilkan
       final bool showTriangle = toothCondition['rct'] ?? false;
+
+      // Mendapatkan teks atas
+      final String teksAtas = toothCondition['teks_atas'] ?? '';
+
+      // Kelompokkan berdasarkan label untuk posisi label gigi
+      final bool isUpperTeeth = ['18', '17', '16', '15', '14', '13', '12', '11', '21', '22', '23', '24', '25', '26', '27', '28'].contains(label);
+      final bool isLowerTeeth = ['48', '47', '46', '45', '44', '43', '42', '41', '31', '32', '33', '34', '35', '36', '37', '38'].contains(label);
 
       return SizedBox(
         width: itemSize,
-        height: 100, // Adjusted height
+        height: 140, // Disesuaikan untuk menampung teks tambahan
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Column(
-              children: [
-                const SizedBox(height: 4),
-                InkWell(
-                  onTap: () {
-                    _toggleShapeColor(index);
-                    widget.onShapeTapped(label);
-                  },
-                  child: SizedBox(
-                    height: itemSize * 0.75,
-                    width: itemSize * 0.75,
-                    child: CustomPaint(
-                      painter: painter,
-                      child: Container(),
-                    ),
+            // Jika gigi atas, tampilkan label di atas
+            if (isUpperTeeth)
+              Column(
+                children: [
+                  Text(
+                    label,
+                    style: const TextStyle(fontSize: 12),
                   ),
-                ),
-                if (showTriangle)
-                  SizedBox(
-                    height: itemSize * 0.25,
-                    child: const InvertedTriangleWidget(),
-                  ),
-              ],
+                  const SizedBox(height: 4),
+                ],
+              ),
+
+            // Tampilkan teks atas jika ada
+            Text(
+              teksAtas,
+              style: const TextStyle(fontSize: 10, color: Colors.black),
+              textAlign: TextAlign.center,
             ),
-            Text(label, style: const TextStyle(fontSize: 12)),
+            const SizedBox(height: 4),
+
+            // Bagian utama: kotak gigi
+            InkWell(
+              onTap: () {
+                _toggleShapeColor(index);
+                widget.onShapeTapped(label);
+              },
+              child: SizedBox(
+                height: itemSize * 0.75,
+                width: itemSize * 0.75,
+                child: CustomPaint(
+                  painter: painter,
+                  child: Container(),
+                ),
+              ),
+            ),
+
+            // Tampilkan triangle jika RCT aktif
+            if (showTriangle)
+              const SizedBox(
+                height: 10,
+                child: InvertedTriangleWidget(),
+              )
+            else
+              const SizedBox(
+                height: 10,
+              ),
+
+            // Jika gigi bawah, tampilkan label di bawah
+            if (isLowerTeeth)
+              Column(
+                children: [
+                  const SizedBox(height: 8),
+                  Text(
+                    label,
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                ],
+              ),
           ],
         ),
       );
     }
+
 
     return Column(
       children: [

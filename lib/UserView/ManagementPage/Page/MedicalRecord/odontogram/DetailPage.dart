@@ -30,6 +30,10 @@ class _DetailPageState extends State<DetailPage> {
   String? selectedOclusal;
   bool showTriangle = false;
 
+  // Variabel tambahan untuk teks atas dan teks bawah
+  String? selectedTeksAtas;
+  String? selectedTeksBawah;
+
   @override
   void initState() {
     super.initState();
@@ -43,6 +47,10 @@ class _DetailPageState extends State<DetailPage> {
     selectedPalatal = toothCondition['palatal'];
     selectedOclusal = toothCondition['oclusal'];
     showTriangle = toothCondition['rct'] ?? false;
+
+    // Inisialisasi teks atas dan teks bawah
+    selectedTeksAtas = toothCondition['teks_atas'] ?? ' ';
+    selectedTeksBawah = toothCondition['teks_bawah'] ?? ' ';
   }
 
   void _toggleRCT(bool value) {
@@ -55,6 +63,22 @@ class _DetailPageState extends State<DetailPage> {
   @override
   Widget build(BuildContext context) {
     List<String> options = ['karies', 'komposit', 'gic'];
+    List<String> teksAtasOptions = [
+      ' ',
+      'SOU',
+      'ATT',
+      'PRE',
+      'UNE',
+      'ANO',
+      'NON',
+    ];
+    List<String> teksBawahOptions = [
+      ' ',
+      'MISSING',
+      'CFR',
+      'RRX',
+    ];
+
     bool showOclusal = ![
       '13',
       '12',
@@ -92,6 +116,43 @@ class _DetailPageState extends State<DetailPage> {
             Expanded(
               child: ListView(
                 children: [
+                  DropdownButtonFormField<String>(
+                    value: selectedTeksAtas,
+                    decoration: const InputDecoration(labelText: ' '),
+                    items: teksAtasOptions.map((String value) {
+                      return DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(value),
+                      );
+                    }).toList(),
+                    onChanged: (newValue) {
+                      if (newValue != null) {
+                        setState(() {
+                          selectedTeksAtas = newValue;
+                          widget.onConditionChanged(widget.label, 'teks_atas', newValue);
+                        });
+                      }
+                    },
+                  ),
+
+                  DropdownButtonFormField<String>(
+                    value: selectedTeksBawah,
+                    decoration: const InputDecoration(labelText: ' '),
+                    items: teksBawahOptions.map((String value) {
+                      return DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(value),
+                      );
+                    }).toList(),
+                    onChanged: (newValue) {
+                      if (newValue != null) {
+                        setState(() {
+                          selectedTeksBawah = newValue;
+                          widget.onConditionChanged(widget.label, 'teks_bawah', newValue);
+                        });
+                      }
+                    },
+                  ),
                   DropdownButtonFormField<String>(
                     value: selectedMesial,
                     decoration: const InputDecoration(labelText: 'Mesial'),
@@ -178,6 +239,8 @@ class _DetailPageState extends State<DetailPage> {
                         });
                       },
                     ),
+
+
                 ],
               ),
             ),

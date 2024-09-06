@@ -1,5 +1,7 @@
 // ignore_for_file: library_private_types_in_public_api, use_build_context_synchronously
 
+import 'package:clima/UserView/ManagementPage/Page/MedicalRecord/OHI.dart';
+import 'package:clima/UserView/ManagementPage/Page/MedicalRecord/odontogram/odontogram.dart';
 import 'package:flutter/material.dart';
 import 'package:signature/signature.dart';
 import 'package:http/http.dart' as http;
@@ -258,6 +260,19 @@ class _MedicalRecordState extends State<MedicalRecord> {
             child: SingleChildScrollView(
               child: Column(
                 children: [
+                  Row(
+                    children: [
+                      ElevatedButton(onPressed: (){
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => const Odontogram()));
+                      }, child: const Text('Odontogram')),
+                      ElevatedButton(onPressed: (){
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => const OHI()));
+                      }, child: const Text('OHI')),
+                      ElevatedButton(onPressed: (){
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => const OHIPage()));
+                      }, child: const Text('OHI-PAGE')),
+                    ],
+                  ),
                   _buildRecordTable(),
                 ],
               ),
@@ -528,18 +543,14 @@ class _MedicalFormPageState extends State<MedicalFormPage> {
       );
 
       // Debugging response
-      print('Status code: ${response.statusCode}');
-      print('Response body: ${response.body}');
 
       if (response.statusCode == 200) {
         _fetchMedicalRecord(widget.selectedPatientId); // Refresh the records
       } else {
         setState(() => hasError = true);
-        print('Error posting data: ${response.body}');
       }
     } catch (e) {
       setState(() => hasError = true);
-      print('Exception caught: $e');
     }
 
     _clearFields();
@@ -641,12 +652,11 @@ class _MedicalFormPageState extends State<MedicalFormPage> {
                 ElevatedButton(
                   onPressed: () {
                     if (widget.selectedPatientId.isEmpty) {
-                      print('Error: selectedPatientId is empty');
                       return;
                     }
 
                     _addRecord();  // Panggil fungsi untuk post data
-                    print(widget.selectedPatientId);  // Debugging selectedPatientId
+                    // Debugging selectedPatientId
                   },
 
                   child: const Text('Tambah Rekam Medis'),

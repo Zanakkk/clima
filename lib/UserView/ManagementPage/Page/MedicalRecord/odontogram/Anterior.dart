@@ -170,6 +170,53 @@ class Anterior extends CustomPainter {
 
     canvas.drawPath(palatalTriangle, getPaint(conditions['palatal']));
     canvas.drawPath(palatalTriangle, paint);
+
+    // Check if 'CFR' is selected for 'teks_bawah' and draw the hash symbol (#)
+    if (conditions['teks_bawah'] == 'CFR') {
+      final textPainter = TextPainter(
+        text: const TextSpan(
+          text: '#',
+          style: TextStyle(fontSize: 48, color: Colors.black),
+        ),
+        textDirection: TextDirection.ltr,
+      );
+      textPainter.layout(minWidth: 0, maxWidth: size.width);
+      textPainter.paint(
+        canvas,
+        Offset((size.width - textPainter.width) / 2,
+            (size.height - textPainter.height) / 2),
+      );
+    }
+
+    // Check if 'RRX' is selected for 'teks_bawah' and draw the diagonal check mark
+    if (conditions['teks_bawah'] == 'RRX') {
+      Paint checkMarkPaint = Paint()
+        ..color = Colors.black
+        ..strokeWidth = 3
+        ..style = PaintingStyle.stroke;
+
+      // Draw the diagonal check mark (V shape)
+      Path checkMarkPath = Path();
+      checkMarkPath.moveTo(size.width * 0.2, size.height * 0.6);
+      checkMarkPath.lineTo(size.width * 0.4, size.height * 0.85);
+      checkMarkPath.lineTo(size.width * 0.7, size.height * 0.2);
+
+      canvas.drawPath(checkMarkPath, checkMarkPaint);
+    }
+
+    // Check if 'MISSING' is selected for 'teks_bawah' and draw the X mark
+    if (conditions['teks_bawah'] == 'MISSING') {
+      Paint crossPaint = Paint()
+        ..color = Colors.black
+        ..strokeWidth = 3
+        ..style = PaintingStyle.stroke;
+
+      // Draw the 'X' mark
+      canvas.drawLine(const Offset(-5, -5),
+          Offset(size.width + 5, size.height + 5), crossPaint);
+      canvas.drawLine(
+          Offset(size.width + 5, -5), Offset(-5, size.height + 5), crossPaint);
+    }
   }
 
   @override

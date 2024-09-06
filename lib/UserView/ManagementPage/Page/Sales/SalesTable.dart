@@ -6,7 +6,7 @@ import 'dart:html' as html;
 import 'package:excel/excel.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-
+import 'package:fl_chart/fl_chart.dart';
 import '../../../../Component/FormatUmum.dart';
 import '../../HomePage.dart';
 
@@ -128,7 +128,7 @@ class _SalesTablePageState extends State<SalesTablePage> {
 
     if (filteredData.isNotEmpty) {
       List<Map<String, dynamic>> tableData =
-      List<Map<String, dynamic>>.from(filteredData['data']);
+          List<Map<String, dynamic>>.from(filteredData['data']);
 
       if (tableData.isNotEmpty) {
         sheet.appendRow(
@@ -163,6 +163,35 @@ class _SalesTablePageState extends State<SalesTablePage> {
       html.Url.revokeObjectUrl(url);
     }
   }
+
+  List<double> monthlySales = [
+    500,
+    700,
+    1200,
+    1500,
+    1300,
+    1600,
+    1800,
+    2100,
+    1900,
+    2300,
+    2500,
+    2700
+  ];
+  List<String> months = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec"
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -215,6 +244,10 @@ class _SalesTablePageState extends State<SalesTablePage> {
               ],
             ),
           ),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: _buildSalesChart(),
+          ),
           Expanded(
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
@@ -243,6 +276,42 @@ class _SalesTablePageState extends State<SalesTablePage> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSalesChart() {
+    return SizedBox(
+      height: 300,
+      child: LineChart(
+        LineChartData(
+          gridData: const FlGridData(show: true),
+          titlesData: FlTitlesData(
+            leftTitles:
+                const AxisTitles(sideTitles: SideTitles(showTitles: true)),
+            bottomTitles: AxisTitles(
+                sideTitles: SideTitles(
+                    showTitles: true,
+                    getTitlesWidget: (value, _) {
+                      return Text(months[value.toInt()]);
+                    })),
+          ),
+          borderData: FlBorderData(show: true),
+          lineBarsData: [
+            LineChartBarData(
+              spots: monthlySales
+                  .asMap()
+                  .entries
+                  .map((e) => FlSpot(e.key.toDouble(), e.value))
+                  .toList(),
+              isCurved: true,
+              barWidth: 4,
+              dotData: const FlDotData(show: true),
+              belowBarData:
+                  BarAreaData(show: true, color: Colors.green.withOpacity(0.3)),
+            ),
+          ],
+        ),
       ),
     );
   }
