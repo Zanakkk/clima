@@ -46,7 +46,9 @@ class _SalesTablePageState extends State<SalesTablePage> {
 
   Map<String, dynamic> _generateJsonFromTable() {
     List<Map<String, dynamic>> tableData = [];
+    salesPerMonth.clear(); // Reset data penjualan per bulan
 
+    // Proses data dan hitung total penjualan per bulan
     data.forEach((key, value) {
       String namaPasien = value['namapasien'];
       String doctor = value['doctor'];
@@ -71,6 +73,18 @@ class _SalesTablePageState extends State<SalesTablePage> {
           'Tanggal': formatTanggal(dateTime),
           'Waktu': formatWaktu(dateTime),
         });
+
+        // Gunakan indeks bulan untuk mendapatkan nama bulan
+        String month =
+            months[dateTime.month - 1]; // Ambil nama bulan dari array months
+
+        // Tambahkan ke total penjualan per bulan
+        if (salesPerMonth.containsKey(month)) {
+          salesPerMonth[month] = salesPerMonth[month]! + totalBayar;
+        } else {
+          salesPerMonth[month] =
+              totalBayar.toDouble(); // Jika belum ada, inisialisasi
+        }
       }
     });
 
@@ -192,6 +206,20 @@ class _SalesTablePageState extends State<SalesTablePage> {
     "Nov",
     "Dec"
   ];
+  Map<String, double> salesPerMonth = {
+    "Januari": 0,
+    "Februari": 0,
+    "Maret": 0,
+    "April": 0,
+    "Mei": 0,
+    "Juni": 0,
+    "Juli": 0,
+    "Agustus": 0,
+    "September": 0,
+    "Oktober": 0,
+    "November": 0,
+    "Desember": 0,
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -283,38 +311,54 @@ class _SalesTablePageState extends State<SalesTablePage> {
   Widget _buildSalesChart() {
     return SizedBox(
       height: 300,
+      width: MediaQuery.of(context).size.width / 3,
       child: LineChart(
         LineChartData(
           gridData: const FlGridData(show: true),
           titlesData: FlTitlesData(
-            leftTitles:
-                const AxisTitles(sideTitles: SideTitles(showTitles: true)),
+
             bottomTitles: AxisTitles(
-                sideTitles: SideTitles(
-                    showTitles: true,
-                    getTitlesWidget: (value, _) {
-                      return Text(months[value.toInt()]);
-                    })),
+              sideTitles: SideTitles(
+                showTitles: true,
+                getTitlesWidget: (value, _) {
+                  final int index = value.toInt();
+                  if (index >= 0 && index < months.length) {
+                    return Text(months[index]);
+                  } else {
+                    return const Text('');
+                  }
+                },
+              ),
+            ),
           ),
-          borderData: FlBorderData(show: true),
+          borderData: FlBorderData(
+            show: true,
+          ),
+
           lineBarsData: [
             LineChartBarData(
-              spots: monthlySales
-                  .asMap()
-                  .entries
-                  .map((e) => FlSpot(e.key.toDouble(), e.value))
-                  .toList(),
+              spots: List.generate(12, (index) {
+                final month = months[index];
+                final sales = salesPerMonth[month] ?? 0;
+                return FlSpot(index.toDouble(), sales);
+              }),
               isCurved: true,
               barWidth: 4,
-              dotData: const FlDotData(show: true),
-              belowBarData:
-                  BarAreaData(show: true, color: Colors.green.withOpacity(0.3)),
+              color: Colors.deepPurpleAccent, // Warna ungu pada garis grafik
+              dotData: const FlDotData(
+                show: true,
+              ),
+              belowBarData: BarAreaData(
+                show: true,
+                color: Colors.deepPurpleAccent.withOpacity(0.2), // Area di bawah garis dengan warna ungu
+              ),
             ),
           ],
         ),
       ),
     );
   }
+
 
   List<DataRow> _buildFilteredRows() {
     List<DataRow> rows = [];
