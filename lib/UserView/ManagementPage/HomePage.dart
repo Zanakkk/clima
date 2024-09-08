@@ -2,6 +2,7 @@
 
 import 'package:clima/UserView/ManagementPage/ManagementControl/ManagementControl.dart';
 import 'package:flutter/material.dart';
+import '../../PocketBase/Tes PocketBase.dart';
 import '../RegisterLogin/LogOut.dart';
 import 'CLIMACONTROL/ClimaClinicPageControl.dart';
 import 'Page/CustomerSupportPage.dart';
@@ -101,6 +102,13 @@ class _HomePageState extends State<HomePage> {
                   icon:
                       Icon(isExpanded ? Icons.arrow_back : Icons.arrow_forward),
                   onPressed: toggleSidebar,
+                ),
+                IconButton(
+                  icon:
+                      Icon(Icons.attach_money),
+                  onPressed: (){
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => LoginPage()));
+                  },
                 ),
               ],
             ),
