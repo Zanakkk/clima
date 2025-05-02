@@ -3,6 +3,7 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
+  app_links
   cloud_firestore
   file_saver
   file_selector_windows
@@ -11,7 +12,6 @@ list(APPEND FLUTTER_PLUGIN_LIST
   firebase_storage
   permission_handler_windows
   printing
-  share_plus
   url_launcher_windows
 )
 
