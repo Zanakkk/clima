@@ -1,6 +1,7 @@
 // ignore_for_file: empty_catches
 
 import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
@@ -23,9 +24,12 @@ class _ClimaClinicPageControlState extends State<ClimaClinicPageControl> {
   final List<String> pageLabels = [
     'Dashboard',
     'Reservation Page',
+    'Admin Reserv',
     'Patient Page',
     'Treatment Page',
     'Medical Record Page',
+    'Pricelist Page',
+    'Add Doctor Page',
     'Receipt - advanced',
     'Management Control',
     'Staff List Page',
@@ -66,10 +70,8 @@ class _ClimaClinicPageControlState extends State<ClimaClinicPageControl> {
           climaPlan = data['ClimaPlan'] ?? 'Unknown Plan'; // Handle null case
           controllerClinic = List<bool>.from(data['controllerclinic'] ?? []);
         });
-      } else {
-      }
-    } catch (e) {
-    }
+      } else {}
+    } catch (e) {}
   }
 
   @override
@@ -86,89 +88,87 @@ class _ClimaClinicPageControlState extends State<ClimaClinicPageControl> {
       body: controllerClinic == null
           ? const Center(child: CircularProgressIndicator())
           : Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: DashboardBox(
-                    title: 'Clima Active',
-                    value: isClimaActive ? 'Yes' : 'No',
-                    color: Colors.red,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: DashboardBox(
-                    title: 'Clima Date',
-                    value: climaDate,
-                    color: Colors.green,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: DashboardBox(
-                    title: 'Clima Plan',
-                    value: climaPlan,
-                    color: Colors.blue,
-                  ),
-                ),const SizedBox(width: 16),
-                Expanded(
-                  child: InkWell(
-                    child: const DashboardBox(
-                      title: 'Upgrade plan Clinic',
-                      value: 'Klik Disini',
-                      color: Colors.black
-                    ),
-                    onTap: (){
-                    },
-                  )
-                  )
-              ],
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              'Controller Clinic Access:',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
-            ),
-            const SizedBox(height: 10),
-            Expanded(
-              child: ListView.builder(
-                itemCount: controllerClinic!.length,
-                itemBuilder: (context, index) {
-                  return ListTile(
-                    leading: Icon(
-                      controllerClinic![index]
-                          ? Icons.check_circle
-                          : Icons.cancel,
-                      color: controllerClinic![index]
-                          ? Colors.green
-                          : Colors.red,
-                    ),
-                    title: Text(
-                      pageLabels[index],
-                      style: TextStyle(
-                        color: controllerClinic![index]
-                            ? Colors.black87
-                            : Colors.grey,
-                        fontWeight: controllerClinic![index]
-                            ? FontWeight.bold
-                            : FontWeight.normal,
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: DashboardBox(
+                          title: 'Clima Active',
+                          value: isClimaActive ? 'Yes' : 'No',
+                          color: Colors.red,
+                        ),
                       ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: DashboardBox(
+                          title: 'Clima Date',
+                          value: climaDate,
+                          color: Colors.green,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: DashboardBox(
+                          title: 'Clima Plan',
+                          value: climaPlan,
+                          color: Colors.blue,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                          child: InkWell(
+                        child: const DashboardBox(
+                            title: 'Upgrade plan Clinic',
+                            value: 'Klik Disini',
+                            color: Colors.black),
+                        onTap: () {},
+                      ))
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  const Text(
+                    'Controller Clinic Access:',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
                     ),
-                  );
-                },
+                  ),
+                  const SizedBox(height: 10),
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: controllerClinic!.length,
+                      itemBuilder: (context, index) {
+                        return ListTile(
+                          leading: Icon(
+                            controllerClinic![index]
+                                ? Icons.check_circle
+                                : Icons.cancel,
+                            color: controllerClinic![index]
+                                ? Colors.green
+                                : Colors.red,
+                          ),
+                          title: Text(
+                            pageLabels[index],
+                            style: TextStyle(
+                              color: controllerClinic![index]
+                                  ? Colors.black87
+                                  : Colors.grey,
+                              fontWeight: controllerClinic![index]
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
-      ),
     );
   }
 }

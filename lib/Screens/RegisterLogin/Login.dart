@@ -3,7 +3,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -88,6 +87,7 @@ class _LoginScreenState extends State<LoginScreen>
       await prefs.remove('password');
     }
   }
+
   Future<void> _loginWithEmailPassword() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -264,127 +264,116 @@ class _LoginScreenState extends State<LoginScreen>
                       ],
                     ),
                   ),
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      // Background pattern
-                      Opacity(
-                        opacity: 0.15,
-                        child: SvgPicture.asset(
-                          'assets/images/pattern_medical.svg',
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                      // Content overlay
-                      Padding(
-                        padding: const EdgeInsets.all(40),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  child: Padding(
+                    padding: const EdgeInsets.all(40),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Logo and app name
+                        Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // Logo and app name
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(12),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Image.asset(
-                                    'assets/LOGO.JPG',
-                                    width: 40,
-                                    height: 40,
-                                  ),
-                                ),
-                                const SizedBox(height: 24),
-                                Text(
-                                  'MedCare Clinic',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 32,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  'Modern Healthcare Management',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 16,
-                                    color: Colors.white.withOpacity(0.9),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            // Features list
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                _buildFeatureItem(
-                                    Icons.medical_services_rounded,
-                                    'Patient Records Management'),
-                                const SizedBox(height: 16),
-                                _buildFeatureItem(Icons.payment_rounded,
-                                    'Billing & Invoices'),
-                                const SizedBox(height: 16),
-                                _buildFeatureItem(Icons.analytics_rounded,
-                                    'Analytics & Reporting'),
-                              ],
-                            ),
-                            // Testimonial or Extra Info
-                            Container(
-                              padding: const EdgeInsets.all(20),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.15),
+                            Card(
+                              shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      const Icon(
-                                        Icons.format_quote,
-                                        color: Colors.white,
-                                        size: 20,
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        'Testimonial',
-                                        style: GoogleFonts.poppins(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w600,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    'MedCare has transformed our clinic operations. Patient management is now seamless and efficient.',
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 14,
-                                      fontStyle: FontStyle.italic,
-                                      color: Colors.white.withOpacity(0.9),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    '- Dr. Sarah Johnson, Family Clinic',
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w500,
-                                      color: Colors.white.withOpacity(0.8),
-                                    ),
-                                  ),
-                                ],
+                              elevation: 2,
+                              child: Padding(
+                                padding: const EdgeInsets.all(12),
+                                child: Image.asset(
+                                  'assets/LOGO.JPG',
+                                  width: 40,
+                                  height: 40,
+                                ),
+                              ),
+                            ),
+
+                            const SizedBox(height: 24),
+                            Text(
+                              'CLIMA NUSANTARA',
+                              style: GoogleFonts.poppins(
+                                fontSize: 32,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Modern Healthcare Management',
+                              style: GoogleFonts.poppins(
+                                fontSize: 16,
+                                color: Colors.white.withOpacity(0.9),
                               ),
                             ),
                           ],
                         ),
-                      ),
-                    ],
+                        // Features list
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildFeatureItem(
+                                Icons.medical_services_rounded,
+                                'Patient Records Management'),
+                            const SizedBox(height: 16),
+                            _buildFeatureItem(Icons.payment_rounded,
+                                'Billing & Invoices'),
+                            const SizedBox(height: 16),
+                            _buildFeatureItem(Icons.analytics_rounded,
+                                'Analytics & Reporting'),
+                          ],
+                        ),
+                        // Testimonial or Extra Info
+                        Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.format_quote,
+                                    color: Colors.white,
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Testimonial',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'MedCare has transformed our clinic operations. Patient management is now seamless and efficient.',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 14,
+                                  fontStyle: FontStyle.italic,
+                                  color: Colors.white.withOpacity(0.9),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                '- Dr. Sarah Johnson, Family Clinic',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.white.withOpacity(0.8),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -420,7 +409,7 @@ class _LoginScreenState extends State<LoginScreen>
               ),
               const SizedBox(height: 16),
               Text(
-                'MedCare Clinic',
+                'CLIMA NUSANTARA',
                 style: GoogleFonts.poppins(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,

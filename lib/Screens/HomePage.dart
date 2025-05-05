@@ -1,24 +1,30 @@
 // ignore_for_file: non_constant_identifier_names
 
+import 'dart:html' as html;
+
 import 'package:clima/Screens/Page/PatientsPage/PatientsPage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:google_nav_bar/google_nav_bar.dart';
+import 'package:line_icons/line_icons.dart';
+
 import '../main.dart';
 import '../utils/LiveClock.dart';
 import 'Dashboard.dart';
 import 'ManagementControl/ManagementControl.dart';
 import 'Page/AbsenPage.dart';
+import 'Page/AddDoctorsPage.dart';
 import 'Page/CustomerSupportPage.dart';
 import 'Page/MedicalRecord/MedicalRecord.dart';
 import 'Page/PeripheralPage.dart';
-import 'Page/ReservationPage.dart';
+import 'Page/PriceListPage.dart';
+import 'Page/ReservationPage/AdminReserv.dart';
+import 'Page/ReservationPage/ReservationPage.dart';
 import 'Page/StaffListPage.dart';
 import 'Page/StocksPage.dart';
 import 'Page/TreatmentPage/TreatmentPage.dart';
 import 'RegisterLogin/Login.dart';
-import 'dart:html' as html;
-import 'package:google_nav_bar/google_nav_bar.dart';
 
 String FULLURL = '';
 
@@ -129,9 +135,12 @@ class _HomeScreenState extends State<HomeScreen>
   final List<Widget> _screens = [
     const DashboardScreen(),
     const ReservationsPage(),
+    const AdminReservationsPage(),
     const PatientsPage(),
     const TreatmentsPage(),
     const MedicalRecord(),
+    const PricelistPage(),
+    const DaftarDoktor(),
     const ManagementControl(),
     const StaffListPage(),
     const StocksPage(),
@@ -162,6 +171,10 @@ class _HomeScreenState extends State<HomeScreen>
       "icon": Icons.calendar_today,
       "iconSelected": Icons.calendar_month,
       "label": "Reservation Page"
+    }, {
+      "icon": Icons.calendar_today,
+      "iconSelected": Icons.calendar_month,
+      "label": "Admin Reserv"
     },
     {
       "icon": Icons.person_outline,
@@ -177,6 +190,16 @@ class _HomeScreenState extends State<HomeScreen>
       "icon": Icons.assignment_outlined,
       "iconSelected": Icons.assignment,
       "label": "Medical Record Page"
+    },
+    {
+      "icon": Icons.receipt_long_outlined,
+      "iconSelected": Icons.medical_services,
+      "label": "Service & Training"
+    },
+    {
+      "icon": Icons.receipt_long_outlined,
+      "iconSelected": LineIcons.doctor,
+      "label": "Tambah Dokter"
     },
     {
       "icon": Icons.receipt_long_outlined,
@@ -360,18 +383,25 @@ class _HomeScreenState extends State<HomeScreen>
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Column(
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                const SizedBox(
+                  height: 8,
+                ),
                 Text(
-                  'Dashboard Klinik',
-                  style: TextStyle(
+                  _menuItems[_selectedIndex]["label"],
+                  style: const TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF1E293B),
                   ),
                 ),
-                LiveClock(
+                const LiveClock(
                   isDesktop: true,
+                ),
+                const SizedBox(
+                  height: 8,
                 ),
               ],
             ),

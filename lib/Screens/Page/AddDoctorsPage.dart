@@ -1,7 +1,9 @@
-// ignore_for_file: use_build_context_synchronously, library_private_types_in_public_api
+// ignore_for_file: use_build_context_synchronously, library_private_types_in_public_api, deprecated_member_use
 
-import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
+
+import '../../utils/Validator.dart';
 
 class DaftarDoktor extends StatefulWidget {
   const DaftarDoktor({super.key});
@@ -116,27 +118,13 @@ class _DaftarDoktorState extends State<DaftarDoktor> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Daftar Dokter'),
-        centerTitle: true,
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        foregroundColor: Colors.white,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _isLoading ? null : _fetchDoctors,
-            tooltip: 'Refresh',
-          ),
-        ],
-      ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _buildBody(),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showAddDoctorDialog(),
-        child: const Icon(Icons.add),
         tooltip: 'Tambah Dokter',
+        child: const Icon(Icons.add),
       ),
     );
   }
@@ -307,62 +295,99 @@ class _DaftarDoktorState extends State<DaftarDoktor> {
   }
 
   void _showAddDoctorDialog() {
+    // Import the validators if needed
+    // import 'path_to_your_validators.dart';
+
+    // Define the specialization options
+    final List<String> specializations = [
+      'General Practicioner',
+      'Bedah Mulut',
+      'Orthodontia',
+      'Periodontia',
+      'Konservasi Gigi',
+      'Ilmu Kedokteran Gigi Anak',
+      'Penyakit Mulut',
+      'Prosthodontia'
+    ];
+
+    // Initialize dropdown value if empty
+    if (_bidangController.text.isEmpty && specializations.isNotEmpty) {
+      _bidangController.text = specializations[0];
+    }
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Tambah Dokter Baru'),
-        content: Form(
-          key: _formKey,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                TextFormField(
-                  controller: _nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Nama Dokter',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.person),
+        content: SizedBox(
+          width: 500, // Set specific width to make dialog wider
+          child: Form(
+            key: _formKey,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextFormField(
+                    controller: _nameController,
+                    decoration: const InputDecoration(
+                      labelText: 'Nama Dokter',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.person),
+                      contentPadding:
+                          EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+                    ),
+                    validator: (value) => Validators.validateName(value ?? ''),
                   ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Nama dokter harus diisi';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _bidangController,
-                  decoration: const InputDecoration(
-                    labelText: 'Bidang/Spesialisasi',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.medical_services),
+                  const SizedBox(height: 20),
+                  DropdownButtonFormField<String>(
+                    value: _bidangController.text.isEmpty
+                        ? specializations[0]
+                        : _bidangController.text,
+                    decoration: const InputDecoration(
+                      labelText: 'Bidang/Spesialisasi',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.medical_services),
+                      contentPadding:
+                          EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+                    ),
+                    items: specializations.map((String value) {
+                      return DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(value),
+                      );
+                    }).toList(),
+                    onChanged: (String? newValue) {
+                      if (newValue != null) {
+                        _bidangController.text = newValue;
+                      }
+                    },
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Bidang harus diisi';
+                      }
+                      return null;
+                    },
                   ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Bidang harus diisi';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _sipController,
-                  decoration: const InputDecoration(
-                    labelText: 'SIP (Surat Izin Praktik)',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.card_membership),
+                  const SizedBox(height: 20),
+                  TextFormField(
+                    controller: _sipController,
+                    decoration: const InputDecoration(
+                      labelText: 'SIP (Surat Izin Praktik)',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.card_membership),
+                      contentPadding:
+                          EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'SIP harus diisi';
+                      }
+                      return null;
+                    },
                   ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'SIP harus diisi';
-                    }
-                    return null;
-                  },
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -377,9 +402,11 @@ class _DaftarDoktorState extends State<DaftarDoktor> {
             onPressed: _isSubmitting
                 ? null
                 : () {
-              Navigator.of(context).pop();
-              _addDoctor();
-            },
+                    if (_formKey.currentState!.validate()) {
+                      Navigator.of(context).pop();
+                      _addDoctor();
+                    }
+                  },
             child: _isSubmitting
                 ? const SizedBox(
               width: 20,
@@ -389,6 +416,8 @@ class _DaftarDoktorState extends State<DaftarDoktor> {
                 : const Text('Simpan'),
           ),
         ],
+        actionsPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       ),
     );
   }

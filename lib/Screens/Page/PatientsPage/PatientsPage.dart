@@ -1,14 +1,15 @@
-import 'package:clima/Screens/Page/PatientsPage/pushdummy.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
-import 'package:image_picker/image_picker.dart';
-import 'dart:typed_data';
+// ignore_for_file: deprecated_member_use, use_build_context_synchronously
+
 import 'dart:io';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'dart:typed_data';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb;
+import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
-import 'dart:math';
 
 import 'DaftarPasien.dart';
 
@@ -27,7 +28,7 @@ class PatientsPage extends StatefulWidget {
 
 class _PatientsPageState extends State<PatientsPage> {
   int _selectedIndex = 0;
-  bool _isSidebarExpanded = true;
+  final bool _isSidebarExpanded = true;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   // Navigation method
@@ -67,14 +68,14 @@ class _PatientsPageState extends State<PatientsPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            DrawerHeader(
-              decoration: const BoxDecoration(
+            const DrawerHeader(
+              decoration: BoxDecoration(
                 color: primaryColor,
               ),
               child: Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  children: const [
+                  children: [
                     Icon(
                       Icons.local_hospital,
                       color: Colors.white,
@@ -179,13 +180,13 @@ class SidebarItem extends StatelessWidget {
   final VoidCallback onTap;
 
   const SidebarItem({
-    Key? key,
+    super.key,
     required this.icon,
     required this.label,
     required this.isActive,
     required this.isExpanded,
     required this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -221,7 +222,7 @@ class SidebarItem extends StatelessWidget {
 }
 
 class AddPatientForm extends StatefulWidget {
-  const AddPatientForm({Key? key}) : super(key: key);
+  const AddPatientForm({super.key});
 
   @override
   State<AddPatientForm> createState() => _AddPatientFormState();
@@ -239,7 +240,6 @@ class _AddPatientFormState extends State<AddPatientForm> {
   String? _selectedGender;
   String? _selectedReligion;
   Uint8List? _imageBytes;
-  String? _downloadUrl;
   String? _medicalRecordNumber;
   bool _isLoading = false;
 
@@ -295,9 +295,9 @@ class _AddPatientFormState extends State<AddPatientForm> {
         throw Exception('ID Klinik tidak tersedia');
       }
 
-      print('===========================');
-      print('Clinic ID: $_clinicId');
-      print('===========================');
+      if (kDebugMode) {
+        print('Clinic ID: $_clinicId');
+      }
 
       // Ambil semua data untuk klinik ini
       final snapshot = await FirebaseFirestore.instance
@@ -305,14 +305,12 @@ class _AddPatientFormState extends State<AddPatientForm> {
           .where('clinicId', isEqualTo: _clinicId)
           .get();
 
-      print('Jumlah dokumen yang ditemukan: ${snapshot.docs.length}');
 
       int lastNumber = 0;
       if (snapshot.docs.isNotEmpty) {
         // Loop melalui semua dokumen untuk menemukan nomor terbesar
         for (var doc in snapshot.docs) {
           final String? mrn = doc.data()['medicalRecordNumber'] as String?;
-          print('MRN yang ditemukan: $mrn');
 
           if (mrn != null) {
             // Parse nomor rekam medis
@@ -323,20 +321,16 @@ class _AddPatientFormState extends State<AddPatientForm> {
           }
         }
 
-        print('Nomor terakhir yang ditemukan: $lastNumber');
       }
 
       // Nomor berikutnya adalah nomor terakhir + 1
       final nextNumber = lastNumber + 1;
-      print('Nomor berikutnya: $nextNumber');
 
       setState(() {
         // Format: 8 digit dengan leading zeros
         _medicalRecordNumber = nextNumber.toString().padLeft(8, '0');
-        print('Medical Record Number yang dihasilkan: $_medicalRecordNumber');
       });
     } catch (e) {
-      print('Error fetching medical record number: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to fetch medical record number: $e')),
       );
@@ -450,7 +444,6 @@ class _AddPatientFormState extends State<AddPatientForm> {
       _selectedGender = null;
       _selectedReligion = null;
       _imageBytes = null;
-      _downloadUrl = null;
       _fetchMedicalRecordNumber();
     });
   }
@@ -481,14 +474,7 @@ class _AddPatientFormState extends State<AddPatientForm> {
                     color: primaryColor,
                   ),
                 ),
-                ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => DaftarDoktor()));
-                    },
-                    child: Text('Push')),
+
                 const SizedBox(height: 8),
                 const Text(
                   'Silakan isi semua data dengan benar',
@@ -590,7 +576,7 @@ class _AddPatientFormState extends State<AddPatientForm> {
                 const SizedBox(height: 20),
 
                 // Form fields
-                Text(
+                const Text(
                   'Data Pribadi',
                   style: TextStyle(
                     fontSize: 18,
@@ -782,7 +768,7 @@ class _AddPatientFormState extends State<AddPatientForm> {
                 ),
 
                 const SizedBox(height: 20),
-                Text(
+                const Text(
                   'Informasi Tambahan',
                   style: TextStyle(
                     fontSize: 18,
@@ -924,7 +910,6 @@ class PatientListPage extends StatefulWidget {
 class _PatientListPageState extends State<PatientListPage> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
-  bool _isLoading = false;
 
   @override
   Widget build(BuildContext context) {

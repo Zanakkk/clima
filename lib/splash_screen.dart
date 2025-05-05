@@ -155,7 +155,7 @@ class _SplashScreenState extends State<SplashScreen>
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(70),
+                    borderRadius: BorderRadius.circular(24),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withOpacity(0.1),
@@ -164,16 +164,21 @@ class _SplashScreenState extends State<SplashScreen>
                       ),
                     ],
                   ),
-                  child: Image.asset(
-                    'assets/LOGO.JPG',
-                    width: 100,
-                    height: 100,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(24),
+                    child: Image.asset(
+                      'assets/LOGO.JPG',
+                      width: 100,
+                      height: 100,
+                      fit: BoxFit.cover,
+                    ),
                   ),
                 ),
+
                 const SizedBox(height: 24),
                 // App name
                 const Text(
-                  'MedCare Clinic',
+                  'CLIMA NUSANTARA',
                   style: TextStyle(
                     fontSize: 32,
                     fontWeight: FontWeight.bold,

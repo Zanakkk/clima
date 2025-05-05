@@ -1,9 +1,7 @@
 // ignore_for_file: use_build_context_synchronously, library_private_types_in_public_api
 
-import 'package:clima/Screens/Page/PatientsPage/pushdummy.dart';
-import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:intl/intl.dart';
+import 'package:flutter/material.dart';
 
 class DaftarTindakanPasien extends StatefulWidget {
   const DaftarTindakanPasien({super.key});
@@ -157,20 +155,7 @@ class _DaftarTindakanPasienState extends State<DaftarTindakanPasien> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Daftar Tindakan'),
-        centerTitle: true,
-        elevation: 0,
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        foregroundColor: Colors.white,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _isLoading ? null : _fetchData,
-            tooltip: 'Muat ulang data',
-          ),
-        ],
-      ),
+
       body: _isLoading ? const _LoadingView() : _buildBody(),
     );
   }
@@ -218,7 +203,6 @@ class _DaftarTindakanPasienState extends State<DaftarTindakanPasien> {
                 color: Theme.of(context).colorScheme.primary,
               ),
         ),
-
         const SizedBox(height: 8),
         Text(
           'Pilih pasien dan dokter gigi untuk mendaftarkan tindakan baru',
@@ -310,7 +294,7 @@ class _DaftarTindakanPasienState extends State<DaftarTindakanPasien> {
         isExpanded: true,
         icon: const Icon(Icons.keyboard_arrow_down),
         decoration: const InputDecoration(
-          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 5),
+          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           border: InputBorder.none,
         ),
         items: _filteredPatients.map((patient) {
@@ -319,25 +303,25 @@ class _DaftarTindakanPasienState extends State<DaftarTindakanPasien> {
 
           return DropdownMenuItem<Map<String, dynamic>>(
             value: patient,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  name,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-                Text(
-                  'NIK: $nik',
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
-                ),
-              ],
+            child: Container(
+              width: double.infinity,
+              alignment: Alignment.centerLeft,
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: Text(
+                '$name - NIK: $nik',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+                softWrap: true,
+              ),
             ),
           );
         }).toList(),
         onChanged: (value) {
           setState(() => _selectedPatient = value);
         },
+        isDense: false,
+        itemHeight: null,
+        // Membiarkan item menyesuaikan tinggi konten
+        menuMaxHeight: 400, // Menambah ketinggian maksimum menu
       ),
     );
   }
@@ -396,7 +380,7 @@ class _DaftarTindakanPasienState extends State<DaftarTindakanPasien> {
         isExpanded: true,
         icon: const Icon(Icons.keyboard_arrow_down),
         decoration: const InputDecoration(
-          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 5),
+          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           border: InputBorder.none,
         ),
         items: _dentists.map((dentist) {
@@ -405,25 +389,25 @@ class _DaftarTindakanPasienState extends State<DaftarTindakanPasien> {
 
           return DropdownMenuItem<Map<String, dynamic>>(
             value: dentist,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  name,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-                Text(
-                  'SIP: $sip',
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
-                ),
-              ],
+            child: Container(
+              width: double.infinity,
+              alignment: Alignment.centerLeft,
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: Text(
+                '$name - SIP: $sip',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+                softWrap: true,
+              ),
             ),
           );
         }).toList(),
         onChanged: (value) {
           setState(() => _selectedDentist = value);
         },
+        isDense: false,
+        itemHeight: null,
+        // Membiarkan item menyesuaikan tinggi konten
+        menuMaxHeight: 400, // Menambah ketinggian maksimum menu
       ),
     );
   }
@@ -441,7 +425,7 @@ class _DaftarTindakanPasienState extends State<DaftarTindakanPasien> {
         elevation: 0,
       ),
       child: _isSubmitting
-          ? Row(
+          ? const Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 SizedBox(
@@ -452,16 +436,16 @@ class _DaftarTindakanPasienState extends State<DaftarTindakanPasien> {
                     valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                   ),
                 ),
-                const SizedBox(width: 12),
-                const Text('Memproses...'),
+                SizedBox(width: 12),
+                Text('Memproses...'),
               ],
             )
-          : Row(
+          : const Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.save),
-                const SizedBox(width: 12),
-                const Text(
+                Icon(Icons.save),
+                SizedBox(width: 12),
+                Text(
                   'Daftarkan Tindakan',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),

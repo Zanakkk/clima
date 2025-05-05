@@ -101,7 +101,7 @@ class MyApp extends StatelessWidget {
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, child) {
           return MaterialApp(
-            title: 'MedCare Clinic',
+            title: 'CLIMA',
             debugShowCheckedModeBanner: false,
             theme: _buildLightTheme(),
             darkTheme: _buildDarkTheme(),
