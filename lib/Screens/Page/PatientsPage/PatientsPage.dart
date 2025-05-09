@@ -12,6 +12,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 
 import 'DaftarPasien.dart';
+import 'EditDataPasien.dart';
 
 // Constants
 const Color primaryColor = Color(0xFF4F6AFF);
@@ -305,7 +306,6 @@ class _AddPatientFormState extends State<AddPatientForm> {
           .where('clinicId', isEqualTo: _clinicId)
           .get();
 
-
       int lastNumber = 0;
       if (snapshot.docs.isNotEmpty) {
         // Loop melalui semua dokumen untuk menemukan nomor terbesar
@@ -320,7 +320,6 @@ class _AddPatientFormState extends State<AddPatientForm> {
             }
           }
         }
-
       }
 
       // Nomor berikutnya adalah nomor terakhir + 1
@@ -1142,7 +1141,15 @@ class _PatientListPageState extends State<PatientListPage> {
                 ),
                 IconButton(
                   icon: const Icon(Icons.edit, color: Colors.amber),
-                  onPressed: () => _editPatient(id, data),
+                  onPressed: () {
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => EditPatientPage(
+                                  patientId: id,
+                                  patientData: data,
+                                )));
+                  },
                   tooltip: 'Edit Data',
                 ),
               ],

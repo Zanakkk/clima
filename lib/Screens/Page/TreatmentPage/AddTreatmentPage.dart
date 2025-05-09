@@ -37,6 +37,7 @@ class _AddTreatmentPageState extends State<AddTreatmentPage> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   // Controllers for SOAP fields
+  final TextEditingController _gigiController = TextEditingController();
   final TextEditingController _subjectiveController = TextEditingController();
   final TextEditingController _objectiveController = TextEditingController();
   final TextEditingController _assessmentController = TextEditingController();
@@ -50,10 +51,12 @@ class _AddTreatmentPageState extends State<AddTreatmentPage> {
   void initState() {
     super.initState();
     _fetchProcedureList();
+
   }
 
   @override
   void dispose() {
+    _gigiController.dispose();
     _subjectiveController.dispose();
     _objectiveController.dispose();
     _assessmentController.dispose();
@@ -287,7 +290,8 @@ class _AddTreatmentPageState extends State<AddTreatmentPage> {
                       Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (context) => const MedicalRecord()));
+                              builder: (context) =>
+                                  MedicalRecord(idpasien: widget.selectedPatient!['id'])));
                     },
                     child: const Text('Medical Record'))
               ],
@@ -412,6 +416,48 @@ class _AddTreatmentPageState extends State<AddTreatmentPage> {
           ),
         ),
         const SizedBox(height: 16),
+
+
+        // S - Subjective
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.pink.shade50,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Row(
+                children: [
+                  Icon(Icons.person_outline, color: Colors.pink),
+                  SizedBox(width: 8),
+                  Text(
+                    'Gigi',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: Colors.pink,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              TextFormField(
+                controller: _gigiController,
+                decoration: InputDecoration(
+                  hintText: 'Enter patient complaints and symptoms',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  filled: true,
+                  fillColor: Colors.white,
+                ),
+                maxLines: 3,
+              ),
+            ],
+          ),
+        ),
 
         // S - Subjective
         Container(
@@ -701,6 +747,7 @@ class _AddTreatmentPageState extends State<AddTreatmentPage> {
 
               // Prepare SOAP data with signature
               final soapData = {
+                'gigi': _gigiController.text.trim(),
                 'subjective': _subjectiveController.text.trim(),
                 'objective': _objectiveController.text.trim(),
                 'assessment': _assessmentController.text.trim(),
@@ -714,6 +761,7 @@ class _AddTreatmentPageState extends State<AddTreatmentPage> {
               // Pass SOAP data to parent widget along with procedure data
               widget.onAddProcedure(soapData);
 
+              _gigiController.clear();
               _subjectiveController.clear();
               _objectiveController.clear();
               _assessmentController.clear();
@@ -722,7 +770,6 @@ class _AddTreatmentPageState extends State<AddTreatmentPage> {
             } catch (e) {
               // Close loading dialog
               Navigator.pop(context);
-              print(e);
               // Show error message
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(

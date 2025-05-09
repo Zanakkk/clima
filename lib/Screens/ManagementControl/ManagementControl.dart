@@ -6,7 +6,6 @@ import 'package:http/http.dart' as http;
 
 import '../HomePage.dart';
 import '../Page/Receipt/LaporanStokObat.dart';
-import '../Page/Sales/SalesPage.dart';
 import 'ManageDoctor.dart';
 import 'ManagePricelist.dart';
 import 'ManagementStaff.dart';
@@ -110,7 +109,7 @@ class _ManagementControlState extends State<ManagementControl> {
       (pageVisibility[14]) ? const ManagementStaffPage() : Container(),
       (pageVisibility[15]) ? const ManagementPriceListPage() : Container(),
       (pageVisibility[16]) ? const LaporanStokObat() : Container(),
-      (pageVisibility[17]) ? const SalesPage() : Container(),
+      (pageVisibility[17]) ?  Container() : Container(),
       (pageVisibility[18]) ? Container() : Container(),
     ];
     final List<String> pageTitles = [

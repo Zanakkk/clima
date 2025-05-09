@@ -16,7 +16,6 @@ import 'ManagementControl/ManagementControl.dart';
 import 'Page/AbsenPage.dart';
 import 'Page/AddDoctorsPage.dart';
 import 'Page/CustomerSupportPage.dart';
-import 'Page/MedicalRecord/MedicalRecord.dart';
 import 'Page/PeripheralPage.dart';
 import 'Page/PriceListPage.dart';
 import 'Page/ReservationPage/AdminReserv.dart';
@@ -138,7 +137,7 @@ class _HomeScreenState extends State<HomeScreen>
     const AdminReservationsPage(),
     const PatientsPage(),
     const TreatmentsPage(),
-    const MedicalRecord(),
+    const TreatmentsPage(),
     const PricelistPage(),
     const DaftarDoktor(),
     const ManagementControl(),
@@ -181,16 +180,18 @@ class _HomeScreenState extends State<HomeScreen>
       "iconSelected": Icons.person,
       "label": "Patient Page"
     },
+
+    {
+      "icon": Icons.healing_outlined,
+      "iconSelected": Icons.healing,
+      "label": "Medical Record Page"
+    },
     {
       "icon": Icons.healing_outlined,
       "iconSelected": Icons.healing,
       "label": "Treatment Page"
     },
-    {
-      "icon": Icons.assignment_outlined,
-      "iconSelected": Icons.assignment,
-      "label": "Medical Record Page"
-    },
+
     {
       "icon": Icons.receipt_long_outlined,
       "iconSelected": Icons.medical_services,
@@ -200,11 +201,6 @@ class _HomeScreenState extends State<HomeScreen>
       "icon": Icons.receipt_long_outlined,
       "iconSelected": LineIcons.doctor,
       "label": "Tambah Dokter"
-    },
-    {
-      "icon": Icons.receipt_long_outlined,
-      "iconSelected": Icons.receipt,
-      "label": "Receipt - advanced"
     },
     {
       "icon": Icons.settings_outlined,
@@ -235,6 +231,12 @@ class _HomeScreenState extends State<HomeScreen>
       "icon": Icons.support_agent,
       "iconSelected": Icons.headset_mic,
       "label": "Customer Support Page"
+    },
+
+    {
+      "icon": Icons.receipt_long_outlined,
+      "iconSelected": Icons.receipt,
+      "label": "Receipt - advanced"
     },
     {
       "icon": Icons.logout,

@@ -1,239 +1,164 @@
-// ignore_for_file: library_private_types_in_public_api, use_build_context_synchronously
+// ignore_for_file: library_private_types_in_public_api, deprecated_member_use, avoid_print
 
 import 'package:flutter/material.dart';
-import 'package:signature/signature.dart';
-import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 
-import '../../HomePage.dart';
-import 'OHI.dart';
-
 class MedicalRecord extends StatefulWidget {
-  const MedicalRecord({super.key});
+  const MedicalRecord({required this.idpasien, super.key});
 
+  final String idpasien;
   @override
   _MedicalRecordState createState() => _MedicalRecordState();
 }
 
 class _MedicalRecordState extends State<MedicalRecord> {
-  List<Map<String, dynamic>> records = [];
   List<Map<String, dynamic>> patients = [];
+  List<Map<String, dynamic>> procedures = [];
   String selectedPatientId = '';
   bool isLoading = false;
-  bool hasError = false;
-  final PageController _pageController = PageController();
-  int currentPage = 0;
+  String patientName = '';
+  String namadokter = '';
 
   @override
   void initState() {
     super.initState();
-    _fetchPatients();
+    print(widget.idpasien);
+    _fetchPatientsForToday();
   }
 
-  @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
-  }
+  // Format timestamp to readable date
 
-  // Fungsi untuk refresh data
-  Future<void> refresh() async {
-    await _fetchPatients();
-    if (selectedPatientId.isNotEmpty) {
-      await _fetchMedicalRecord(selectedPatientId);
-    }
-  }
+  // Format timestamp to readable time
 
-  Future<void> _fetchPatients() async {
+  // Fetch patients for today
+  Future<void> _fetchPatientsForToday() async {
     setState(() => isLoading = true);
 
     try {
-      final response = await http.get(Uri.parse("$FULLURL/tindakan.json"));
-      if (response.statusCode == 200 && response.body.isNotEmpty) {
-        final Map<String, dynamic> data = json.decode(response.body);
-        final String today = DateFormat('yyyy-MM-dd').format(DateTime.now());
+      // Get today's date in YYYY-MM-DD format
+      DateFormat('yyyy-MM-dd').format(DateTime.now());
 
-        final fetchedPatients = data.entries
-            .where((entry) => entry.value['timestamp'].split('T')[0] == today)
-            .map((entry) {
+      final QuerySnapshot snapshot = await FirebaseFirestore.instance
+          .collection('tindakan')
+          .where('idpasien', isEqualTo: widget.idpasien)
+          .get();
+
+      final List<Map<String, dynamic>> fetchedPatients = snapshot.docs
+          .map((doc) => {
+                'id': doc.id,
+                'idpasien': doc['idpasien'],
+                'namapasien': doc['namapasien'],
+                'doctor': doc['doctor'],
+                'timestamp': doc['timestamp'],
+              })
+          .toList();
+
+      fetchedPatients.sort((a, b) => a['timestamp'].compareTo(b['timestamp']));
+
+      setState(() {
+        patients = fetchedPatients;
+
+        // Select first patient by default if available
+        if (patients.isNotEmpty && selectedPatientId.isEmpty) {
+          selectedPatientId = patients.first['idpasien'];
+          patientName = patients.first['namapasien'];
+          namadokter = patients.first['doctor'];
+          _fetchProcedures(selectedPatientId);
+        }
+      });
+    } catch (e) {
+      _showErrorSnackbar('Error fetching patients: $e');
+    } finally {
+      setState(() => isLoading = false);
+    }
+  }
+
+  // Fetch procedures for a specific patient
+  Future<void> _fetchProcedures(String patientId) async {
+    setState(() => isLoading = true);
+
+    try {
+      // First, find all tindakan documents for this patient
+      final QuerySnapshot tindakanSnapshot = await FirebaseFirestore.instance
+          .collection('tindakan')
+          .where('idpasien', isEqualTo: patientId)
+          .get();
+
+      List<Map<String, dynamic>> allProcedures = [];
+
+      // For each tindakan document, fetch its procedures subcollection
+      for (var tindakanDoc in tindakanSnapshot.docs) {
+        final String tindakanId = tindakanDoc.id;
+
+        final QuerySnapshot proceduresSnapshot = await FirebaseFirestore
+            .instance
+            .collection('tindakan')
+            .doc(tindakanId)
+            .collection('procedures')
+            .get();
+
+        // Map each procedure document to our format
+        final procedures = proceduresSnapshot.docs.map((procedureDoc) {
+          final data = procedureDoc.data() as Map<String, dynamic>;
+
+          // Extract SOAP data safely
+          Map<String, dynamic> soap = {};
+          if (data.containsKey('soap') && data['soap'] is Map) {
+            soap = data['soap'] as Map<String, dynamic>;
+          }
+
+          // Get signature from soap object if it exists there
+          String signature = '';
+          if (soap.containsKey('signature') && soap['signature'] != null) {
+            signature = soap['signature'] as String;
+          } else if (data.containsKey('signature') &&
+              data['signature'] != null) {
+            signature = data['signature'] as String;
+          }
+
+          String gigi = '';
+          if (soap.containsKey('gigi') && soap['gigi'] != null) {
+            gigi = soap['gigi'] as String;
+          } else if (data.containsKey('gigi') && data['gigi'] != null) {
+            gigi = data['gigi'] as String;
+          }
+
           return {
-            'id': entry.key,
-            'idpasien': entry.value['idpasien'],
-            'namapasien': entry.value['namapasien'],
-            'doctor': entry.value['doctor'],
-            'timestamp': entry.value['timestamp'],
+            'id': procedureDoc.id,
+            'tindakanId': tindakanId,
+            'procedure': data['procedure'] ?? '',
+            'explanation': data['explanation'] ?? '',
+            'price': data['price'] ?? 0,
+            'signature': signature, // Use the properly extracted signature
+            'timestamp': data['timestamp'] ?? '',
+            'gigi': gigi,
+            'subjective': data['subjective'] ?? soap['subjective'] ?? '',
+            'objective': data['objective'] ?? soap['objective'] ?? '',
+            'assessment': data['assessment'] ?? soap['assessment'] ?? '',
+            'plan': data['plan'] ?? soap['plan'] ?? '',
           };
         }).toList();
 
-        fetchedPatients
-            .sort((a, b) => a['timestamp'].compareTo(b['timestamp']));
-
-        setState(() {
-          patients = fetchedPatients;
-          hasError = false;
-
-          // Jika ada pasien, pilih yang pertama secara default
-          if (patients.isNotEmpty && selectedPatientId.isEmpty) {
-            selectedPatientId = patients.first['id'];
-            _fetchMedicalRecord(selectedPatientId);
-          }
-        });
+        allProcedures.addAll(procedures);
       }
+
+      // Sort all procedures by timestamp (newest first)
+      allProcedures.sort(
+          (a, b) => (b['timestamp'] ?? '').compareTo(a['timestamp'] ?? ''));
+
+      setState(() {
+        procedures = allProcedures;
+      });
     } catch (e) {
-      setState(() => hasError = true);
+      _showErrorSnackbar('Error fetching procedures: $e');
     } finally {
       setState(() => isLoading = false);
     }
   }
 
-  Future<void> _fetchMedicalRecord(String patientId) async {
-    setState(() => isLoading = true);
-
-    try {
-      final response = await http
-          .get(Uri.parse("$FULLURL/datapasien/$patientId/medicalrecord.json"));
-
-      if (response.statusCode == 200) {
-        if (response.body.isNotEmpty) {
-          final Map<String, dynamic> data = json.decode(response.body);
-
-          if (data.isNotEmpty) {
-            // Memetakan setiap entry ke dalam list records
-            final List<Map<String, dynamic>> fetchedRecords =
-                data.entries.map((entry) {
-              final procedureData = entry.value as Map<String, dynamic>;
-
-              return {
-                'id': entry.key,
-                'timestamp': procedureData['tanggal'],
-                's': procedureData['s'],
-                'o': procedureData['o'],
-                'a': procedureData['a'],
-                'p': procedureData['p'],
-                'treatment': procedureData['treatment'],
-                'keterangan': procedureData['keterangan'],
-                'urlTandaTangan': procedureData['urlTandaTangan'],
-              };
-            }).toList();
-
-            // Urutkan berdasarkan timestamp
-            fetchedRecords
-                .sort((a, b) => a['timestamp'].compareTo(b['timestamp']));
-
-            // Format tanggal dan waktu
-            final DateFormat dateFormat = DateFormat('d MMMM yyyy');
-            final DateFormat timeFormat = DateFormat('HH : mm');
-
-            // Tambahkan nomor urut
-            final List<Map<String, dynamic>> numberedRecords =
-                fetchedRecords.asMap().entries.map((entry) {
-              final index = (entry.key + 1).toString();
-              final record = entry.value;
-
-              // Mengubah format tanggal dan waktu
-              final DateTime dateTime = DateTime.parse(record['timestamp']);
-              final String formattedDate = dateFormat.format(dateTime);
-              final String formattedTime = timeFormat.format(dateTime);
-
-              return {
-                'id': record['id'],
-                'no': index,
-                'tanggal': formattedDate,
-                'waktu': formattedTime,
-                's': record['s'],
-                'o': record['o'],
-                'a': record['a'],
-                'p': record['p'],
-                'treatment': record['treatment'],
-                'keterangan': record['keterangan'],
-                'urlTandaTangan': record['urlTandaTangan'],
-              };
-            }).toList();
-
-            setState(() {
-              records = numberedRecords;
-              selectedPatientId = patientId;
-              hasError = false;
-              // Reset page controller to first page
-              if (_pageController.hasClients) {
-                _pageController.jumpToPage(0);
-              }
-              currentPage = 0;
-            });
-          } else {
-            setState(() {
-              records = [];
-              selectedPatientId = patientId;
-              hasError = false;
-            });
-          }
-        } else {
-          setState(() {
-            records = [];
-            selectedPatientId = patientId;
-            hasError = false;
-          });
-        }
-      } else {
-        setState(() {
-          hasError = true;
-        });
-      }
-    } finally {
-      setState(() => isLoading = false);
-    }
-  }
-
-  Future<void> _deleteRecord(String recordId) async {
-    setState(() => isLoading = true);
-
-    try {
-      final response = await http.delete(Uri.parse(
-          "$FULLURL/datapasien/$selectedPatientId/medicalrecord/$recordId.json"));
-
-      if (response.statusCode == 200) {
-        // Sukses dihapus, refresh data
-        await _fetchMedicalRecord(selectedPatientId);
-        ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Catatan berhasil dihapus')));
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Gagal menghapus catatan')));
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
-    } finally {
-      setState(() => isLoading = false);
-    }
-  }
-
-  void _showDeleteConfirmation(String recordId) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Konfirmasi'),
-          content: const Text('Apakah Anda yakin ingin menghapus catatan ini?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Batal'),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                _deleteRecord(recordId);
-              },
-              child: const Text('Hapus'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
+  // Show patient selector dialog
   void _showPatientSelector() {
     showDialog(
       context: context,
@@ -242,6 +167,7 @@ class _MedicalRecordState extends State<MedicalRecord> {
           title: const Text('Pilih Pasien'),
           content: SizedBox(
             width: double.maxFinite,
+            height: 300,
             child: ListView.builder(
               shrinkWrap: true,
               itemCount: patients.length,
@@ -253,8 +179,9 @@ class _MedicalRecordState extends State<MedicalRecord> {
                   onTap: () {
                     Navigator.of(context).pop();
                     setState(() {
-                      selectedPatientId = patient['id'];
-                      _fetchMedicalRecord(selectedPatientId);
+                      selectedPatientId = patient['idpasien'];
+                      patientName = patient['namapasien'];
+                      _fetchProcedures(selectedPatientId);
                     });
                   },
                 );
@@ -272,56 +199,25 @@ class _MedicalRecordState extends State<MedicalRecord> {
     );
   }
 
-  void _openEditForm(Map<String, dynamic> record) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return Align(
-          alignment: Alignment.centerRight,
-          child: FractionallySizedBox(
-            widthFactor: 0.33,
-            child: Material(
-              color: Colors.white,
-              elevation: 5,
-              shape: const RoundedRectangleBorder(
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(20),
-                  bottomLeft: Radius.circular(20),
-                ),
-              ),
-              child: MedicalFormPage(
-                selectedPatientId: selectedPatientId,
-                isEditing: true,
-                recordId: record['id'],
-                initialData: {
-                  's': record['s'],
-                  'o': record['o'],
-                  'a': record['a'],
-                  'p': record['p'],
-                  'treatment': record['treatment'],
-                  'keterangan': record['keterangan'],
-                },
-                onSuccess: () {
-                  refresh();
-                },
-              ),
-            ),
-          ),
-        );
-      },
+  // Show error snackbar
+  void _showErrorSnackbar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
-        title: Text(patients.isNotEmpty && selectedPatientId.isNotEmpty
-            ? 'Medical Record - ${patients.firstWhere((p) => p['id'] == selectedPatientId, orElse: () => {
-                  'namapasien': 'Tidak ada'
-                })['namapasien']}'
-            : 'Medical Record'),
+        title: Text(
+          'Rekam Medis - ${patientName.isNotEmpty ? patientName : "Pasien"}',
+          style: const TextStyle(fontWeight: FontWeight.w600),
+        ),
         centerTitle: true,
+        elevation: 0,
+        backgroundColor: Colors.white,
         actions: [
           IconButton(
             icon: const Icon(Icons.person),
@@ -330,619 +226,551 @@ class _MedicalRecordState extends State<MedicalRecord> {
           ),
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: refresh,
+            onPressed: () {
+              _fetchPatientsForToday();
+              if (selectedPatientId.isNotEmpty) {
+                _fetchProcedures(selectedPatientId);
+              }
+            },
             tooltip: 'Refresh',
           ),
         ],
       ),
       body: Column(
         children: [
-          // Tombol navigasi antar modul
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => const Odontogram()));
-                    },
-                    child: const Text('Odontogram')),
-                ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(context,
-                          MaterialPageRoute(builder: (context) => const OHI()));
-                    },
-                    child: const Text('OHI')),
-                ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => const OHIPage()));
-                    },
-                    child: const Text('OHI-PAGE')),
-              ],
-            ),
-          ),
-
-          // Indikator halaman
-          if (records.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back),
-                    onPressed: currentPage > 0
-                        ? () => _pageController.previousPage(
-                              duration: const Duration(milliseconds: 300),
-                              curve: Curves.easeInOut,
-                            )
-                        : null,
+          // Patient Info Card
+          if (patientName.isNotEmpty)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
                   ),
-                  Text('${currentPage + 1} / ${records.length}'),
-                  IconButton(
-                    icon: const Icon(Icons.arrow_forward),
-                    onPressed: currentPage < records.length - 1
-                        ? () => _pageController.nextPage(
-                              duration: const Duration(milliseconds: 300),
-                              curve: Curves.easeInOut,
-                            )
-                        : null,
+                ],
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    height: 40,
+                    width: 40,
+                    decoration: BoxDecoration(
+                      color: Colors.blue.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      Icons.person,
+                      color: Colors.blue,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        patientName,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'ID: $selectedPatientId',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const Spacer(),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.green.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.check_circle_outline,
+                          size: 16,
+                          color: Colors.green,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${procedures.length} Rekam Medis',
+                          style: const TextStyle(
+                            color: Colors.green,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
             ),
 
           // Loading indicator
-          if (isLoading) const Center(child: CircularProgressIndicator()),
-
-          // Error message
-          if (hasError)
-            const Center(
-              child: Padding(
-                padding: EdgeInsets.all(16.0),
-                child: Text(
-                  'Terjadi kesalahan saat memuat data. Silakan coba lagi.',
-                  style: TextStyle(color: Colors.red),
-                ),
-              ),
-            ),
-
-          // Empty state
-          if (!isLoading && !hasError && records.isEmpty)
+          if (isLoading)
             const Expanded(
               child: Center(
-                child: Text(
-                  'Belum ada catatan medis untuk pasien ini',
-                  style: TextStyle(fontSize: 16),
+                child: CircularProgressIndicator(),
+              ),
+            ),
+
+          // Empty state message
+          if (!isLoading && procedures.isEmpty)
+            const Expanded(
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.medical_information_outlined,
+                      size: 64,
+                      color: Colors.grey,
+                    ),
+                    SizedBox(height: 16),
+                    Text(
+                      'Belum ada catatan medis untuk pasien ini',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
 
-          // Medical record book view
-          if (!isLoading && !hasError && records.isNotEmpty)
+          // Medical records column headers
+          if (!isLoading && procedures.isNotEmpty)
+            Container(
+              margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+              decoration: BoxDecoration(
+                color: Colors.blue.shade600,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(12),
+                  topRight: Radius.circular(12),
+                ),
+              ),
+              child: const Row(
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: Text(
+                      'Tanggal & Gigi',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 12),
+                  Expanded(
+                    flex: 3,
+                    child: Text(
+                      'SOAP',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 12),
+                  Expanded(
+                    flex: 3,
+                    child: Text(
+                      'Tindakan',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 12),
+                  Expanded(
+                    flex: 2,
+                    child: Text(
+                      'Tanda Tangan',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+          // Medical record list
+          if (!isLoading && procedures.isNotEmpty)
             Expanded(
-              child: PageView.builder(
-                controller: _pageController,
-                onPageChanged: (index) {
-                  setState(() {
-                    currentPage = index;
-                  });
-                },
-                itemCount: records.length,
+              child: ListView.builder(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                itemCount: procedures.length,
                 itemBuilder: (context, index) {
-                  final record = records[index];
-                  return MedicalRecordPage(
-                    record: record,
-                    onEdit: () => _openEditForm(record),
-                    onDelete: () => _showDeleteConfirmation(record['id']),
+                  final procedure = procedures[index];
+                  return MedicalRecordCard(
+                    procedure: procedure,
+                    index: index + 1,
+                    dokter: namadokter,
                   );
                 },
               ),
             ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          showDialog(
-            context: context,
-            builder: (BuildContext context) {
-              return Align(
-                alignment: Alignment.centerRight,
-                child: FractionallySizedBox(
-                  widthFactor: 0.33,
-                  child: Material(
-                    color: Colors.white,
-                    elevation: 5,
-                    shape: const RoundedRectangleBorder(
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(20),
-                        bottomLeft: Radius.circular(20),
-                      ),
-                    ),
-                    child: MedicalFormPage(
-                      selectedPatientId: selectedPatientId,
-                      onSuccess: () {
-                        refresh();
-                      },
-                    ),
-                  ),
-                ),
-              );
-            },
-          );
-        },
-        backgroundColor: Colors.blue,
-        child: const Icon(Icons.add),
-      ),
     );
   }
 }
 
-// Widget khusus untuk menampilkan halaman catatan medis seperti buku
-class MedicalRecordPage extends StatelessWidget {
-  final Map<String, dynamic> record;
-  final VoidCallback onEdit;
-  final VoidCallback onDelete;
+class MedicalRecordCard extends StatelessWidget {
+  final String dokter;
+  final Map<String, dynamic> procedure;
+  final int index;
 
-  const MedicalRecordPage({
+  const MedicalRecordCard({
     super.key,
-    required this.record,
-    required this.onEdit,
-    required this.onDelete,
+    required this.procedure,
+    required this.index,
+    required this.dokter,
   });
 
   @override
   Widget build(BuildContext context) {
+    final Timestamp timestamp = procedure['timestamp'];
+    final DateTime dateTime = timestamp.toDate();
+    final String formattedDate = DateFormat('d MMMM yyyy').format(dateTime);
+    final String formattedTime = DateFormat('HH:mm').format(dateTime);
+
     return Container(
-      margin: const EdgeInsets.all(16.0),
+      margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(8.0),
+        borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.5),
-            spreadRadius: 2,
-            blurRadius: 5,
-            offset: const Offset(0, 3),
+            color: Colors.black.withOpacity(0.05),
+            spreadRadius: 1,
+            blurRadius: 6,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
-      child: Stack(
+      child: Column(
         children: [
-          // Efek binding buku di sisi kiri
+          // Header
           Container(
-            width: 20,
-            decoration: const BoxDecoration(
-              color: Colors.blue,
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(8.0),
-                bottomLeft: Radius.circular(8.0),
-              ),
-              gradient: LinearGradient(
-                colors: [Colors.blue, Colors.lightBlue],
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.blue.shade50,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(12),
+                topRight: Radius.circular(12),
               ),
             ),
-          ),
-
-          // Isi catatan medis
-          Padding(
-            padding: const EdgeInsets.fromLTRB(30.0, 16.0, 16.0, 16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Header dengan tanggal dan waktu
                 Container(
-                  padding: const EdgeInsets.all(8.0),
+                  height: 36,
+                  width: 36,
                   decoration: BoxDecoration(
-                    border: Border(
-                      bottom:
-                          BorderSide(color: Colors.grey.shade300, width: 1.0),
-                    ),
+                    color: Colors.blue,
+                    borderRadius: BorderRadius.circular(18),
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'No. ${record['no']}',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            '${record['tanggal']} | ${record['waktu']}',
-                            style: TextStyle(
-                              color: Colors.grey.shade700,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
+                  child: Center(
+                    child: Text(
+                      '$index',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
                       ),
-                      Row(
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.edit, color: Colors.blue),
-                            onPressed: onEdit,
-                            tooltip: 'Edit',
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.delete, color: Colors.red),
-                            onPressed: onDelete,
-                            tooltip: 'Hapus',
-                          ),
-                        ],
-                      ),
-                    ],
+                    ),
                   ),
                 ),
-
-                // Konten catatan medis
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(vertical: 12.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildSection('S (Subjektif)', record['s']),
-                        _buildSection('O (Objektif)', record['o']),
-                        _buildSection('A (Assessment)', record['a']),
-                        _buildSection('P (Plan)', record['p']),
-                        _buildSection('Treatment', record['treatment']),
-                        _buildSection('Keterangan', record['keterangan']),
-
-                        // Tanda tangan
-                        if (record['urlTandaTangan'] != null &&
-                            record['urlTandaTangan'].isNotEmpty)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 16.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'Tanda Tangan:',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Container(
-                                  height: 100,
-                                  decoration: BoxDecoration(
-                                    border:
-                                        Border.all(color: Colors.grey.shade300),
-                                    borderRadius: BorderRadius.circular(4.0),
-                                  ),
-                                  child: Center(
-                                    child: Image.network(
-                                      record['urlTandaTangan'],
-                                      height: 80,
-                                      fit: BoxFit.contain,
-                                      errorBuilder: (context, error,
-                                              stackTrace) =>
-                                          const Text(
-                                              'Tanda tangan tidak tersedia'),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                      ],
-                    ),
+                const Text(
+                  'Rekam Medis',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                  ),
+                ),
+                Text(
+                  formattedDate,
+                  style: TextStyle(
+                    color: Colors.grey.shade700,
+                    fontSize: 14,
                   ),
                 ),
               ],
             ),
           ),
+
+          // Content
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Column 1: Date and Gigi
+                  Expanded(
+                    flex: 2,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildColumnHeader('Tanggal'),
+                        const SizedBox(height: 8),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade50,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.grey.shade200),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                formattedDate,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                formattedTime,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.grey.shade700,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        _buildColumnHeader('Gigi'),
+                        const SizedBox(height: 8),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade50,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.grey.shade200),
+                          ),
+                          child: Text(
+                            procedure['gigi'] ?? '-',
+                            style: const TextStyle(
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(width: 12),
+
+                  // Column 2: SOAP
+                  Expanded(
+                    flex: 3,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildColumnHeader('SOAP'),
+                        const SizedBox(height: 8),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade50,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.grey.shade200),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (procedure['subjective']?.isNotEmpty ?? false)
+                                _buildSoapItem('S (Subjektif)',
+                                    procedure['subjective'], Colors.green),
+                              if (procedure['objective']?.isNotEmpty ?? false)
+                                _buildSoapItem('O (Objektif)',
+                                    procedure['objective'], Colors.blue),
+                              if (procedure['assessment']?.isNotEmpty ?? false)
+                                _buildSoapItem('A (Assessment)',
+                                    procedure['assessment'], Colors.orange),
+                              if (procedure['plan']?.isNotEmpty ?? false)
+                                _buildSoapItem('P (Plan)', procedure['plan'],
+                                    Colors.purple),
+                              if (!_hasAnySoapData(procedure))
+                                const Text('-', style: TextStyle(fontSize: 14)),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(width: 12),
+
+                  // Column 3: Procedure and Explanation
+                  Expanded(
+                    flex: 3,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildColumnHeader('Tindakan'),
+                        const SizedBox(height: 8),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade50,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.grey.shade200),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (procedure['procedure']?.isNotEmpty ?? false)
+                                _buildSoapItem('Prosedur',
+                                    procedure['procedure'], Colors.red),
+                              if (procedure['explanation']?.isNotEmpty ?? false)
+                                _buildSoapItem('Penjelasan',
+                                    procedure['explanation'], Colors.teal),
+                              if ((procedure['procedure']?.isEmpty ?? true) &&
+                                  (procedure['explanation']?.isEmpty ?? true))
+                                const Text('-', style: TextStyle(fontSize: 14)),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(width: 12),
+
+                  // Column 4: Signature
+                  Expanded(
+                    flex: 2,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildColumnHeader('Tanda Tangan'),
+                        const SizedBox(height: 8),
+                        Container(
+                          height: 100,
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade50,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.grey.shade200),
+                          ),
+                          child: procedure['signature']?.isNotEmpty ?? false
+                              ? Image.memory(
+                                  base64Decode(procedure['signature']),
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      const Center(child: Text('-')),
+                                )
+                              : const Center(child: Text('-')),
+                        ),
+                        const SizedBox(height: 8),
+                        _buildColumnHeader('Dokter'),
+                        const SizedBox(height: 8),
+                        Container(
+                          height: 40,
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade50,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.grey.shade200),
+                          ),
+                          child: Center(
+                            child: Text(dokter),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildSection(String title, String content) {
-    if (content == null || content.isEmpty) {
-      return const SizedBox.shrink();
-    }
+  bool _hasAnySoapData(Map<String, dynamic> procedure) {
+    return (procedure['subjective']?.isNotEmpty ?? false) ||
+        (procedure['objective']?.isNotEmpty ?? false) ||
+        (procedure['assessment']?.isNotEmpty ?? false) ||
+        (procedure['plan']?.isNotEmpty ?? false);
+  }
 
+  Widget _buildColumnHeader(String title) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+      decoration: BoxDecoration(
+        color: Colors.blue.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Text(
+        title,
+        style: const TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.bold,
+          color: Colors.blue,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSoapItem(String title, String content, Color color) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
+      padding: const EdgeInsets.only(bottom: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             title,
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 14,
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: 13,
+              color: color,
             ),
           ),
           const SizedBox(height: 4),
           Text(
             content,
-            style: const TextStyle(fontSize: 14),
+            style: const TextStyle(
+              fontSize: 14,
+              height: 1.4,
+            ),
           ),
+          const SizedBox(height: 8),
+          if (title != 'P (Plan)' && title != 'Penjelasan')
+            Divider(color: Colors.grey.shade300, height: 1),
+          const SizedBox(height: 4),
         ],
       ),
     );
-  }
-}
-
-// Widget form untuk menambah atau mengedit catatan medis
-class MedicalFormPage extends StatefulWidget {
-  final String selectedPatientId;
-  final bool isEditing;
-  final String? recordId;
-  final Map<String, dynamic>? initialData;
-  final VoidCallback? onSuccess;
-
-  const MedicalFormPage({
-    super.key,
-    required this.selectedPatientId,
-    this.isEditing = false,
-    this.recordId,
-    this.initialData,
-    this.onSuccess,
-  });
-
-  @override
-  _MedicalFormPageState createState() => _MedicalFormPageState();
-}
-
-class _MedicalFormPageState extends State<MedicalFormPage> {
-  final TextEditingController sController = TextEditingController();
-  final TextEditingController oController = TextEditingController();
-  final TextEditingController aController = TextEditingController();
-  final TextEditingController pController = TextEditingController();
-  final TextEditingController treatmentController = TextEditingController();
-  final TextEditingController keteranganController = TextEditingController();
-  bool isLoading = false;
-
-  final SignatureController _signatureController = SignatureController(
-    penStrokeWidth: 5,
-    penColor: Colors.black,
-    exportBackgroundColor: Colors.white,
-  );
-
-  @override
-  void initState() {
-    super.initState();
-    // Inisialisasi data jika mode edit
-    if (widget.isEditing && widget.initialData != null) {
-      sController.text = widget.initialData!['s'] ?? '';
-      oController.text = widget.initialData!['o'] ?? '';
-      aController.text = widget.initialData!['a'] ?? '';
-      pController.text = widget.initialData!['p'] ?? '';
-      treatmentController.text = widget.initialData!['treatment'] ?? '';
-      keteranganController.text = widget.initialData!['keterangan'] ?? '';
-    }
-  }
-
-  @override
-  void dispose() {
-    sController.dispose();
-    oController.dispose();
-    aController.dispose();
-    pController.dispose();
-    treatmentController.dispose();
-    keteranganController.dispose();
-    _signatureController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _saveRecord() async {
-    if (widget.selectedPatientId.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Silakan pilih pasien terlebih dahulu')));
-      return;
-    }
-
-    setState(() => isLoading = true);
-
-    try {
-      // Convert tanda tangan menjadi PNG
-      final signatureImage = await _signatureController.toPngBytes();
-      String signatureUrl = '';
-
-      // Upload tanda tangan (implementasi sesuai dengan backend Anda)
-      // Ini hanya contoh dan perlu disesuaikan dengan cara upload file di aplikasi Anda
-      // Untuk sederhananya, kita asumsikan ada endpoint API untuk upload file
-      if (signatureImage != null) {
-        // Upload logika di sini
-        // signatureUrl = await uploadSignature(signatureImage);
-
-        // Contoh sementara (mock)
-        signatureUrl = 'https://example.com/signatures/signature.png';
-      }
-
-      final Map<String, dynamic> recordData = {
-        'tanggal': DateTime.now().toIso8601String(),
-        's': sController.text,
-        'o': oController.text,
-        'a': aController.text,
-        'p': pController.text,
-        'treatment': treatmentController.text,
-        'keterangan': keteranganController.text,
-        'urlTandaTangan': signatureUrl,
-      };
-
-      final Uri uri = widget.isEditing
-          ? Uri.parse(
-              "$FULLURL/datapasien/${widget.selectedPatientId}/medicalrecord/${widget.recordId}.json")
-          : Uri.parse(
-              "$FULLURL/datapasien/${widget.selectedPatientId}/medicalrecord.json");
-
-      final http.Response response = widget.isEditing
-          ? await http.put(uri, body: json.encode(recordData))
-          : await http.post(uri, body: json.encode(recordData));
-
-      if (response.statusCode == 200) {
-        if (widget.onSuccess != null) {
-          widget.onSuccess!();
-        }
-        Navigator.of(context).pop();
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text(widget.isEditing
-                ? 'Catatan berhasil diperbarui'
-                : 'Catatan berhasil ditambahkan')));
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Gagal menyimpan catatan')));
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
-    } finally {
-      setState(() => isLoading = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-            widget.isEditing ? 'Edit Catatan Medis' : 'Tambah Catatan Medis'),
-        centerTitle: true,
-        automaticallyImplyLeading: false,
-        leading: IconButton(
-          icon: const Icon(Icons.close),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Form fields
-              _buildTextField(sController, 'S (Subjektif)', 'Keluhan pasien'),
-              _buildTextField(oController, 'O (Objektif)', 'Hasil pemeriksaan'),
-              _buildTextField(
-                  aController, 'A (Assessment)', 'Diagnosis/penilaian'),
-              _buildTextField(pController, 'P (Plan)', 'Rencana perawatan'),
-              _buildTextField(
-                  treatmentController, 'Treatment', 'Tindakan yang dilakukan'),
-              _buildTextField(
-                  keteranganController, 'Keterangan', 'Catatan tambahan'),
-
-              // Signature Pad
-              const SizedBox(height: 16),
-              const Text(
-                'Tanda Tangan:',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              Container(
-                height: 200,
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Signature(
-                  controller: _signatureController,
-                  backgroundColor: Colors.white,
-                ),
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(
-                    onPressed: () => _signatureController.clear(),
-                    child: const Text('Clear'),
-                  ),
-                ],
-              ),
-
-              // Save button
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: isLoading ? null : _saveRecord,
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                  ),
-                  child: isLoading
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : Text(widget.isEditing ? 'Update' : 'Simpan'),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTextField(
-    TextEditingController controller,
-    String label,
-    String hint, {
-    int maxLines = 3,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
-      child: TextField(
-        controller: controller,
-        maxLines: maxLines,
-        decoration: InputDecoration(
-          labelText: label,
-          hintText: hint,
-          border: const OutlineInputBorder(),
-          contentPadding: const EdgeInsets.all(12),
-        ),
-      ),
-    );
-  }
-}
-
-// Placeholder classes for navigasi antara modul
-class Odontogram extends StatelessWidget {
-  const Odontogram({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Odontogram'),
-      ),
-      body: const Center(
-        child: Text('Halaman Odontogram'),
-      ),
-    );
-  }
-}
-
-class OHI extends StatelessWidget {
-  const OHI({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-        appBar: AppBar(
-          title: const Text('OHI'),
-        ),
-        body: const Center(
-          child: Text('Halaman OHI'),
-        ));
   }
 }

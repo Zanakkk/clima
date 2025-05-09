@@ -353,8 +353,8 @@ class _LoginScreenState extends State<LoginScreen>
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                'MedCare has transformed our clinic operations. Patient management is now seamless and efficient.',
-                                style: GoogleFonts.poppins(
+                                'CLIMA telah mentransformasi operasional klinik kami. Manajemen pasien kini menjadi lebih lancar dan efisien.'
+                                    ,style: GoogleFonts.poppins(
                                   fontSize: 14,
                                   fontStyle: FontStyle.italic,
                                   color: Colors.white.withOpacity(0.9),
@@ -362,7 +362,7 @@ class _LoginScreenState extends State<LoginScreen>
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                '- Dr. Sarah Johnson, Family Clinic',
+                                '- drg Daffa Safra',
                                 style: GoogleFonts.poppins(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w500,
