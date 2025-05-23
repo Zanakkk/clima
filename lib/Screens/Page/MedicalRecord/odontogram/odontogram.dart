@@ -79,7 +79,6 @@ class _OdontogramState extends State<Odontogram> {
     });
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -208,7 +207,7 @@ class _ShapeGridPageState extends State<ShapeGridPage> {
     Widget buildToothItem(int index, String label) {
       // Mendapatkan kondisi gigi yang sesuai dengan label
       final toothCondition = widget.toothConditions.firstWhere(
-            (element) => element['label'] == label,
+        (element) => element['label'] == label,
         orElse: () => {'label': label},
       );
 
@@ -239,15 +238,15 @@ class _ShapeGridPageState extends State<ShapeGridPage> {
       // Menentukan painter sesuai dengan jenis gigi
       final painter = isPosterior
           ? Posterior(
-        isBlue: _isBlueList[index],
-        conditions: toothCondition,
-        label: label,
-      )
+              isBlue: _isBlueList[index],
+              conditions: toothCondition,
+              label: label,
+            )
           : Anterior(
-        isBlue: _isBlueList[index],
-        conditions: toothCondition,
-        label: label,
-      );
+              isBlue: _isBlueList[index],
+              conditions: toothCondition,
+              label: label,
+            );
 
       // Cek apakah RCT harus ditampilkan
       final bool showTriangle = toothCondition['rct'] ?? false;
@@ -256,8 +255,42 @@ class _ShapeGridPageState extends State<ShapeGridPage> {
       final String teksAtas = toothCondition['teks_atas'] ?? '';
 
       // Kelompokkan berdasarkan label untuk posisi label gigi
-      final bool isUpperTeeth = ['18', '17', '16', '15', '14', '13', '12', '11', '21', '22', '23', '24', '25', '26', '27', '28'].contains(label);
-      final bool isLowerTeeth = ['48', '47', '46', '45', '44', '43', '42', '41', '31', '32', '33', '34', '35', '36', '37', '38'].contains(label);
+      final bool isUpperTeeth = [
+        '18',
+        '17',
+        '16',
+        '15',
+        '14',
+        '13',
+        '12',
+        '11',
+        '21',
+        '22',
+        '23',
+        '24',
+        '25',
+        '26',
+        '27',
+        '28'
+      ].contains(label);
+      final bool isLowerTeeth = [
+        '48',
+        '47',
+        '46',
+        '45',
+        '44',
+        '43',
+        '42',
+        '41',
+        '31',
+        '32',
+        '33',
+        '34',
+        '35',
+        '36',
+        '37',
+        '38'
+      ].contains(label);
 
       return SizedBox(
         width: itemSize,
@@ -327,7 +360,6 @@ class _ShapeGridPageState extends State<ShapeGridPage> {
         ),
       );
     }
-
 
     return Column(
       children: [

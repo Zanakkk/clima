@@ -498,7 +498,9 @@ class _DoctorFinancialReportState extends State<DoctorFinancialReport> {
           'Doctor Financial Report',
           style: TextStyle(
             fontWeight: FontWeight.w600,
+          color: Colors.white,
           ),
+
         ),
         backgroundColor: primaryColor,
         elevation: 0,

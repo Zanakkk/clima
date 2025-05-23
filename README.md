@@ -2,7 +2,7 @@
 
 <div style="text-align: center;">
     <img src="/api/placeholder/400/120" alt="CLIMA Logo" style="max-width: 400px;" />
-    <h1 style="color: #0066cc;">CLIMA</h1>
+    <h1 style="color: #0066cc;">CLIMA</h1>00000
     <h2 style="color: #0066cc;">Sistem Informasi Manajemen Klinik</h2>
     <p><em>Solusi Digital Terpadu untuk Klinik Anda</em></p>
 </div>

@@ -1,9 +1,13 @@
 // ignore_for_file: library_private_types_in_public_api, deprecated_member_use, avoid_print
 
+import 'package:clima/Screens/Page/Receipt/Receipt.dart';
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+import 'package:line_icons/line_icons.dart';
+
+import 'odontogram/odontogram.dart';
 
 class MedicalRecord extends StatefulWidget {
   const MedicalRecord({required this.idpasien, super.key});
@@ -158,47 +162,6 @@ class _MedicalRecordState extends State<MedicalRecord> {
     }
   }
 
-  // Show patient selector dialog
-  void _showPatientSelector() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Pilih Pasien'),
-          content: SizedBox(
-            width: double.maxFinite,
-            height: 300,
-            child: ListView.builder(
-              shrinkWrap: true,
-              itemCount: patients.length,
-              itemBuilder: (context, index) {
-                final patient = patients[index];
-                return ListTile(
-                  title: Text(patient['namapasien']),
-                  subtitle: Text('ID: ${patient['idpasien']}'),
-                  onTap: () {
-                    Navigator.of(context).pop();
-                    setState(() {
-                      selectedPatientId = patient['idpasien'];
-                      patientName = patient['namapasien'];
-                      _fetchProcedures(selectedPatientId);
-                    });
-                  },
-                );
-              },
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Tutup'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   // Show error snackbar
   void _showErrorSnackbar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -220,11 +183,6 @@ class _MedicalRecordState extends State<MedicalRecord> {
         backgroundColor: Colors.white,
         actions: [
           IconButton(
-            icon: const Icon(Icons.person),
-            onPressed: _showPatientSelector,
-            tooltip: 'Pilih Pasien',
-          ),
-          IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () {
               _fetchPatientsForToday();
@@ -233,6 +191,22 @@ class _MedicalRecordState extends State<MedicalRecord> {
               }
             },
             tooltip: 'Refresh',
+          ),
+          IconButton(
+            icon: const Icon(LineIcons.pills),
+            onPressed: () {
+              Navigator.push(context,
+                  MaterialPageRoute(builder: (context) => const ResepObat()));
+            },
+            tooltip: 'Resep Obat',
+          ),
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () {
+              Navigator.push(context,
+                  MaterialPageRoute(builder: (context) => const Odontogram()));
+            },
+            tooltip: 'Odontogram',
           ),
         ],
       ),

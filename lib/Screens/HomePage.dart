@@ -12,16 +12,13 @@ import 'package:line_icons/line_icons.dart';
 import '../main.dart';
 import '../utils/LiveClock.dart';
 import 'Dashboard.dart';
-import 'ManagementControl/ManagementControl.dart';
-import 'Page/AbsenPage.dart';
 import 'Page/AddDoctorsPage.dart';
-import 'Page/CustomerSupportPage.dart';
-import 'Page/PeripheralPage.dart';
+import 'Page/MedicalRecord/MedrecPage.dart';
+import 'Page/MedicalRecord/doctor payroll.dart';
 import 'Page/PriceListPage.dart';
 import 'Page/ReservationPage/AdminReserv.dart';
+import 'Page/ReservationPage/PublicReservationPage.dart';
 import 'Page/ReservationPage/ReservationPage.dart';
-import 'Page/StaffListPage.dart';
-import 'Page/StocksPage.dart';
 import 'Page/TreatmentPage/TreatmentPage.dart';
 import 'RegisterLogin/Login.dart';
 
@@ -132,31 +129,16 @@ class _HomeScreenState extends State<HomeScreen>
 
   // List dari semua screen
   final List<Widget> _screens = [
-    const DashboardScreen(),
+    const PublicReservationsPage(clinicId: 'http://localhost:50197/daffa4342',),
     const ReservationsPage(),
     const AdminReservationsPage(),
     const PatientsPage(),
-    const TreatmentsPage(),
+    const MedRecPage(),
     const TreatmentsPage(),
     const PricelistPage(),
     const DaftarDoktor(),
-    const ManagementControl(),
-    const StaffListPage(),
-    const StocksPage(),
-    const PeripheralsPage(),
-    const Absen(),
-    const CustomerSupportPage(),
-    Container(),
-    Container(),
-    Container(),
-    Container(),
-    Container(),
-    Container(),
-    Container(),
-    Container(),
-    Container(),
-    Container(),
-    Container(),
+    const DoctorFinancialReport(),
+
   ];
 
   // Daftar menu dengan ikon dan label
@@ -170,7 +152,8 @@ class _HomeScreenState extends State<HomeScreen>
       "icon": Icons.calendar_today,
       "iconSelected": Icons.calendar_month,
       "label": "Reservation Page"
-    }, {
+    },
+    {
       "icon": Icons.calendar_today,
       "iconSelected": Icons.calendar_month,
       "label": "Admin Reserv"
@@ -180,7 +163,6 @@ class _HomeScreenState extends State<HomeScreen>
       "iconSelected": Icons.person,
       "label": "Patient Page"
     },
-
     {
       "icon": Icons.healing_outlined,
       "iconSelected": Icons.healing,
@@ -191,7 +173,6 @@ class _HomeScreenState extends State<HomeScreen>
       "iconSelected": Icons.healing,
       "label": "Treatment Page"
     },
-
     {
       "icon": Icons.receipt_long_outlined,
       "iconSelected": Icons.medical_services,
@@ -203,91 +184,11 @@ class _HomeScreenState extends State<HomeScreen>
       "label": "Tambah Dokter"
     },
     {
-      "icon": Icons.settings_outlined,
-      "iconSelected": Icons.settings,
-      "label": "Management Control"
-    },
-    {
-      "icon": Icons.people_outline,
-      "iconSelected": Icons.people,
-      "label": "Staff List Page"
-    },
-    {
-      "icon": Icons.inventory_2_outlined,
-      "iconSelected": Icons.inventory_2,
-      "label": "Stocks Page"
-    },
-    {
-      "icon": Icons.devices_other,
-      "iconSelected": Icons.devices,
-      "label": "Peripheral Page"
-    },
-    {
-      "icon": Icons.access_time,
-      "iconSelected": Icons.access_time_filled,
-      "label": "Absen Page"
-    },
-    {
-      "icon": Icons.support_agent,
-      "iconSelected": Icons.headset_mic,
-      "label": "Customer Support Page"
-    },
-
-    {
-      "icon": Icons.receipt_long_outlined,
-      "iconSelected": Icons.receipt,
-      "label": "Receipt - advanced"
-    },
-    {
-      "icon": Icons.logout,
-      "iconSelected": Icons.logout,
-      "label": "Logout Page"
-    },
-    {
-      "icon": Icons.medical_services_outlined,
-      "iconSelected": Icons.medical_services,
-      "label": "Management Doctor"
-    },
-    {
-      "icon": Icons.manage_accounts_outlined,
-      "iconSelected": Icons.manage_accounts,
-      "label": "Management Staff"
-    },
-    {
-      "icon": Icons.list_alt_outlined,
-      "iconSelected": Icons.list_alt,
-      "label": "Management Price List"
-    },
-    {
-      "icon": Icons.local_pharmacy_outlined,
-      "iconSelected": Icons.local_pharmacy,
-      "label": "Laporan Stok Obat"
-    },
-    {
-      "icon": Icons.point_of_sale,
-      "iconSelected": Icons.shopping_cart,
-      "label": "Sales Page"
-    },
-    {
-      "icon": Icons.monetization_on_outlined,
-      "iconSelected": Icons.monetization_on,
+      "icon": Icons.attach_money,
+      "iconSelected": LineIcons.doctor,
       "label": "Payroll"
     },
-    {
-      "icon": Icons.print_outlined,
-      "iconSelected": Icons.print,
-      "label": "Cetak Invoice"
-    },
-    {
-      "icon": Icons.send_to_mobile,
-      "iconSelected": Icons.send,
-      "label": "Kirim Invoice WA"
-    },
-    {
-      "icon": Icons.file_download_outlined,
-      "iconSelected": Icons.file_download,
-      "label": "Ekspor Laporan Ke EXCEL"
-    },
+
   ];
 
   @override

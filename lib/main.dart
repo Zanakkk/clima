@@ -193,15 +193,7 @@ class MyApp extends StatelessWidget {
           fontWeight: FontWeight.w400,
         ),
       ),
-      cardTheme: CardTheme(
-        elevation: 4,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        color: MedColors.cardBackground,
-        surfaceTintColor: Colors.white,
-        shadowColor: Colors.black.withOpacity(0.1),
-      ),
+
       dividerTheme: const DividerThemeData(
         color: MedColors.divider,
         thickness: 1,
@@ -288,15 +280,6 @@ class MyApp extends StatelessWidget {
           color: Colors.white70.withOpacity(0.7),
           fontWeight: FontWeight.w400,
         ),
-      ),
-      cardTheme: CardTheme(
-        elevation: 4,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        color: const Color(0xFF1E1E1E),
-        surfaceTintColor: const Color(0xFF1E1E1E),
-        shadowColor: Colors.black.withOpacity(0.3),
       ),
       dividerTheme: const DividerThemeData(
         color: Color(0xFF3E3E3E),
