@@ -3,6 +3,7 @@
 import 'dart:html' as html;
 
 import 'package:clima/Screens/Page/PatientsPage/PatientsPage.dart';
+import 'package:clima/Screens/RegisterLogin/LogOut.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -129,7 +130,7 @@ class _HomeScreenState extends State<HomeScreen>
 
   // List dari semua screen
   final List<Widget> _screens = [
-    const PublicReservationsPage(clinicId: 'http://localhost:50197/daffa4342',),
+    const PublicReservationPage(),
     const ReservationsPage(),
     const AdminReservationsPage(),
     const PatientsPage(),
@@ -138,7 +139,6 @@ class _HomeScreenState extends State<HomeScreen>
     const PricelistPage(),
     const DaftarDoktor(),
     const DoctorFinancialReport(),
-
   ];
 
   // Daftar menu dengan ikon dan label
@@ -188,7 +188,6 @@ class _HomeScreenState extends State<HomeScreen>
       "iconSelected": LineIcons.doctor,
       "label": "Payroll"
     },
-
   ];
 
   @override
@@ -817,7 +816,7 @@ class _HomeScreenState extends State<HomeScreen>
       html.window.localStorage['status'] = '';
       // Navigate to login screen
       if (mounted) {
-        Navigator.of(context).pushReplacementNamed('/login');
+        Navigator.of(context).push(MaterialPageRoute(builder: (context) => LoginScreen()));
       }
     } catch (e) {
       // Show error message

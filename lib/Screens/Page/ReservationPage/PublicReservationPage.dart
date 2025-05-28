@@ -1,24 +1,19 @@
 // ignore_for_file: deprecated_member_use
-
+import 'dart:html' as html;
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:go_router/go_router.dart';
 
-import 'ReservationPage.dart'; // Atau package routing yang Anda gunakan
-
-class PublicReservationsPage extends StatefulWidget {
-  final String? clinicId; // Parameter dari URL atau route
-
-  const PublicReservationsPage({super.key, this.clinicId});
+class PublicReservationPage extends StatefulWidget {
+  const PublicReservationPage({super.key});
 
   @override
-  State<PublicReservationsPage> createState() => _PublicReservationsPageState();
+  State<PublicReservationPage> createState() => _PublicReservationPageState();
 }
 
-class _PublicReservationsPageState extends State<PublicReservationsPage> {
+class _PublicReservationPageState extends State<PublicReservationPage> {
   final _formKey = GlobalKey<FormState>();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
@@ -32,9 +27,7 @@ class _PublicReservationsPageState extends State<PublicReservationsPage> {
   // Selected values
   Map<String, dynamic>? _selectedDoctor;
   Map<String, dynamic>? _selectedProcedure;
-
-  // Clinic data
-  Map<String, dynamic>? _clinicData;
+  String? _clinicId;
 
   // Data lists
   List<Map<String, dynamic>> _doctors = [];
@@ -47,12 +40,14 @@ class _PublicReservationsPageState extends State<PublicReservationsPage> {
   String? _reservationNumber;
   String? _checkPhoneNumber;
   Map<String, dynamic>? _foundReservation;
-  bool _clinicNotFound = false;
 
+  String? _endpointId;
+  bool _isPublicReservation = false;
   @override
   void initState() {
     super.initState();
-    _initializeClinic();
+    _checkForEndpointId();
+    _loadData();
   }
 
   @override
@@ -63,83 +58,92 @@ class _PublicReservationsPageState extends State<PublicReservationsPage> {
     super.dispose();
   }
 
-  Future<void> _initializeClinic() async {
+  // REVISI 4: Tambahkan method untuk mengecek endpoint ID dari URL
+  void _checkForEndpointId() {
+    final String currentUrl = html.window.location.href;
+    final Uri uri = Uri.parse(currentUrl);
+
+    // Cek apakah ada endpoint ID di path
+    final List<String> pathSegments = uri.pathSegments;
+    if (pathSegments.isNotEmpty) {
+      final String lastSegment = pathSegments.last;
+      // Jika segment terakhir bukan 'reservasi' atau path kosong, maka itu adalah endpoint ID
+      if (lastSegment.isNotEmpty && lastSegment != 'reservasipublik') {
+        setState(() {
+          _endpointId = lastSegment;
+          _isPublicReservation = true;
+        });
+      }
+    }
+  }
+
+  Future<void> _loadData() async {
     setState(() => _isLoading = true);
 
-    // Jika tidak ada clinicId dari parameter, tampilkan error
-    if (widget.clinicId == null || widget.clinicId!.isEmpty) {
-      setState(() {
-        _clinicNotFound = true;
-        _isLoading = false;
-      });
-      return;
-    }
-
-    await _loadClinicData();
-
-    if (_clinicData != null) {
-      await Future.wait([
-        _fetchDoctors(),
-        _fetchProcedures(),
-      ]);
-    }
+    // Hanya load clinic ID dulu
+    await _loadClinicId();
 
     setState(() => _isLoading = false);
   }
 
-  // Load clinic data berdasarkan ID
-  Future<void> _loadClinicData() async {
+  // Get the clinic ID
+  // REVISI 5: Ubah method _loadClinicId untuk menggunakan endpoint ID
+// Get the clinic ID
+// REVISI 5: Ubah method _loadClinicId untuk menggunakan endpoint ID
+  Future _loadClinicId() async {
     try {
-      // Coba ambil berdasarkan document ID
-      DocumentSnapshot doc =
-          await _firestore.collection('clinics').doc(widget.clinicId!).get();
-
-      if (doc.exists) {
-        setState(() {
-          _clinicData = {
-            'id': doc.id,
-            ...doc.data() as Map<String, dynamic>,
-          };
-        });
-        return;
-      }
-
-      // Jika tidak ditemukan berdasarkan ID, coba cari berdasarkan slug/code
-      QuerySnapshot querySnapshot = await _firestore
-          .collection('clinics')
-          .where('endpointId', isEqualTo: widget.clinicId!)
-          .limit(1)
-          .get();
-
-      if (querySnapshot.docs.isNotEmpty) {
-        setState(() {
-          _clinicData = {
-            'id': querySnapshot.docs.first.id,
-            ...querySnapshot.docs.first.data() as Map<String, dynamic>,
-          };
-        });
+      if (_isPublicReservation && _endpointId != null) {
+        print(1);
+        final querySnapshot = await _firestore
+            .collection('clinics')
+            .where('endpointId', isEqualTo: _endpointId)
+            .limit(1)
+            .get();
+        print(2);
+        if (querySnapshot.docs.isNotEmpty) {
+          setState(() {
+            _clinicId = querySnapshot.docs.first.id;
+          });
+          print(3);
+          // Setelah _clinicId di-set, baru fetch data lainnya
+          await _fetchDoctors();
+          await _fetchProcedures();
+          print(4);
+        } else {
+          _showSnackBar('Klinik tidak ditemukan untuk endpoint: $_endpointId');
+        }
       } else {
-        setState(() {
-          _clinicNotFound = true;
-        });
+        final querySnapshot =
+            await _firestore.collection('clinics').limit(1).get();
+        if (querySnapshot.docs.isNotEmpty) {
+          setState(() {
+            _clinicId = querySnapshot.docs.first.id;
+          });
+
+          // Setelah _clinicId di-set, baru fetch data lainnya
+          await _fetchDoctors();
+          await _fetchProcedures();
+        }
       }
     } catch (e) {
       _showSnackBar('Error loading clinic data: ${e.toString()}');
-      setState(() {
-        _clinicNotFound = true;
-      });
     }
   }
 
-  // Fetch doctors yang bekerja di klinik ini
-  Future<void> _fetchDoctors() async {
+// Fetch list of doctors from firestore - FILTERED BY CLINIC ID
+  Future _fetchDoctors() async {
+    if (_clinicId == null) {
+      _showSnackBar('Clinic ID tidak tersedia');
+      return;
+    }
+    print(21);
     try {
-      // Ambil dokter berdasarkan clinic ID
       final snapshot = await _firestore
           .collection('dokter')
-          .where('clinicId', isEqualTo: _clinicData!['id'])
+          .where('clinicId', isEqualTo: _clinicId)
           .get();
 
+      print(22);
       final List<Map<String, dynamic>> doctors = snapshot.docs.map((doc) {
         return {
           'id': doc.id,
@@ -147,41 +151,70 @@ class _PublicReservationsPageState extends State<PublicReservationsPage> {
         };
       }).toList();
 
+      print(23);
       setState(() {
         _doctors = doctors;
       });
+      print(24);
     } catch (e) {
       _showSnackBar('Gagal mengambil data dokter: ${e.toString()}');
     }
   }
 
-  // Fetch procedures yang tersedia di klinik ini
-  Future<void> _fetchProcedures() async {
+// Fetch list of procedures/treatments from firestore - FILTERED BY CLINIC ID
+  Future _fetchProcedures() async {
+    if (_clinicId == null) {
+      _showSnackBar('Clinic ID tidak tersedia');
+      return;
+    }
+
+    print(31);
     try {
-      // Ambil pricelist berdasarkan clinic ID
       final snapshot = await _firestore
           .collection('pricelist')
-          .where('clinicId', isEqualTo: _clinicData!['id'])
+          .where('clinicId', isEqualTo: _clinicId)
           .get();
 
+      print(32);
       final List<Map<String, dynamic>> procedures = snapshot.docs.map((doc) {
         final data = doc.data();
         return {
           'id': doc.id,
           'name': data['name'] as String,
           'price': data['price'] as int,
+          'clinicId': data['clinicId'] as String,
         };
       }).toList();
 
+      print(33);
       setState(() {
         _procedures = procedures;
       });
+      print(34);
     } catch (e) {
       _showSnackBar('Gagal mengambil data perawatan: ${e.toString()}');
     }
   }
 
-  // Submit reservation dengan clinic ID yang tepat
+// Optional: Method untuk refresh semua data berdasarkan clinic ID
+  Future _refreshDataByClinicId() async {
+    if (_clinicId == null) {
+      _showSnackBar('Clinic ID tidak tersedia');
+      return;
+    }
+
+    try {
+      await Future.wait([
+        _fetchDoctors(),
+        _fetchProcedures(),
+      ]);
+      _showSnackBar('Data berhasil diperbarui');
+    } catch (e) {
+      _showSnackBar('Gagal memperbarui data: ${e.toString()}');
+    }
+  }
+
+  // Submit reservation to firestore
   Future<void> _submitReservation() async {
     if (_formKey.currentState!.validate()) {
       if (_selectedDoctor == null) {
@@ -194,14 +227,19 @@ class _PublicReservationsPageState extends State<PublicReservationsPage> {
         return;
       }
 
+      if (_clinicId == null) {
+        _showSnackBar('Data klinik tidak ditemukan');
+        return;
+      }
+
       setState(() => _isSubmitting = true);
 
       try {
-        // Generate reservation number dengan prefix clinic
+        // Generate reservation number
         final DateTime now = DateTime.now();
-        final String clinicPrefix = _clinicData!['code'] ?? 'CLI';
-        final String reservationCode =
-            '$clinicPrefix${now.millisecondsSinceEpoch.toString().substring(5)}';
+        final String reservationCode = _isPublicReservation
+            ? 'PUB${now.millisecondsSinceEpoch.toString().substring(5)}'
+            : 'RES${now.millisecondsSinceEpoch.toString().substring(5)}';
 
         // Combine date and time
         final DateTime reservationDateTime = DateTime(
@@ -224,15 +262,18 @@ class _PublicReservationsPageState extends State<PublicReservationsPage> {
           'procedurePrice': _selectedProcedure!['price'],
           'reservationDateTime': Timestamp.fromDate(reservationDateTime),
           'createdAt': Timestamp.fromDate(now),
-          'clinicId': _clinicData!['id'], // Pastikan clinic ID yang benar
-          'clinicName': _clinicData!['name'],
+          'clinicId': _clinicId,
           'reservationCode': reservationCode,
           'status': 'pending',
-          'source': 'public', // Tandai bahwa ini dari public reservation
+          // TAMBAHKAN FIELD UNTUK PUBLIC RESERVATION
+          'isPublicReservation': _isPublicReservation,
+          'endpointId': _endpointId,
         };
 
-        // Save to firestore
-        await _firestore.collection('reservasi').add(reservationData);
+        // UBAH COLLECTION BERDASARKAN JENIS RESERVASI
+        final String collectionName =
+            _isPublicReservation ? 'reservasipublik' : 'reservasipublik';
+        await _firestore.collection(collectionName).add(reservationData);
 
         // Reset form
         _formKey.currentState!.reset();
@@ -256,36 +297,53 @@ class _PublicReservationsPageState extends State<PublicReservationsPage> {
     }
   }
 
-  // Check reservation dengan filter clinic ID
+  // Check reservation by phone number
+  // REVISI 7: Ubah method _checkReservation untuk mencari di collection yang tepat
   Future<void> _checkReservation(String phoneNumber) async {
     setState(() => _isCheckingReservation = true);
 
     try {
-      final snapshot = await _firestore
-          .collection('reservasi')
-          .where('phone', isEqualTo: phoneNumber)
-          .where('clinicId',
-              isEqualTo: _clinicData!['id']) // Filter berdasarkan clinic
-          .orderBy('createdAt', descending: true)
-          .limit(1)
-          .get();
+      // Tentukan collection yang akan dicari
+      final String collectionName =
+          _isPublicReservation ? 'reservasipublik' : 'reservasipublik';
+
+      QuerySnapshot snapshot;
+
+      if (_isPublicReservation && _clinicId != null) {
+        // Untuk public reservation, filter berdasarkan clinicId juga
+        snapshot = await _firestore
+            .collection(collectionName)
+            .where('phone', isEqualTo: phoneNumber)
+            .where('clinicId', isEqualTo: _clinicId)
+            .orderBy('createdAt', descending: true)
+            .limit(1)
+            .get();
+      } else {
+        snapshot = await _firestore
+            .collection(collectionName)
+            .where('phone', isEqualTo: phoneNumber)
+            .orderBy('createdAt', descending: true)
+            .limit(1)
+            .get();
+      }
 
       if (snapshot.docs.isNotEmpty) {
         setState(() {
           _foundReservation = {
             'id': snapshot.docs.first.id,
-            ...snapshot.docs.first.data(),
+            ...snapshot.docs.first.data() as Map<String, dynamic>,
           };
         });
       } else {
         setState(() {
           _foundReservation = null;
         });
-        _showSnackBar(
-            'Tidak ada reservasi dengan nomor telepon tersebut di klinik ini');
+        _showSnackBar('Tidak ada reservasi dengan nomor telepon tersebut');
       }
     } catch (e) {
+      print(e);
       _showSnackBar('Gagal mengecek reservasi: ${e.toString()}');
+      print(e);
     } finally {
       setState(() => _isCheckingReservation = false);
     }
@@ -294,24 +352,21 @@ class _PublicReservationsPageState extends State<PublicReservationsPage> {
   void _showSuccessDialog(String reservationCode) {
     showDialog(
       context: context,
-      barrierDismissible: false,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Column(
+        title: const Column(
           children: [
             Icon(Icons.check_circle, color: Colors.green, size: 60),
-            const SizedBox(height: 16),
-            Text(
-              'Reservasi Berhasil',
-              style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
-            ),
+            SizedBox(height: 16),
+            Text('Reservasi Berhasil',
+                style: TextStyle(fontWeight: FontWeight.bold)),
           ],
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              'Reservasi Anda di ${_clinicData!['name']} telah berhasil dibuat dengan kode:',
+            const Text(
+              'Reservasi Anda telah berhasil dibuat dengan kode:',
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
@@ -333,20 +388,10 @@ class _PublicReservationsPageState extends State<PublicReservationsPage> {
             ),
             const SizedBox(height: 16),
             const Text(
-              'Silakan simpan kode reservasi ini untuk referensi Anda. Kami akan menghubungi Anda untuk konfirmasi.',
+              'Silakan simpan kode reservasi ini untuk referensi Anda.',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 12),
             ),
-            const SizedBox(height: 16),
-            // Informasi kontak klinik
-            if (_clinicData!['phone'] != null)
-              Text(
-                'Kontak: ${_clinicData!['phone']}',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey.shade600,
-                ),
-              ),
           ],
         ),
         actions: [
@@ -359,66 +404,165 @@ class _PublicReservationsPageState extends State<PublicReservationsPage> {
     );
   }
 
-  // Widget untuk menampilkan error jika klinik tidak ditemukan
-  Widget _buildClinicNotFoundView() {
-    return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Colors.red.shade50, Colors.white],
-          ),
+  void _showReservationDetails() {
+    if (_foundReservation == null) return;
+
+    final DateTime reservationDateTime =
+        (_foundReservation!['reservationDateTime'] as Timestamp).toDate();
+    final String formattedDate =
+        DateFormat('dd MMMM yyyy').format(reservationDateTime);
+    final String formattedTime =
+        DateFormat('HH:mm').format(reservationDateTime);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Column(
+          children: [
+            Icon(Icons.calendar_today, color: Colors.blue, size: 40),
+            SizedBox(height: 8),
+            Text('Detail Reservasi',
+                style: TextStyle(fontWeight: FontWeight.bold)),
+          ],
         ),
-        child: Center(
+        content: SingleChildScrollView(
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                Icons.error_outline,
-                size: 80,
-                color: Colors.red.shade400,
-              ),
-              const SizedBox(height: 24),
-              Text(
-                'Klinik Tidak Ditemukan',
-                style: GoogleFonts.poppins(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.red.shade700,
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'ID Klinik "${widget.clinicId}" tidak valid atau tidak ditemukan.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey.shade600,
-                ),
-              ),
-              const SizedBox(height: 24),
-              Text(
-                'Silakan periksa kembali link yang Anda gunakan.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey.shade500,
-                ),
-              ),
+              _detailItem(
+                  'Kode Reservasi', _foundReservation!['reservationCode']),
+              _detailItem('Nama', _foundReservation!['name']),
+              _detailItem('Telepon', _foundReservation!['phone']),
+              _detailItem('Dokter', _foundReservation!['doctorName']),
+              _detailItem('Perawatan', _foundReservation!['procedureName']),
+              _detailItem('Tanggal', formattedDate),
+              _detailItem('Waktu', formattedTime),
+              _detailItem('Status', _foundReservation!['status']),
             ],
           ),
         ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Tutup'),
+          ),
+        ],
       ),
     );
   }
 
+  Widget _detailItem(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.grey.shade600,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const Divider(),
+        ],
+      ),
+    );
+  }
+
+  void _showSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
+  Widget _buildLoadingView() {
+    return const Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          CircularProgressIndicator(),
+          SizedBox(height: 16),
+          Text('Memuat data klinik...'),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 90)),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: Colors.blue,
+              onPrimary: Colors.white,
+              onSurface: Colors.black,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null && picked != _selectedDate) {
+      setState(() {
+        _selectedDate = picked;
+      });
+    }
+  }
+
+  Future<void> _selectTime(BuildContext context) async {
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: _selectedTime,
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: Colors.blue,
+              onPrimary: Colors.white,
+              onSurface: Colors.black,
+            ),
+          ),
+          child: MediaQuery(
+            data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
+            child: child!,
+          ),
+        );
+      },
+    );
+    if (picked != null && picked != _selectedTime) {
+      // Validate time (9:00 AM - 9:00 PM)
+      if (picked.hour < 9 ||
+          (picked.hour >= 21 && picked.minute > 0) ||
+          picked.hour > 21) {
+        _showSnackBar('Jam operasional klinik adalah 09:00 - 21:00');
+        return;
+      }
+
+      setState(() {
+        _selectedTime = picked;
+      });
+    }
+  }
+
+  // Replace ResponsiveWrapper with MediaQuery for responsiveness
   @override
   Widget build(BuildContext context) {
-    if (_clinicNotFound) {
-      return _buildClinicNotFoundView();
-    }
-
     return Scaffold(
       body: _buildMainContent(),
     );
@@ -470,71 +614,222 @@ class _PublicReservationsPageState extends State<PublicReservationsPage> {
     );
   }
 
-  Widget _buildHeader() {
+// Helper method to determine if device is tablet based on width
+  bool _isTablet(BuildContext context) {
+    return MediaQuery.of(context).size.width >= 800;
+  }
+
+  Widget _buildReservationForm() {
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 24),
+      margin: EdgeInsets.only(right: _isTablet(context) ? 16 : 0, bottom: 16),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.blue.shade600,
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withOpacity(0.05),
             offset: const Offset(0, 4),
-            blurRadius: 12,
+            blurRadius: 20,
+          ),
+        ],
+      ),
+      child: Form(
+        key: _formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Form Reservasi',
+              style: GoogleFonts.poppins(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.blue.shade800,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Silakan isi formulir di bawah ini untuk melakukan reservasi',
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey.shade700,
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // Nama Lengkap
+            _buildFormField(
+              label: 'Nama Lengkap',
+              controller: _nameController,
+              icon: Icons.person,
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Nama tidak boleh kosong';
+                } else if (value.length < 3) {
+                  return 'Nama minimal 3 karakter';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 16),
+
+            // Nomor HP
+            _buildFormField(
+              label: 'Nomor HP',
+              controller: _phoneController,
+              icon: Icons.phone,
+              keyboardType: TextInputType.phone,
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Nomor HP tidak boleh kosong';
+                } else if (!RegExp(r'^[0-9]{10,13}$').hasMatch(value)) {
+                  return 'Nomor HP tidak valid';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 24),
+
+            // Pilih Dokter
+            _buildDoctorSelection(),
+            const SizedBox(height: 24),
+
+            // Keluhan
+            _buildFormField(
+              label: 'Keluhan',
+              controller: _complaintController,
+              icon: Icons.notes_outlined,
+              maxLines: 3,
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Keluhan tidak boleh kosong';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 24),
+            _buildDateTimeSelectors(),
+            const SizedBox(height: 24),
+            // Perawatan yang diinginkan
+            _buildTreatmentSelection(),
+            const SizedBox(height: 24),
+            _buildSubmitButton(),
+            const SizedBox(height: 24),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSidePanel() {
+    return Container(
+      margin: EdgeInsets.only(left: _isTablet(context) ? 16 : 0),
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            offset: const Offset(0, 4),
+            blurRadius: 20,
           ),
         ],
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Nama Klinik
-          if (_clinicData != null)
-            Text(
-              _clinicData!['name']?.toString().toUpperCase() ?? 'KLINIK',
-              style: GoogleFonts.poppins(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-                letterSpacing: 1.2,
-              ),
-              textAlign: TextAlign.center,
+          Text(
+            'Cek Status Reservasi',
+            style: GoogleFonts.poppins(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Colors.blue.shade800,
             ),
+          ),
           const SizedBox(height: 8),
           Text(
-            'RESERVASI ONLINE',
-            style: GoogleFonts.poppins(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-              letterSpacing: 1.5,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 16),
-          Container(
-            width: 100,
-            height: 4,
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.7),
-              borderRadius: BorderRadius.circular(2),
+            'Masukkan nomor HP yang Anda gunakan saat reservasi',
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey.shade700,
             ),
           ),
-          // Alamat klinik jika ada
-          if (_clinicData != null && _clinicData!['address'] != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 16),
-              child: Text(
-                _clinicData!['address'],
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.white.withOpacity(0.8),
+          const SizedBox(height: 24),
+
+          // Form cek reservasi
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  onChanged: (value) =>
+                      setState(() => _checkPhoneNumber = value),
+                  keyboardType: TextInputType.phone,
+                  decoration: InputDecoration(
+                    hintText: 'Nomor HP',
+                    prefixIcon: Icon(Icons.phone, color: Colors.blue.shade400),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 12),
+                  ),
                 ),
-                textAlign: TextAlign.center,
               ),
-            ),
+              const SizedBox(width: 12),
+              ElevatedButton(
+                onPressed: _checkPhoneNumber != null &&
+                        _checkPhoneNumber!.isNotEmpty &&
+                        !_isCheckingReservation
+                    ? () => _checkReservation(_checkPhoneNumber!)
+                    : null,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue.shade600,
+                  foregroundColor: Colors.white,
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 0,
+                ),
+                child: _isCheckingReservation
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Text('Cek'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+
+          // Hasil cek reservasi
+          if (_foundReservation != null) _buildReservationResult(),
+
+          const SizedBox(height: 40),
+
+          // Info jam operasional
+          _buildOperationalHoursInfo(),
+
+          const SizedBox(height: 30),
+
+          // Info reservasi sukses
+          if (_reservationNumber != null) _buildReservationSuccessInfo(),
         ],
       ),
     );
   }
+// Add these four methods in the _ReservationsPageState class, wherever appropriate
 
   Widget _buildFooter() {
     return Container(
@@ -543,95 +838,187 @@ class _PublicReservationsPageState extends State<PublicReservationsPage> {
       color: Colors.blue.shade800,
       child: Column(
         children: [
-          if (_clinicData != null) ...[
-            Text(
-              '© ${DateTime.now().year} ${_clinicData!['name']?.toString().toUpperCase()}',
-              style: TextStyle(
-                color: Colors.white.withOpacity(0.8),
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-              ),
-              textAlign: TextAlign.center,
+          Text(
+            '© ${DateTime.now().year} SISTEM INFORMASI MANAJEMEN KLINIK',
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.8),
+              fontSize: 14,
             ),
-            const SizedBox(height: 6),
-            if (_clinicData!['phone'] != null)
-              Text(
-                'Hubungi kami di ${_clinicData!['phone']}',
-                style: TextStyle(
-                  color: Colors.white.withOpacity(0.6),
-                  fontSize: 12,
-                ),
-                textAlign: TextAlign.center,
-              ),
-          ] else ...[
-            Text(
-              '© ${DateTime.now().year} SISTEM RESERVASI KLINIK',
-              style: TextStyle(
-                color: Colors.white.withOpacity(0.8),
-                fontSize: 14,
-              ),
-              textAlign: TextAlign.center,
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Hubungi kami di 021-5525999',
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.6),
+              fontSize: 12,
             ),
-          ],
+            textAlign: TextAlign.center,
+          ),
         ],
       ),
     );
-  }
+  } // Add these four methods in the _ReservationsPageState class, wherever appropriate
 
-  // Helper method to determine if device is tablet based on width
-  bool _isTablet(BuildContext context) {
-    return MediaQuery.of(context).size.width >= 800;
-  }
-
-  void _showSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
-  }
-
-  Widget _buildLoadingView() {
-    return const Center(
+  Widget _buildOperationalHoursInfo() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade300),
+      ),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          CircularProgressIndicator(),
-          SizedBox(height: 16),
-          Text('Memuat data klinik...'),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildReservationInfoItem(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-            width: 80,
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey.shade700,
+          Row(
+            children: [
+              Icon(Icons.access_time, color: Colors.blue.shade700, size: 20),
+              const SizedBox(width: 8),
+              Text(
+                'Jam Operasional',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blue.shade700,
+                ),
               ),
-            ),
+            ],
           ),
-          Text(
-            ': ',
+          const SizedBox(height: 12),
+          _buildOperationalHourItem('Senin - Jumat', '09:00 - 21:00'),
+          const SizedBox(height: 6),
+          _buildOperationalHourItem('Sabtu', '09:00 - 18:00'),
+          const SizedBox(height: 6),
+          _buildOperationalHourItem('Minggu', '10:00 - 16:00'),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Icon(Icons.info_outline, color: Colors.amber.shade700, size: 16),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Reservasi dapat dilakukan minimal 1 hari sebelumnya',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey.shade700,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOperationalHourItem(String day, String hours) {
+    return Row(
+      children: [
+        const SizedBox(width: 4),
+        SizedBox(
+          width: 100,
+          child: Text(
+            day,
             style: TextStyle(
               fontSize: 14,
-              color: Colors.grey.shade700,
+              color: Colors.grey.shade800,
             ),
           ),
-          Expanded(
-            child: Text(
-              value,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
+        ),
+        Text(
+          ': ',
+          style: TextStyle(
+            fontSize: 14,
+            color: Colors.grey.shade800,
+          ),
+        ),
+        Text(
+          hours,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: Colors.grey.shade800,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildReservationSuccessInfo() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.green.shade50,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.green.shade200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.check_circle, color: Colors.green.shade700),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Reservasi Berhasil',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.green.shade700,
+                  ),
+                ),
               ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Reservasi Anda telah berhasil dibuat dengan kode:',
+            style: TextStyle(fontSize: 14, color: Colors.grey.shade800),
+          ),
+          const SizedBox(height: 10),
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.green.shade200),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  _reservationNumber!,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.green.shade800,
+                    letterSpacing: 1.5,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  onPressed: () {
+                    Clipboard.setData(ClipboardData(text: _reservationNumber!));
+                    _showSnackBar('Kode reservasi disalin ke clipboard');
+                  },
+                  icon:
+                      Icon(Icons.copy, size: 18, color: Colors.green.shade700),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  tooltip: 'Salin kode',
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Silahkan simpan kode reservasi ini. Kami akan mengirimkan konfirmasi lebih lanjut melalui nomor telepon yang Anda berikan.',
+            style: TextStyle(
+              fontSize: 13,
+              color: Colors.grey.shade700,
             ),
           ),
         ],
@@ -725,6 +1112,346 @@ class _PublicReservationsPageState extends State<PublicReservationsPage> {
         isDense: false,
         itemHeight: null,
         menuMaxHeight: 400,
+      ),
+    );
+  }
+
+  Widget _buildDateTimeSelectors() {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Tanggal Reservasi',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey.shade800,
+                ),
+              ),
+              const SizedBox(height: 8),
+              InkWell(
+                onTap: () => _selectDate(context),
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey.shade300),
+                    color: Colors.grey.shade50,
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.calendar_today, color: Colors.blue.shade400),
+                      const SizedBox(width: 16),
+                      Text(
+                        DateFormat('dd MMMM yyyy').format(_selectedDate),
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Jam Reservasi',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey.shade800,
+                ),
+              ),
+              const SizedBox(height: 8),
+              InkWell(
+                onTap: () => _selectTime(context),
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey.shade300),
+                    color: Colors.grey.shade50,
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.access_time, color: Colors.blue.shade400),
+                      const SizedBox(width: 16),
+                      Text(
+                        _selectedTime.format(context),
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSubmitButton() {
+    return SizedBox(
+      width: double.infinity,
+      height: 50,
+      child: ElevatedButton(
+        onPressed: _isSubmitting ? null : _submitReservation,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.blue.shade600,
+          foregroundColor: Colors.white,
+          disabledBackgroundColor: Colors.blue.shade300,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          elevation: 0,
+        ),
+        child: _isSubmitting
+            ? const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2,
+                    ),
+                  ),
+                  SizedBox(width: 12),
+                  Text('Memproses...')
+                ],
+              )
+            : const Text(
+                'Kirim Reservasi',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+      ),
+    );
+  }
+
+  Widget _buildReservationResult() {
+    final DateTime reservationDateTime =
+        (_foundReservation!['reservationDateTime'] as Timestamp).toDate();
+    final String formattedDate =
+        DateFormat('dd MMMM yyyy').format(reservationDateTime);
+    final String formattedTime =
+        DateFormat('HH:mm').format(reservationDateTime);
+    final String status = _foundReservation!['status'] ?? 'pending';
+
+    Color statusColor;
+    IconData statusIcon;
+
+    switch (status.toLowerCase()) {
+      case 'confirmed':
+        statusColor = Colors.green;
+        statusIcon = Icons.check_circle;
+        break;
+      case 'cancelled':
+        statusColor = Colors.red;
+        statusIcon = Icons.cancel;
+        break;
+      case 'rescheduled':
+        statusColor = Colors.orange;
+        statusIcon = Icons.update;
+        break;
+      case 'completed':
+        statusColor = Colors.blue;
+        statusIcon = Icons.task_alt;
+        break;
+      default:
+        statusColor = Colors.amber;
+        statusIcon = Icons.pending;
+        break;
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.blue.shade50,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.blue.shade200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.confirmation_number, color: Colors.blue.shade700),
+              const SizedBox(width: 8),
+              Text(
+                'Reservasi Ditemukan',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blue.shade700,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          _buildReservationInfoItem(
+              'Kode', _foundReservation!['reservationCode']),
+          _buildReservationInfoItem('Nama', _foundReservation!['name']),
+          _buildReservationInfoItem('Dokter', _foundReservation!['doctorName']),
+          _buildReservationInfoItem('Tanggal', formattedDate),
+          _buildReservationInfoItem('Jam', formattedTime),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: statusColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: statusColor.withOpacity(0.3)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(statusIcon, size: 16, color: statusColor),
+                const SizedBox(width: 6),
+                Text(
+                  status.toUpperCase(),
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: statusColor,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: TextButton(
+              onPressed: _showReservationDetails,
+              style: TextButton.styleFrom(
+                backgroundColor: Colors.blue.shade100,
+                foregroundColor: Colors.blue.shade700,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: const Text('Lihat Detail'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReservationInfoItem(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 80,
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey.shade700,
+              ),
+            ),
+          ),
+          Text(
+            ': ',
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey.shade700,
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 24),
+      decoration: BoxDecoration(
+        color:
+            _isPublicReservation ? Colors.green.shade600 : Colors.blue.shade600,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            offset: const Offset(0, 4),
+            blurRadius: 12,
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Text(
+            'SISTEM INFORMASI MANAJEMEN KLINIK',
+            style: GoogleFonts.poppins(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: Colors.white.withOpacity(0.85),
+              letterSpacing: 1.2,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            _isPublicReservation
+                ? 'RESERVASI ONLINE PUBLIK'
+                : 'RESERVASI ONLINE',
+            style: GoogleFonts.poppins(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+              letterSpacing: 1.5,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          if (_isPublicReservation) ...[
+            const SizedBox(height: 8),
+            Text(
+              'Endpoint: $_endpointId',
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: Colors.white.withOpacity(0.8),
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+          const SizedBox(height: 16),
+          Container(
+            width: 100,
+            height: 4,
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.7),
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -890,979 +1617,5 @@ class _PublicReservationsPageState extends State<PublicReservationsPage> {
             : _buildProceduresList(),
       ],
     );
-  }
-}
-// ========== CLINIC URL GENERATOR ==========
-
-class ClinicUrlGenerator {
-  static const String baseUrl =
-      'https://yourdomain.com'; // Ganti dengan domain Anda
-
-  // Generate URL untuk reservasi public
-  static String generateReservationUrl(String clinicId) {
-    return '$baseUrl/reservasi?clinic=$clinicId';
-  }
-
-  // Generate URL berdasarkan clinic slug (lebih user friendly)
-  static String generateReservationUrlBySlug(String clinicSlug) {
-    return '$baseUrl/reservasi?clinic=$clinicSlug';
-  }
-
-  // Method untuk membuat slug dari nama klinik
-  static String createSlugFromName(String clinicName) {
-    return clinicName
-        .toLowerCase()
-        .replaceAll(RegExp(r'[^a-z0-9\s-]'), '') // Hapus karakter khusus
-        .replaceAll(RegExp(r'\s+'), '-') // Ganti spasi dengan dash
-        .replaceAll(
-            RegExp(r'-+'), '-'); // Ganti multiple dash dengan single dash
-  }
-
-  // Batch update untuk menambahkan slug ke semua klinik yang sudah ada
-  static Future<void> generateSlugsForExistingClinics() async {
-    final FirebaseFirestore firestore = FirebaseFirestore.instance;
-
-    try {
-      // Ambil semua klinik
-      final snapshot = await firestore.collection('clinics').get();
-
-      final batch = firestore.batch();
-
-      for (var doc in snapshot.docs) {
-        final data = doc.data();
-        final clinicName = data['name'] as String?;
-
-        if (clinicName != null && data['slug'] == null) {
-          final slug = createSlugFromName(clinicName);
-          batch.update(doc.reference, {'slug': slug});
-        }
-      }
-
-      await batch.commit();
-      print('Slug berhasil ditambahkan ke semua klinik');
-    } catch (e) {
-      print('Error generating slugs: $e');
-    }
-  }
-}
-
-// ========== ROUTE SETUP (untuk Flutter Web) ==========
-
-class AppRouter {
-  static final GoRouter router = GoRouter(
-    routes: [
-      // Route untuk admin (yang sudah ada)
-      GoRoute(
-        path: '/admin/reservations',
-        builder: (context, state) =>
-            const ReservationsPage(), // Page admin yang lama
-      ),
-
-      // Route untuk public reservation
-      GoRoute(
-        path: '/reservasi',
-        builder: (context, state) {
-          final clinicId = state.uri.queryParameters['clinic'];
-          return PublicReservationsPage(clinicId: clinicId);
-        },
-      ),
-
-      // Alternative route dengan path parameter (opsional)
-      GoRoute(
-        path: '/klinik/:clinicSlug/reservasi',
-        builder: (context, state) {
-          final clinicSlug = state.pathParameters['clinicSlug'];
-          return PublicReservationsPage(clinicId: clinicSlug);
-        },
-      ),
-    ],
-  );
-}
-
-// ========== DATABASE SETUP HELPER ==========
-class DatabaseSetupHelper {
-  static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-
-  // Tambahkan field slug ke collection clinics
-  static Future<void> addSlugFieldToClinics() async {
-    try {
-      final snapshot = await _firestore.collection('clinics').get();
-
-      final batch = _firestore.batch();
-
-      for (var doc in snapshot.docs) {
-        final data = doc.data();
-        final clinicName = data['name'] as String?;
-
-        if (clinicName != null) {
-          final slug = ClinicUrlGenerator.createSlugFromName(clinicName);
-          batch.update(doc.reference, {
-            'slug': slug,
-            'publicReservationEnabled':
-                true, // Flag untuk enable/disable public reservation
-            'updatedAt': FieldValue.serverTimestamp(),
-          });
-        }
-      }
-
-      await batch.commit();
-      print('Slug field berhasil ditambahkan');
-    } catch (e) {
-      print('Error: $e');
-    }
-  }
-
-  // Update collection dokter untuk menambahkan clinicId reference
-  static Future<void> linkDoctorsToClinic() async {
-    try {
-      // Contoh: jika Anda perlu link dokter ke klinik tertentu
-      final doctorsSnapshot = await _firestore.collection('dokter').get();
-      final clinicsSnapshot = await _firestore.collection('clinics').get();
-
-      if (clinicsSnapshot.docs.isNotEmpty) {
-        final firstClinicId = clinicsSnapshot.docs.first.id;
-
-        final batch = _firestore.batch();
-
-        for (var doc in doctorsSnapshot.docs) {
-          // Jika dokter belum punya clinicId, assign ke klinik pertama
-          final data = doc.data();
-          if (data['clinicId'] == null) {
-            batch.update(doc.reference, {
-              'clinicId': firstClinicId,
-              'updatedAt': FieldValue.serverTimestamp(),
-            });
-          }
-        }
-
-        await batch.commit();
-        print('Doctors linked to clinic');
-      }
-    } catch (e) {
-      print('Error linking doctors: $e');
-    }
-  }
-
-  // Update collection pricelist untuk menambahkan clinicId reference
-  static Future<void> linkPricelistToClinic() async {
-    try {
-      final pricelistSnapshot = await _firestore.collection('pricelist').get();
-      final clinicsSnapshot = await _firestore.collection('clinics').get();
-
-      if (clinicsSnapshot.docs.isNotEmpty) {
-        final firstClinicId = clinicsSnapshot.docs.first.id;
-
-        final batch = _firestore.batch();
-
-        for (var doc in pricelistSnapshot.docs) {
-          final data = doc.data();
-          if (data['clinicId'] == null) {
-            batch.update(doc.reference, {
-              'clinicId': firstClinicId,
-              'updatedAt': FieldValue.serverTimestamp(),
-            });
-          }
-        }
-
-        await batch.commit();
-        print('Pricelist linked to clinic');
-      }
-    } catch (e) {
-      print('Error linking pricelist: $e');
-    }
-  }
-}
-
-// ========== ADMIN PANEL UNTUK GENERATE URLS ==========
-class ClinicUrlManagementPage extends StatefulWidget {
-  const ClinicUrlManagementPage({super.key});
-
-  @override
-  State<ClinicUrlManagementPage> createState() =>
-      _ClinicUrlManagementPageState();
-}
-
-class _ClinicUrlManagementPageState extends State<ClinicUrlManagementPage> {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  List<Map<String, dynamic>> _clinics = [];
-  bool _isLoading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadClinics();
-  }
-
-  Future<void> _loadClinics() async {
-    try {
-      final snapshot = await _firestore.collection('clinics').get();
-
-      final clinics = snapshot.docs.map((doc) {
-        return {
-          'id': doc.id,
-          ...doc.data(),
-        };
-      }).toList();
-
-      setState(() {
-        _clinics = clinics;
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Clinic URL Management'),
-        backgroundColor: Colors.blue.shade600,
-        foregroundColor: Colors.white,
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: _clinics.length,
-              itemBuilder: (context, index) {
-                final clinic = _clinics[index];
-                final clinicId = clinic['id'];
-                final clinicName = clinic['name'] ?? 'Unnamed Clinic';
-                final slug = clinic['slug'];
-
-                // Generate URLs
-                final urlById =
-                    ClinicUrlGenerator.generateReservationUrl(clinicId);
-                final urlBySlug = slug != null
-                    ? ClinicUrlGenerator.generateReservationUrlBySlug(slug)
-                    : null;
-
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 16),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          clinicName,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text('ID: $clinicId'),
-                        if (slug != null) Text('Slug: $slug'),
-                        const SizedBox(height: 16),
-
-                        // URL by ID
-                        const Text('URL by ID:',
-                            style: TextStyle(fontWeight: FontWeight.w600)),
-                        const SizedBox(height: 8),
-                        SelectableText(
-                          urlById,
-                          style: TextStyle(
-                            color: Colors.blue.shade600,
-                            fontSize: 12,
-                            fontFamily: 'monospace',
-                          ),
-                        ),
-                        Row(
-                          children: [
-                            TextButton.icon(
-                              onPressed: () {
-                                Clipboard.setData(ClipboardData(text: urlById));
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                      content: Text('URL copied to clipboard')),
-                                );
-                              },
-                              icon: const Icon(Icons.copy, size: 16),
-                              label: const Text('Copy'),
-                            ),
-                            TextButton.icon(
-                              onPressed: () {
-                                // Launch URL in browser (untuk testing)
-                                // launch(urlById); // Uncomment jika menggunakan url_launcher
-                              },
-                              icon: const Icon(Icons.open_in_new, size: 16),
-                              label: const Text('Test'),
-                            ),
-                          ],
-                        ),
-
-                        if (urlBySlug != null) ...[
-                          const SizedBox(height: 16),
-                          const Text('URL by Slug (User Friendly):',
-                              style: TextStyle(fontWeight: FontWeight.w600)),
-                          const SizedBox(height: 8),
-                          SelectableText(
-                            urlBySlug,
-                            style: TextStyle(
-                              color: Colors.blue.shade600,
-                              fontSize: 12,
-                              fontFamily: 'monospace',
-                            ),
-                          ),
-                          Row(
-                            children: [
-                              TextButton.icon(
-                                onPressed: () {
-                                  Clipboard.setData(
-                                      ClipboardData(text: urlBySlug));
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                        content:
-                                            Text('URL copied to clipboard')),
-                                  );
-                                },
-                                icon: const Icon(Icons.copy, size: 16),
-                                label: const Text('Copy'),
-                              ),
-                              TextButton.icon(
-                                onPressed: () {
-                                  // Launch URL in browser (untuk testing)
-                                  // launch(urlBySlug); // Uncomment jika menggunakan url_launcher
-                                },
-                                icon: const Icon(Icons.open_in_new, size: 16),
-                                label: const Text('Test'),
-                              ),
-                            ],
-                          ),
-                        ],
-
-                        const SizedBox(height: 16),
-                        // QR Code untuk URL (opsional)
-                        ElevatedButton.icon(
-                          onPressed: () => _showQRCodeDialog(
-                              context, urlBySlug ?? urlById, clinicName),
-                          icon: const Icon(Icons.qr_code),
-                          label: const Text('Generate QR Code'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.green.shade600,
-                            foregroundColor: Colors.white,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () async {
-          await DatabaseSetupHelper.addSlugFieldToClinics();
-          _loadClinics();
-        },
-        icon: const Icon(Icons.refresh),
-        label: const Text('Update Slugs'),
-      ),
-    );
-  }
-
-  void _showQRCodeDialog(BuildContext context, String url, String clinicName) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('QR Code - $clinicName'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Placeholder untuk QR Code
-            // Anda bisa menggunakan package seperti qr_flutter
-            Container(
-              width: 200,
-              height: 200,
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.qr_code, size: 48, color: Colors.grey.shade600),
-                  const SizedBox(height: 8),
-                  Text(
-                    'QR Code\n(Install qr_flutter package)',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.grey.shade600),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Scan QR code untuk akses reservasi',
-              style: TextStyle(color: Colors.grey.shade700),
-            ),
-            const SizedBox(height: 8),
-            SelectableText(
-              url,
-              style: const TextStyle(fontSize: 12),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ========== MELENGKAPI PublicReservationsPage (bagian yang hilang) ==========
-
-// Method yang hilang dari PublicReservationsPage
-extension PublicReservationsPageExtension on _PublicReservationsPageState {
-  Widget _buildReservationForm() {
-    return Card(
-      elevation: 8,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Formulir Reservasi',
-                style: GoogleFonts.poppins(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.blue.shade700,
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // Nama Lengkap
-              _buildFormField(
-                label: 'Nama Lengkap',
-                controller: _nameController,
-                icon: Icons.person,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Nama lengkap wajib diisi';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-
-              // Nomor Telepon
-              _buildFormField(
-                label: 'Nomor Telepon',
-                controller: _phoneController,
-                icon: Icons.phone,
-                keyboardType: TextInputType.phone,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Nomor telepon wajib diisi';
-                  }
-                  if (value.length < 10) {
-                    return 'Nomor telepon minimal 10 digit';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-
-              // Pilih Dokter
-              _buildDoctorSelection(),
-              const SizedBox(height: 16),
-
-              // Pilih Perawatan
-              _buildTreatmentSelection(),
-              const SizedBox(height: 16),
-
-              // Tanggal dan Waktu
-              Row(
-                children: [
-                  Expanded(child: _buildDatePicker()),
-                  const SizedBox(width: 16),
-                  Expanded(child: _buildTimePicker()),
-                ],
-              ),
-              const SizedBox(height: 16),
-
-              // Keluhan
-              _buildFormField(
-                label: 'Keluhan (Opsional)',
-                controller: _complaintController,
-                icon: Icons.note_alt,
-                maxLines: 3,
-              ),
-              const SizedBox(height: 24),
-
-              // Submit Button
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: _isSubmitting ? null : _submitReservation,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue.shade600,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    elevation: 2,
-                  ),
-                  child: _isSubmitting
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor:
-                                AlwaysStoppedAnimation<Color>(Colors.white),
-                          ),
-                        )
-                      : Text(
-                          'BUAT RESERVASI',
-                          style: GoogleFonts.poppins(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1,
-                          ),
-                        ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDatePicker() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Tanggal',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: Colors.grey.shade800,
-          ),
-        ),
-        const SizedBox(height: 8),
-        InkWell(
-          onTap: () async {
-            final DateTime? picked = await showDatePicker(
-              context: context,
-              initialDate: _selectedDate,
-              firstDate: DateTime.now(),
-              lastDate: DateTime.now().add(const Duration(days: 30)),
-              builder: (context, child) {
-                return Theme(
-                  data: Theme.of(context).copyWith(
-                    colorScheme: ColorScheme.light(
-                      primary: Colors.blue.shade600,
-                    ),
-                  ),
-                  child: child!,
-                );
-              },
-            );
-            if (picked != null && picked != _selectedDate) {
-              setState(() => _selectedDate = picked);
-            }
-          },
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey.shade300),
-              borderRadius: BorderRadius.circular(12),
-              color: Colors.grey.shade50,
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.calendar_today, color: Colors.blue.shade400),
-                const SizedBox(width: 12),
-                Text(
-                  DateFormat('dd/MM/yyyy').format(_selectedDate),
-                  style: const TextStyle(fontSize: 16),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTimePicker() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Waktu',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: Colors.grey.shade800,
-          ),
-        ),
-        const SizedBox(height: 8),
-        InkWell(
-          onTap: () async {
-            final TimeOfDay? picked = await showTimePicker(
-              context: context,
-              initialTime: _selectedTime,
-              builder: (context, child) {
-                return Theme(
-                  data: Theme.of(context).copyWith(
-                    colorScheme: ColorScheme.light(
-                      primary: Colors.blue.shade600,
-                    ),
-                  ),
-                  child: child!,
-                );
-              },
-            );
-            if (picked != null && picked != _selectedTime) {
-              setState(() => _selectedTime = picked);
-            }
-          },
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey.shade300),
-              borderRadius: BorderRadius.circular(12),
-              color: Colors.grey.shade50,
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.access_time, color: Colors.blue.shade400),
-                const SizedBox(width: 12),
-                Text(
-                  _selectedTime.format(context),
-                  style: const TextStyle(fontSize: 16),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSidePanel() {
-    return Padding(
-      padding: const EdgeInsets.only(left: 24.0),
-      child: Column(
-        children: [
-          _buildReservationStatus(),
-          const SizedBox(height: 24),
-          _buildCheckReservation(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildReservationStatus() {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.info_outline, color: Colors.blue.shade600),
-                const SizedBox(width: 8),
-                Text(
-                  'Informasi Reservasi',
-                  style: GoogleFonts.poppins(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.blue.shade700,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            _buildInfoItem('📅', 'Jam Operasional', '08:00 - 17:00'),
-            _buildInfoItem('⏰', 'Konfirmasi', 'Maks 2 jam sebelum jadwal'),
-            _buildInfoItem('📞', 'Kontak', _clinicData?['phone'] ?? '-'),
-            _buildInfoItem('📍', 'Alamat', _clinicData?['address'] ?? '-'),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildInfoItem(String emoji, String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(emoji, style: const TextStyle(fontSize: 16)),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey.shade600,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                Text(
-                  value,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCheckReservation() {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.search, color: Colors.green.shade600),
-                const SizedBox(width: 8),
-                Text(
-                  'Cek Reservasi',
-                  style: GoogleFonts.poppins(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.green.shade700,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              decoration: InputDecoration(
-                hintText: 'Masukkan nomor telepon',
-                prefixIcon: Icon(Icons.phone, color: Colors.green.shade400),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide:
-                      BorderSide(color: Colors.green.shade400, width: 2),
-                ),
-                filled: true,
-                fillColor: Colors.grey.shade50,
-              ),
-              onChanged: (value) => _checkPhoneNumber = value,
-            ),
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _isCheckingReservation
-                    ? null
-                    : () {
-                        if (_checkPhoneNumber != null &&
-                            _checkPhoneNumber!.isNotEmpty) {
-                          _checkReservation(_checkPhoneNumber!);
-                        }
-                      },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green.shade600,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: _isCheckingReservation
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor:
-                              AlwaysStoppedAnimation<Color>(Colors.white),
-                        ),
-                      )
-                    : const Text('CEK RESERVASI'),
-              ),
-            ),
-            if (_foundReservation != null) ...[
-              const SizedBox(height: 16),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.green.shade50,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.green.shade200),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Reservasi Ditemukan',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.green.shade700,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    _buildReservationInfoItem(
-                        'Kode', _foundReservation!['reservationCode'] ?? '-'),
-                    _buildReservationInfoItem(
-                        'Nama', _foundReservation!['name'] ?? '-'),
-                    _buildReservationInfoItem(
-                        'Dokter', _foundReservation!['doctorName'] ?? '-'),
-                    _buildReservationInfoItem(
-                        'Status',
-                        (_foundReservation!['status'] ?? 'pending')
-                            .toUpperCase()),
-                  ],
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ========== UTILITY FUNCTIONS ==========
-
-// Helper untuk setup database initial
-class DatabaseInitializer {
-  static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-
-  // Setup initial data untuk testing
-  static Future<void> setupInitialData() async {
-    try {
-      // Create sample clinic
-      final clinicRef = await _firestore.collection('clinics').add({
-        'name': 'Klinik Sehat Bersama',
-        'address': 'Jl. Kesehatan No. 123, Jakarta',
-        'phone': '021-12345678',
-        'slug': 'klinik-sehat-bersama',
-        'code': 'KSB',
-        'publicReservationEnabled': true,
-        'createdAt': FieldValue.serverTimestamp(),
-      });
-
-      final clinicId = clinicRef.id;
-
-      // Create sample doctors
-      await _firestore.collection('dokter').add({
-        'name': 'Dr. Ahmad Prakasa',
-        'sip': '123456789',
-        'specialization': 'Umum',
-        'clinicId': clinicId,
-        'createdAt': FieldValue.serverTimestamp(),
-      });
-
-      await _firestore.collection('dokter').add({
-        'name': 'Dr. Sari Dewi',
-        'sip': '987654321',
-        'specialization': 'Gigi',
-        'clinicId': clinicId,
-        'createdAt': FieldValue.serverTimestamp(),
-      });
-
-      // Create sample procedures
-      await _firestore.collection('pricelist').add({
-        'name': 'Konsultasi Umum',
-        'price': 100000,
-        'clinicId': clinicId,
-        'createdAt': FieldValue.serverTimestamp(),
-      });
-
-      await _firestore.collection('pricelist').add({
-        'name': 'Pemeriksaan Gigi',
-        'price': 150000,
-        'clinicId': clinicId,
-        'createdAt': FieldValue.serverTimestamp(),
-      });
-
-      await _firestore.collection('pricelist').add({
-        'name': 'Cabut Gigi',
-        'price': 200000,
-        'clinicId': clinicId,
-        'createdAt': FieldValue.serverTimestamp(),
-      });
-
-      print('Initial data setup completed');
-    } catch (e) {
-      print('Error setting up initial data: $e');
-    }
-  }
-}
-
-// ========== TESTING UTILITIES ==========
-
-class ReservationTestHelper {
-  // Generate test URL
-  static void printTestUrls() {
-    const clinicId = 'your-clinic-id-here';
-    const clinicSlug = 'klinik-sehat-bersama';
-
-    print('=== TEST URLS ===');
-    print('By ID: ${ClinicUrlGenerator.generateReservationUrl(clinicId)}');
-    print(
-        'By Slug: ${ClinicUrlGenerator.generateReservationUrlBySlug(clinicSlug)}');
-    print('================');
-  }
-
-  // Validate reservation data
-  static bool validateReservationData(Map<String, dynamic> data) {
-    final requiredFields = [
-      'name',
-      'phone',
-      'doctorId',
-      'procedureId',
-      'reservationDateTime',
-      'clinicId'
-    ];
-
-    for (String field in requiredFields) {
-      if (!data.containsKey(field) || data[field] == null) {
-        print('Missing required field: $field');
-        return false;
-      }
-    }
-
-    return true;
   }
 }
