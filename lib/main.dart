@@ -1,5 +1,6 @@
 // ignore_for_file: deprecated_member_use
 
+//import 'package:firebase_ai/firebase_ai.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -60,7 +61,7 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-
+ // final model = FirebaseAI.googleAI().generativeModel(model: 'gemini-2.0-flash');
   // Set preferred orientations
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
@@ -76,6 +77,17 @@ void main() async {
       systemNavigationBarIconBrightness: Brightness.dark,
     ),
   );
+  //print('start');
+  // Buat prompt
+  //String teksawal = 'Write a story about a magic backpack.';
+  //print(teksawal);
+  //final prompt = [Content.text(teksawal)];
+
+// Kirim prompt ke model dan ambil responnya
+  //final response = await model.generateContent(prompt);
+
+// Cetak hasil respon
+  //print(response.text);
 
   runApp(const MyApp());
 }
@@ -193,7 +205,6 @@ class MyApp extends StatelessWidget {
           fontWeight: FontWeight.w400,
         ),
       ),
-
       dividerTheme: const DividerThemeData(
         color: MedColors.divider,
         thickness: 1,
