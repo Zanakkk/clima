@@ -1,6 +1,7 @@
-// ignore_for_file: use_build_context_synchronously, library_private_types_in_public_api, deprecated_member_use
+// ignore_for_file: use_build_context_synchronously, library_private_types_in_public_api, deprecated_member_use, avoid_print
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -46,12 +47,124 @@ class _DaftarDoktorState extends State<DaftarDoktor>
   ];
 
   @override
+// Perbaikan pada initState dan _loadClinicId
+  @override
   void initState() {
     super.initState();
     _initializeAnimations();
-    _fetchDoctors();
     _setupSearchListener();
+    _loadClinicId(); // Hanya panggil ini, _fetchDoctors akan dipanggil setelah clinicId berhasil dimuat
   }
+
+// Perbaikan pada _loadClinicId
+  Future<void> _loadClinicId() async {
+    final User? currentUser = _auth.currentUser;
+
+    if (currentUser == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
+
+    try {
+      final querySnapshot = await _firestore
+          .collection('clinics')
+          .where('email', isEqualTo: currentUser.email)
+          .limit(1)
+          .get();
+
+      if (querySnapshot.docs.isNotEmpty) {
+        setState(() {
+          _clinicId = querySnapshot.docs.first.id;
+        });
+
+        // Panggil _fetchDoctors setelah clinicId berhasil dimuat
+        await _fetchDoctors();
+
+        // Start animation setelah data berhasil dimuat
+        _fadeController.forward();
+        _slideController.forward();
+      } else {
+        setState(() => _isLoading = false);
+      }
+    } catch (e) {
+      print('Gagal memuat data klinik: ${e.toString()}');
+      setState(() => _isLoading = false);
+      _showSnackBar('Gagal memuat data klinik: ${e.toString()}');
+    }
+  }
+
+// Perbaikan pada _fetchDoctors
+  Future<void> _fetchDoctors() async {
+    // Pastikan clinicId sudah tersedia
+    if (_clinicId == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
+
+    try {
+      final QuerySnapshot snapshot = await _firestore
+          .collection('dokter')
+          .where('clinicId',
+              isEqualTo: _clinicId) // Sekarang _clinicId sudah tidak null
+          .orderBy('createdAt', descending: true)
+          .get();
+
+      setState(() {
+        _doctors = snapshot.docs.map((doc) {
+          final data = doc.data() as Map<String, dynamic>;
+          return {
+            'id': doc.id,
+            'name': data['name'] ?? '',
+            'bidang': data['bidang'] ?? '',
+            'sip': data['sip'] ?? '',
+            'createdAt': data['createdAt'],
+            'clinicId': data['clinicId'], // Tambahkan untuk debugging
+          };
+        }).toList();
+        _filteredDoctors = List.from(_doctors);
+        _isLoading = false;
+      });
+
+      print(
+          'Fetched ${_doctors.length} doctors for clinic: $_clinicId'); // Debug log
+    } catch (e) {
+      print('Gagal memuat data dokter: ${e.toString()}');
+      _showSnackBar('Gagal memuat data dokter: ${e.toString()}');
+      setState(() => _isLoading = false);
+    }
+  }
+
+// Perbaikan pada _addDoctor untuk memastikan clinicId disimpan
+  Future<void> _addDoctor() async {
+    if (_formKey.currentState!.validate() && _clinicId != null) {
+      setState(() => _isSubmitting = true);
+
+      HapticFeedback.lightImpact();
+
+      try {
+        await _firestore.collection('dokter').doc().set({
+          'name': _nameController.text.trim(),
+          'bidang': _bidangController.text.trim(),
+          'sip': _sipController.text.trim(),
+          'clinicId': _clinicId, // Pastikan clinicId disimpan
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+
+        _showSnackBar('✅ Dokter berhasil ditambahkan', isError: false);
+        _resetForm();
+        await _fetchDoctors();
+      } catch (e) {
+        _showSnackBar('❌ Gagal menambahkan dokter: ${e.toString()}');
+      } finally {
+        setState(() => _isSubmitting = false);
+      }
+    } else if (_clinicId == null) {
+      _showSnackBar('❌ ID Klinik tidak ditemukan');
+    }
+  }
+
+  String? _clinicId;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
   void _initializeAnimations() {
     _fadeController = AnimationController(
@@ -70,7 +183,8 @@ class _DaftarDoktorState extends State<DaftarDoktor>
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.2),
       end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _slideController, curve: Curves.easeOutCubic));
+    ).animate(
+        CurvedAnimation(parent: _slideController, curve: Curves.easeOutCubic));
   }
 
   void _setupSearchListener() {
@@ -109,63 +223,6 @@ class _DaftarDoktorState extends State<DaftarDoktor>
     super.dispose();
   }
 
-  Future<void> _fetchDoctors() async {
-    try {
-      final QuerySnapshot snapshot = await _firestore
-          .collection('dokter')
-          .orderBy('createdAt', descending: true)
-          .get();
-
-      setState(() {
-        _doctors = snapshot.docs.map((doc) {
-          final data = doc.data() as Map<String, dynamic>;
-          return {
-            'id': doc.id,
-            'name': data['name'] ?? '',
-            'bidang': data['bidang'] ?? '',
-            'sip': data['sip'] ?? '',
-            'createdAt': data['createdAt'],
-          };
-        }).toList();
-        _filteredDoctors = List.from(_doctors);
-      });
-
-      // Start animations after data is loaded
-      _fadeController.forward();
-      _slideController.forward();
-    } catch (e) {
-      _showSnackBar('Gagal memuat data dokter: ${e.toString()}');
-    } finally {
-      setState(() => _isLoading = false);
-    }
-  }
-
-  Future<void> _addDoctor() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() => _isSubmitting = true);
-
-      // Add haptic feedback
-      HapticFeedback.lightImpact();
-
-      try {
-        await _firestore.collection('dokter').doc().set({
-          'name': _nameController.text.trim(),
-          'bidang': _bidangController.text.trim(),
-          'sip': _sipController.text.trim(),
-          'createdAt': FieldValue.serverTimestamp(),
-        });
-
-        _showSnackBar('✅ Dokter berhasil ditambahkan', isError: false);
-        _resetForm();
-        await _fetchDoctors();
-      } catch (e) {
-        _showSnackBar('❌ Gagal menambahkan dokter: ${e.toString()}');
-      } finally {
-        setState(() => _isSubmitting = false);
-      }
-    }
-  }
-
   Future<void> _deleteDoctor(String doctorId) async {
     // Add haptic feedback
     HapticFeedback.mediumImpact();
@@ -200,9 +257,8 @@ class _DaftarDoktorState extends State<DaftarDoktor>
             Expanded(child: Text(message)),
           ],
         ),
-        backgroundColor: isError
-            ? const Color(0xFFE53E3E)
-            : const Color(0xFF38A169),
+        backgroundColor:
+            isError ? const Color(0xFFE53E3E) : const Color(0xFF38A169),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         margin: const EdgeInsets.all(16),
@@ -298,17 +354,28 @@ class _DaftarDoktorState extends State<DaftarDoktor>
               constraints: BoxConstraints(
                 maxWidth: isWideScreen ? 1000 : constraints.maxWidth,
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+              child: Row(
                 children: [
-                  _buildHeader(),
-                  _buildSearchBar(),
                   Expanded(
-                    child: _filteredDoctors.isEmpty && _searchController.text.isNotEmpty
-                        ? _buildNoSearchResults()
-                        : _filteredDoctors.isEmpty
-                        ? _buildEmptyDoctorsList()
-                        : _buildDoctorsList(),
+                    flex: 1,
+                    child: _buildHeader(),
+                  ),
+                  Expanded(
+                    flex: 2,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _buildSearchBar(),
+                        Expanded(
+                          child: _filteredDoctors.isEmpty &&
+                                  _searchController.text.isNotEmpty
+                              ? _buildNoSearchResults()
+                              : _filteredDoctors.isEmpty
+                                  ? _buildEmptyDoctorsList()
+                                  : _buildDoctorsList(),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -420,12 +487,12 @@ class _DaftarDoktorState extends State<DaftarDoktor>
           prefixIcon: const Icon(Icons.search_rounded),
           suffixIcon: _searchController.text.isNotEmpty
               ? IconButton(
-            icon: const Icon(Icons.clear_rounded),
-            onPressed: () {
-              _searchController.clear();
-              _filterDoctors('');
-            },
-          )
+                  icon: const Icon(Icons.clear_rounded),
+                  onPressed: () {
+                    _searchController.clear();
+                    _filterDoctors('');
+                  },
+                )
               : null,
           filled: true,
           fillColor: Colors.white,
@@ -444,7 +511,8 @@ class _DaftarDoktorState extends State<DaftarDoktor>
               width: 2,
             ),
           ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         ),
       ),
     );
@@ -597,7 +665,10 @@ class _DaftarDoktorState extends State<DaftarDoktor>
                                   gradient: LinearGradient(
                                     colors: [
                                       Theme.of(context).colorScheme.primary,
-                                      Theme.of(context).colorScheme.primary.withOpacity(0.7),
+                                      Theme.of(context)
+                                          .colorScheme
+                                          .primary
+                                          .withOpacity(0.7),
                                     ],
                                   ),
                                   borderRadius: BorderRadius.circular(16),
@@ -652,9 +723,11 @@ class _DaftarDoktorState extends State<DaftarDoktor>
                                   value: 'delete',
                                   child: Row(
                                     children: [
-                                      Icon(Icons.delete_outline, color: Colors.red),
+                                      Icon(Icons.delete_outline,
+                                          color: Colors.red),
                                       SizedBox(width: 8),
-                                      Text('Hapus', style: TextStyle(color: Colors.red)),
+                                      Text('Hapus',
+                                          style: TextStyle(color: Colors.red)),
                                     ],
                                   ),
                                 ),
@@ -664,12 +737,19 @@ class _DaftarDoktorState extends State<DaftarDoktor>
                         ),
                         const SizedBox(height: 16),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 8),
                           decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                            color: Theme.of(context)
+                                .colorScheme
+                                .primary
+                                .withOpacity(0.1),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .primary
+                                  .withOpacity(0.2),
                             ),
                           ),
                           child: Row(
@@ -784,7 +864,8 @@ class _DaftarDoktorState extends State<DaftarDoktor>
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Theme.of(context).colorScheme.primary,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -857,7 +938,8 @@ class _DaftarDoktorState extends State<DaftarDoktor>
                     ),
                     IconButton(
                       onPressed: () => Navigator.of(context).pop(),
-                      icon: const Icon(Icons.close_rounded, color: Colors.white),
+                      icon:
+                          const Icon(Icons.close_rounded, color: Colors.white),
                     ),
                   ],
                 ),
@@ -875,7 +957,8 @@ class _DaftarDoktorState extends State<DaftarDoktor>
                           controller: _nameController,
                           label: 'Nama Dokter',
                           icon: Icons.person_rounded,
-                          validator: (value) => Validators.validateName(value ?? ''),
+                          validator: (value) =>
+                              Validators.validateName(value ?? ''),
                         ),
                         const SizedBox(height: 20),
                         _buildDropdownField(),
@@ -898,7 +981,8 @@ class _DaftarDoktorState extends State<DaftarDoktor>
                               child: OutlinedButton(
                                 onPressed: () => Navigator.of(context).pop(),
                                 style: OutlinedButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 16),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12),
                                   ),
@@ -912,28 +996,32 @@ class _DaftarDoktorState extends State<DaftarDoktor>
                                 onPressed: _isSubmitting
                                     ? null
                                     : () {
-                                  if (_formKey.currentState!.validate()) {
-                                    Navigator.of(context).pop();
-                                    _addDoctor();
-                                  }
-                                },
+                                        if (_formKey.currentState!.validate()) {
+                                          Navigator.of(context).pop();
+                                          _addDoctor();
+                                        }
+                                      },
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: Theme.of(context).colorScheme.primary,
+                                  backgroundColor:
+                                      Theme.of(context).colorScheme.primary,
                                   foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 16),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                 ),
                                 child: _isSubmitting
                                     ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                                  ),
-                                )
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          valueColor:
+                                              AlwaysStoppedAnimation<Color>(
+                                                  Colors.white),
+                                        ),
+                                      )
                                     : const Text('Simpan'),
                               ),
                             ),
@@ -987,7 +1075,8 @@ class _DaftarDoktorState extends State<DaftarDoktor>
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: Colors.red, width: 2),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
       ),
       validator: validator,
     );
@@ -1018,7 +1107,8 @@ class _DaftarDoktorState extends State<DaftarDoktor>
             width: 2,
           ),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
       ),
       items: _specializations.map((String value) {
         return DropdownMenuItem<String>(
@@ -1075,7 +1165,8 @@ class _DaftarDoktorState extends State<DaftarDoktor>
             onPressed: () => Navigator.of(context).pop(),
             style: TextButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
             ),
             child: const Text('Batal'),
           ),
@@ -1088,7 +1179,8 @@ class _DaftarDoktorState extends State<DaftarDoktor>
               backgroundColor: Colors.red.shade700,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
             ),
             child: const Text('Hapus'),
           ),

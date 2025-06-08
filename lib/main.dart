@@ -1,12 +1,16 @@
-// ignore_for_file: deprecated_member_use
-
+// ignore_for_file: deprecated_member_use, avoid_web_libraries_in_flutter
 //import 'package:firebase_ai/firebase_ai.dart';
-import 'package:flutter/material.dart';
+import 'dart:html' as html; // Import untuk web
+
 import 'package:firebase_core/firebase_core.dart';
-import 'package:intl/date_symbol_data_local.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:provider/provider.dart';
+
+import 'MetaAds/Providers/Provider.dart';
+import 'Screens/Page/ReservationPage/PublicReservationPage.dart';
 import 'firebase_options.dart';
 import 'splash_screen.dart';
 
@@ -61,7 +65,7 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
- // final model = FirebaseAI.googleAI().generativeModel(model: 'gemini-2.0-flash');
+
   // Set preferred orientations
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
@@ -77,19 +81,16 @@ void main() async {
       systemNavigationBarIconBrightness: Brightness.dark,
     ),
   );
-  //print('start');
-  // Buat prompt
-  //String teksawal = 'Write a story about a magic backpack.';
-  //print(teksawal);
-  //final prompt = [Content.text(teksawal)];
 
-// Kirim prompt ke model dan ambil responnya
-  //final response = await model.generateContent(prompt);
-
-// Cetak hasil respon
-  //print(response.text);
-
-  runApp(const MyApp());
+  runApp(MultiProvider(
+    providers: [
+      ChangeNotifierProvider(create: (_) => AuthProvider()),
+      ChangeNotifierProvider(create: (_) => ClinicProvider()),
+      ChangeNotifierProvider(create: (_) => CampaignProvider()),
+      ChangeNotifierProvider(create: (_) => AnalyticsProvider()),
+    ],
+    child: const MyApp(),
+  ));
 }
 
 class ThemeProvider with ChangeNotifier {
@@ -100,6 +101,40 @@ class ThemeProvider with ChangeNotifier {
   void toggleDarkMode() {
     _isDarkMode = !_isDarkMode;
     notifyListeners();
+  }
+}
+
+// Widget untuk menentukan halaman awal berdasarkan URL
+class InitialPageSelector extends StatelessWidget {
+  const InitialPageSelector({super.key});
+
+  // Method untuk mengecek URL dan menentukan halaman awal
+  Widget _getInitialPage() {
+    final String currentUrl = html.window.location.href;
+    final Uri uri = Uri.parse(currentUrl);
+    final List<String> pathSegments = uri.pathSegments;
+
+    // Cek apakah URL mengandung endpoint untuk public reservation
+    if (pathSegments.isNotEmpty) {
+      final String lastSegment = pathSegments.last;
+
+      // Jika URL berisi 'reservasipublik' atau endpoint ID untuk public reservation
+      if (lastSegment == 'reservasipublik' ||
+          (lastSegment.isNotEmpty &&
+              lastSegment != 'reservasi' &&
+              lastSegment.length > 5)) {
+        // Langsung ke PublicReservationPage
+        return const PublicReservationPage();
+      }
+    }
+
+    // Default ke SplashScreen untuk halaman lainnya
+    return const SplashScreen();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _getInitialPage();
   }
 }
 
@@ -119,7 +154,12 @@ class MyApp extends StatelessWidget {
             darkTheme: _buildDarkTheme(),
             themeMode:
                 themeProvider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
-            home: const SplashScreen(),
+            // Gunakan InitialPageSelector sebagai home
+            home: const InitialPageSelector(),
+            // Atau jika ingin menggunakan named routes
+            routes: {
+              '/reservasipublik': (context) => const PublicReservationPage(),
+            },
           );
         },
       ),

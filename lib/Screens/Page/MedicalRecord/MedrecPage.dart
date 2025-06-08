@@ -1,9 +1,10 @@
 // ignore_for_file: use_build_context_synchronously
 
-import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+
 import 'MedicalRecord.dart';
 
 class MedRecPage extends StatefulWidget {
@@ -28,6 +29,7 @@ class _MedRecPageState extends State<MedRecPage> {
 
   // Cached clinic data
   bool _isLoading = true;
+  String? _clinicId;
 
   @override
   void initState() {
@@ -57,7 +59,17 @@ class _MedRecPageState extends State<MedRecPage> {
             .limit(1)
             .get();
 
-        if (clinicsSnapshot.docs.isNotEmpty) {}
+        if (clinicsSnapshot.docs.isNotEmpty) {
+          // Ambil dokumen pertama
+
+          // Ambil nilai clinicId
+          _clinicId = clinicsSnapshot.docs.first.id;
+
+          // Cetak atau gunakan clinicId sesuai kebutuhan
+          debugPrint('Clinic ID: $_clinicId');
+        } else {
+          debugPrint('No clinic found for the given email.');
+        }
       }
     } catch (e) {
       debugPrint('Error fetching clinic data: $e');
@@ -71,12 +83,14 @@ class _MedRecPageState extends State<MedRecPage> {
   // Improved stream for getting patients with error handling
   Stream<List<Map<String, dynamic>>> _getAllPatientsStream() {
     try {
-      return _patientsCollection.snapshots().map((snapshot) {
+      return _patientsCollection
+          .where('clinicId', isEqualTo: _clinicId)
+          .snapshots()
+          .map((snapshot) {
         final patients = snapshot.docs.map((doc) {
           return {'id': doc.id, ...doc.data() as Map<String, dynamic>};
         }).toList();
 
-        // Cache the patients for use elsewhere
         return patients;
       }).handleError((error) {
         debugPrint('Error in patient stream: $error');
@@ -84,7 +98,6 @@ class _MedRecPageState extends State<MedRecPage> {
       });
     } catch (e) {
       debugPrint('Error setting up patient stream: $e');
-      // Return an empty stream in case of error
       return Stream.value(<Map<String, dynamic>>[]);
     }
   }

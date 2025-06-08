@@ -3,13 +3,13 @@
 import 'dart:html' as html;
 
 import 'package:clima/Screens/Page/PatientsPage/PatientsPage.dart';
-import 'package:clima/Screens/RegisterLogin/LogOut.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
 import 'package:line_icons/line_icons.dart';
 
+import '../MetaAds/Screens/adsdashboard.dart';
 import '../main.dart';
 import '../utils/LiveClock.dart';
 import 'Dashboard.dart';
@@ -19,8 +19,8 @@ import 'Page/MedicalRecord/doctor payroll.dart';
 import 'Page/PriceListPage.dart';
 import 'Page/ReservationPage/AdminReserv.dart';
 import 'Page/ReservationPage/PublicReservationPage.dart';
-import 'Page/ReservationPage/ReservationPage.dart';
 import 'Page/TreatmentPage/TreatmentPage.dart';
+import 'RegisterLogin/LihatProfilKlinik.dart';
 import 'RegisterLogin/Login.dart';
 
 String FULLURL = '';
@@ -108,7 +108,7 @@ class _HomeScreenState extends State<HomeScreen>
       case 'profile':
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => Container()),
+          MaterialPageRoute(builder: (context) => const LihatProfilKlinik()),
         );
         break;
       case 'settings':
@@ -130,8 +130,8 @@ class _HomeScreenState extends State<HomeScreen>
 
   // List dari semua screen
   final List<Widget> _screens = [
+    const DashboardScreen(),
     const PublicReservationPage(),
-    const ReservationsPage(),
     const AdminReservationsPage(),
     const PatientsPage(),
     const MedRecPage(),
@@ -139,6 +139,7 @@ class _HomeScreenState extends State<HomeScreen>
     const PricelistPage(),
     const DaftarDoktor(),
     const DoctorFinancialReport(),
+    const AdsDashboard(),
   ];
 
   // Daftar menu dengan ikon dan label
@@ -188,6 +189,7 @@ class _HomeScreenState extends State<HomeScreen>
       "iconSelected": LineIcons.doctor,
       "label": "Payroll"
     },
+    {"icon": Icons.ads_click, "iconSelected": LineIcons.doctor, "label": "Ads"},
   ];
 
   @override
@@ -309,65 +311,6 @@ class _HomeScreenState extends State<HomeScreen>
             ),
             Row(
               children: [
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(8),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: const Row(
-                    children: [
-                      SizedBox(
-                        width: 200,
-                        child: TextField(
-                          decoration: InputDecoration(
-                            hintText: 'Cari pasien atau dokter...',
-                            border: InputBorder.none,
-                            hintStyle: TextStyle(color: Colors.grey),
-                          ),
-                        ),
-                      ),
-                      SizedBox(width: 8),
-                      Icon(Icons.search, color: Colors.grey),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Stack(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.notifications_outlined, size: 28),
-                      onPressed: () {},
-                    ),
-                    Positioned(
-                      right: 8,
-                      top: 8,
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: const BoxDecoration(
-                          color: Colors.red,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Text(
-                          '3',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
                 const SizedBox(width: 20),
                 // Action buttons row with consistent styling
                 InkWell(
@@ -658,10 +601,10 @@ class _HomeScreenState extends State<HomeScreen>
                                 child: AnimatedContainer(
                                   duration: const Duration(milliseconds: 200),
                                   decoration: BoxDecoration(
-                                    color: _hoveredIndex ==
-                                            _menuItems.length + 1
-                                        ? Colors.red.shade300.withOpacity(0.2)
-                                        : Colors.transparent,
+                                    color:
+                                        _hoveredIndex == _menuItems.length + 1
+                                            ? MedColors.primary.shade700
+                                            : Colors.transparent,
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Material(
@@ -705,7 +648,7 @@ class _HomeScreenState extends State<HomeScreen>
                                           ),
                                         );
                                       },
-                                      splashColor: Colors.red.shade100,
+                                      splashColor: MedColors.primary.shade600,
                                       highlightColor: Colors.transparent,
                                       child: Padding(
                                         padding: const EdgeInsets.symmetric(
@@ -716,7 +659,7 @@ class _HomeScreenState extends State<HomeScreen>
                                               : MainAxisAlignment.center,
                                           children: [
                                             Icon(
-                                              Icons.logout,
+                                              Icons.logout_rounded,
                                               color:
                                                   Colors.white.withOpacity(0.7),
                                               size: 18,
@@ -738,7 +681,7 @@ class _HomeScreenState extends State<HomeScreen>
                                     ),
                                   ),
                                 ),
-                              ),
+                              )
                             ],
                           ),
                         ),
@@ -816,7 +759,8 @@ class _HomeScreenState extends State<HomeScreen>
       html.window.localStorage['status'] = '';
       // Navigate to login screen
       if (mounted) {
-        Navigator.of(context).push(MaterialPageRoute(builder: (context) => LoginScreen()));
+        Navigator.of(context)
+            .push(MaterialPageRoute(builder: (context) => const LoginScreen()));
       }
     } catch (e) {
       // Show error message

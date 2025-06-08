@@ -1,12 +1,8 @@
-// ignore_for_file: use_build_context_synchronously
+// ignore_for_file: use_build_context_synchronously, deprecated_member_use
 
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:intl/intl.dart';
-import 'package:flutter/services.dart';
-import 'package:pdf/pdf.dart';
-import 'package:pdf/widgets.dart' as pw;
 
 class ResepObat extends StatefulWidget {
   const ResepObat({super.key});
@@ -541,7 +537,7 @@ class _CreatePrescriptionPageState extends State<CreatePrescriptionPage> {
                             child: Column(
                               children: [
                                 // Add Medication Button
-                                Container(
+                                SizedBox(
                                   width: double.infinity,
                                   child: ElevatedButton.icon(
                                     onPressed: _addMedication,
@@ -632,7 +628,7 @@ class _CreatePrescriptionPageState extends State<CreatePrescriptionPage> {
                                       ],
                                     ),
                                   );
-                                }).toList(),
+                                }),
 
                                 if (medications.isEmpty)
                                   Container(
@@ -682,7 +678,7 @@ class _CreatePrescriptionPageState extends State<CreatePrescriptionPage> {
                 const SizedBox(height: 32),
 
                 // Submit Button
-                Container(
+                SizedBox(
                   width: double.infinity,
                   child: ElevatedButton.icon(
                     onPressed: _isSaving ? null : _savePrescription,
@@ -1037,7 +1033,7 @@ class _MedicationDialogState extends State<_MedicationDialog> {
                   items: _medicationList.map((medication) {
                     return DropdownMenuItem<String>(
                       value: medication['name'],
-                      child: Container(
+                      child: SizedBox(
                         width: double.infinity,
                         child: RichText(
                           text: TextSpan(
@@ -1956,8 +1952,7 @@ class _ViewPrescriptionsPageState extends State<ViewPrescriptionsPage> {
                               Text('Instructions: ${med.additionalInfo}'),
                             ],
                           ),
-                        ))
-                    .toList(),
+                        )),
               ],
             ),
           ),

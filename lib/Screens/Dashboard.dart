@@ -1,7 +1,7 @@
 // ignore_for_file: library_private_types_in_public_api, deprecated_member_use
 
-import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:flutter/material.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -100,6 +100,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  const Text(
+                    'CLIMA versi 8 Juni 2025',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Color(0xFF64748B),
+                    ),
+                  ),
                   _buildStatCards(clinicData),
                   const SizedBox(height: 32),
                   Expanded(

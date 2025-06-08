@@ -1,10 +1,11 @@
-// ignore_for_file: deprecated_member_use
+// ignore_for_file: deprecated_member_use, unused_field, avoid_print
 
-import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:intl/intl.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 
 class AdminReservationsPage extends StatefulWidget {
   const AdminReservationsPage({super.key});
@@ -16,9 +17,17 @@ class AdminReservationsPage extends StatefulWidget {
 class _AdminReservationsPageState extends State<AdminReservationsPage> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
-
+  String? clinicId;
+  bool _isLoading = true;
   // Status filters
-  final List<String> _statusOptions = ['Semua', 'Pending', 'Confirmed', 'Cancelled', 'Rescheduled', 'Completed'];
+  final List<String> _statusOptions = [
+    'Semua',
+    'Pending',
+    'Confirmed',
+    'Cancelled',
+    'Rescheduled',
+    'Completed'
+  ];
   String _selectedStatusFilter = 'Semua';
 
   // Date filters
@@ -44,6 +53,8 @@ class _AdminReservationsPageState extends State<AdminReservationsPage> {
       start: startOfWeek,
       end: startOfWeek.add(const Duration(days: 6)),
     );
+
+    fetchClinicId();
   }
 
   @override
@@ -52,40 +63,98 @@ class _AdminReservationsPageState extends State<AdminReservationsPage> {
     super.dispose();
   }
 
-  // Create a query based on filters
-  Query<Map<String, dynamic>> _buildQuery() {
-    Query<Map<String, dynamic>> query = _firestore.collection('reservasi');
+  Future<void> fetchClinicId() async {
+    final User? currentUser = _auth.currentUser;
 
-    // Apply status filter
-    if (_selectedStatusFilter != 'Semua') {
-      query = query.where('status', isEqualTo: _selectedStatusFilter.toLowerCase());
+    if (currentUser == null) {
+      setState(() => _isLoading = false);
+      return;
     }
-
-    // Apply date range filter
-    if (_dateRange != null) {
-      query = query.where('reservationDateTime',
-          isGreaterThanOrEqualTo: Timestamp.fromDate(_dateRange!.start.copyWith(
-              hour: 0, minute: 0, second: 0, millisecond: 0, microsecond: 0
-          ))
-      );
-
-      query = query.where('reservationDateTime',
-          isLessThanOrEqualTo: Timestamp.fromDate(_dateRange!.end.copyWith(
-              hour: 23, minute: 59, second: 59, millisecond: 999, microsecond: 999
-          ))
-      );
-    }
-
-    // Apply sorting
-    query = query.orderBy(_sortField, descending: !_sortAscending);
-
-    return query;
-  }
-
-  Future<void> _updateReservationStatus(String documentId, String newStatus) async {
 
     try {
-      await _firestore.collection('reservasi').doc(documentId).update({
+      final querySnapshot = await _firestore
+          .collection('clinics')
+          .where('email', isEqualTo: currentUser.email)
+          .limit(1)
+          .get();
+
+      if (querySnapshot.docs.isNotEmpty) {
+        setState(() {
+          clinicId = querySnapshot.docs.first.id;
+        });
+        print('ini $clinicId');
+      } else {
+        setState(() => _isLoading = false);
+      }
+    } catch (e) {
+      print('Gagal memuat data klinik: ${e.toString()}');
+      setState(() => _isLoading = false);
+      _showSnackBar('Gagal memuat data klinik: ${e.toString()}');
+    }
+  }
+
+  Query<Map<String, dynamic>> _buildQuery() {
+    try {
+      if (clinicId == null) {
+        throw Exception('clinicId tidak boleh null');
+      }
+
+      Query<Map<String, dynamic>> query = _firestore
+          .collection('reservasipublik')
+          .where('clinicId', isEqualTo: clinicId);
+
+      // Filter berdasarkan status
+      if (_selectedStatusFilter != 'Semua') {
+        final status = _selectedStatusFilter.toLowerCase();
+        query = query.where('status', isEqualTo: status);
+
+        if (kDebugMode) {
+          print('Filter status: $status');
+        }
+      }
+
+      // Filter berdasarkan rentang tanggal
+      if (_dateRange != null) {
+        final start = Timestamp.fromDate(
+            _dateRange!.start.copyWith(hour: 0, minute: 0, second: 0));
+        final end = Timestamp.fromDate(_dateRange!.end
+            .copyWith(hour: 23, minute: 59, second: 59, millisecond: 999));
+
+        query = query
+            .where('reservationDateTime', isGreaterThanOrEqualTo: start)
+            .where('reservationDateTime', isLessThanOrEqualTo: end);
+
+        if (kDebugMode) {
+          print('Filter tanggal: dari $start sampai $end');
+        }
+      }
+
+      // Urutkan hasil
+      query = query.orderBy(_sortField, descending: !_sortAscending);
+
+      if (kDebugMode) {
+        print('Sort by $_sortField, ascending: $_sortAscending');
+      }
+
+      return query;
+    } catch (e, stackTrace) {
+      print('Gagal membangun query reservasi: $e');
+      if (kDebugMode) {
+        print('Gagal membangun query reservasi: $e');
+        print(stackTrace);
+      }
+
+      // Mengembalikan query kosong (tidak akan menghasilkan dokumen)
+      return _firestore
+          .collection('reservasipublik')
+          .where('clinicId', isEqualTo: '__invalid__');
+    }
+  }
+
+  Future<void> _updateReservationStatus(
+      String documentId, String newStatus) async {
+    try {
+      await _firestore.collection('reservasipublik').doc(documentId).update({
         'status': newStatus,
         'updatedAt': Timestamp.now(),
         'updatedBy': _auth.currentUser?.email ?? 'admin',
@@ -93,11 +162,11 @@ class _AdminReservationsPageState extends State<AdminReservationsPage> {
       _showSnackBar('Status berhasil diperbarui');
     } catch (e) {
       _showSnackBar('Gagal memperbarui status: ${e.toString()}');
-    } finally {
-    }
+    } finally {}
   }
 
-  Future<void> _showDeleteConfirmation(String documentId, String reservationCode) async {
+  Future<void> _showDeleteConfirmation(
+      String documentId, String reservationCode) async {
     return showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -126,14 +195,12 @@ class _AdminReservationsPageState extends State<AdminReservationsPage> {
   }
 
   Future<void> _deleteReservation(String documentId) async {
-
     try {
       await _firestore.collection('reservasi').doc(documentId).delete();
       _showSnackBar('Reservasi berhasil dihapus');
     } catch (e) {
       _showSnackBar('Gagal menghapus reservasi: ${e.toString()}');
-    } finally {
-    }
+    } finally {}
   }
 
   Future<void> _selectDateRange() async {
@@ -177,7 +244,8 @@ class _AdminReservationsPageState extends State<AdminReservationsPage> {
         foregroundColor: Colors.white,
         title: Text(
           'Admin Reservasi',
-          style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+          style: GoogleFonts.poppins(
+              fontWeight: FontWeight.bold, color: Colors.white),
         ),
         elevation: 0,
         actions: [
@@ -217,32 +285,32 @@ class _AdminReservationsPageState extends State<AdminReservationsPage> {
       ),
       child: isSmallScreen
           ? Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSearchBox(),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(child: _buildStatusFilter()),
-              const SizedBox(width: 12),
-              Expanded(child: _buildDateRangeSelector()),
-            ],
-          ),
-          const SizedBox(height: 16),
-          _buildSortDropdown(),
-        ],
-      )
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildSearchBox(),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(child: _buildStatusFilter()),
+                    const SizedBox(width: 12),
+                    Expanded(child: _buildDateRangeSelector()),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                _buildSortDropdown(),
+              ],
+            )
           : Row(
-        children: [
-          Expanded(flex: 2, child: _buildSearchBox()),
-          const SizedBox(width: 16),
-          Expanded(child: _buildStatusFilter()),
-          const SizedBox(width: 16),
-          Expanded(child: _buildDateRangeSelector()),
-          const SizedBox(width: 16),
-          Expanded(child: _buildSortDropdown()),
-        ],
-      ),
+              children: [
+                Expanded(flex: 2, child: _buildSearchBox()),
+                const SizedBox(width: 16),
+                Expanded(child: _buildStatusFilter()),
+                const SizedBox(width: 16),
+                Expanded(child: _buildDateRangeSelector()),
+                const SizedBox(width: 16),
+                Expanded(child: _buildSortDropdown()),
+              ],
+            ),
     );
   }
 
@@ -259,7 +327,8 @@ class _AdminReservationsPageState extends State<AdminReservationsPage> {
           hintText: 'Cari nama, telepon, kode...',
           prefixIcon: Icon(Icons.search, color: Colors.grey.shade600),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+          contentPadding:
+              const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
         ),
         onChanged: (value) {
           setState(() {
@@ -306,7 +375,8 @@ class _AdminReservationsPageState extends State<AdminReservationsPage> {
     String dateText = 'Pilih Tanggal';
     if (_dateRange != null) {
       final formatter = DateFormat('dd/MM/yyyy');
-      dateText = '${formatter.format(_dateRange!.start)} - ${formatter.format(_dateRange!.end)}';
+      dateText =
+          '${formatter.format(_dateRange!.start)} - ${formatter.format(_dateRange!.end)}';
     }
 
     return InkWell(
@@ -329,7 +399,8 @@ class _AdminReservationsPageState extends State<AdminReservationsPage> {
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-            Icon(Icons.keyboard_arrow_down, color: Colors.grey.shade600, size: 20),
+            Icon(Icons.keyboard_arrow_down,
+                color: Colors.grey.shade600, size: 20),
           ],
         ),
       ),
@@ -397,8 +468,8 @@ class _AdminReservationsPageState extends State<AdminReservationsPage> {
       stream: _buildQuery().snapshots(),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
+          print(snapshot.error);
           return Center(child: Text('Terjadi kesalahan: ${snapshot.error}'));
-
         }
 
         if (snapshot.connectionState == ConnectionState.waiting) {
@@ -418,7 +489,9 @@ class _AdminReservationsPageState extends State<AdminReservationsPage> {
 
             return name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
                 phone.contains(_searchQuery) ||
-                reservationCode.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+                reservationCode
+                    .toLowerCase()
+                    .contains(_searchQuery.toLowerCase()) ||
                 doctorName.toLowerCase().contains(_searchQuery.toLowerCase());
           }).toList();
         }
@@ -480,9 +553,12 @@ class _AdminReservationsPageState extends State<AdminReservationsPage> {
   }
 
   Widget _buildReservationCard(String docId, Map<String, dynamic> data) {
-    final DateTime reservationDateTime = (data['reservationDateTime'] as Timestamp).toDate();
-    final String formattedDate = DateFormat('dd MMM yyyy').format(reservationDateTime);
-    final String formattedTime = DateFormat('HH:mm').format(reservationDateTime);
+    final DateTime reservationDateTime =
+        (data['reservationDateTime'] as Timestamp).toDate();
+    final String formattedDate =
+        DateFormat('dd MMM yyyy').format(reservationDateTime);
+    final String formattedTime =
+        DateFormat('HH:mm').format(reservationDateTime);
     final String status = data['status'] ?? 'pending';
     final String name = data['name'] ?? 'Tidak ada nama';
     final String phone = data['phone'] ?? '-';
@@ -583,7 +659,8 @@ class _AdminReservationsPageState extends State<AdminReservationsPage> {
                     ),
                     const SizedBox(width: 8),
                     IconButton(
-                      onPressed: () => _showDeleteConfirmation(docId, reservationCode),
+                      onPressed: () =>
+                          _showDeleteConfirmation(docId, reservationCode),
                       icon: Icon(Icons.delete, color: Colors.red.shade400),
                       tooltip: 'Hapus',
                     ),
@@ -649,9 +726,12 @@ class _AdminReservationsPageState extends State<AdminReservationsPage> {
         rows: reservations.map((reservation) {
           final data = reservation.data() as Map<String, dynamic>;
           final String docId = reservation.id;
-          final DateTime reservationDateTime = (data['reservationDateTime'] as Timestamp).toDate();
-          final String formattedDate = DateFormat('dd MMM yyyy').format(reservationDateTime);
-          final String formattedTime = DateFormat('HH:mm').format(reservationDateTime);
+          final DateTime reservationDateTime =
+              (data['reservationDateTime'] as Timestamp).toDate();
+          final String formattedDate =
+              DateFormat('dd MMM yyyy').format(reservationDateTime);
+          final String formattedTime =
+              DateFormat('HH:mm').format(reservationDateTime);
           final String status = data['status'] ?? 'pending';
 
           return DataRow(cells: [
@@ -683,7 +763,8 @@ class _AdminReservationsPageState extends State<AdminReservationsPage> {
                 Expanded(child: _buildStatusDropdown(docId, status)),
                 const SizedBox(width: 8),
                 IconButton(
-                  onPressed: () => _showDeleteConfirmation(docId, data['reservationCode']),
+                  onPressed: () =>
+                      _showDeleteConfirmation(docId, data['reservationCode']),
                   icon: Icon(Icons.delete, color: Colors.red.shade400),
                   tooltip: 'Hapus',
                 ),

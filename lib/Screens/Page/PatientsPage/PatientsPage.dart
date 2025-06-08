@@ -40,6 +40,47 @@ class _PatientsPageState extends State<PatientsPage> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _fetchClinicId();
+  }
+
+// Pertama, tambahkan variabel untuk menyimpan ID klinik
+  String? _clinicId;
+
+// Tambahkan fungsi untuk mendapatkan ID klinik berdasarkan email user yang login
+  Future<void> _fetchClinicId() async {
+    try {
+      // Dapatkan email dari user saat ini
+      final User? user = FirebaseAuth.instance.currentUser;
+      if (user != null && user.email != null) {
+        final String userEmail = user.email!;
+
+        // Cari klinik dengan email tersebut
+        final snapshot = await FirebaseFirestore.instance
+            .collection('clinics')
+            .where('email', isEqualTo: userEmail)
+            .limit(1)
+            .get();
+
+        if (snapshot.docs.isNotEmpty) {
+          setState(() {
+            _clinicId = snapshot.docs.first.id;
+          });
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Klinik tidak ditemukan!')),
+          );
+        }
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to fetch clinic ID: $e')),
+      );
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     // Check if the screen is small (mobile)
     final isSmallScreen = MediaQuery.of(context).size.width < 600;
@@ -162,13 +203,19 @@ class _PatientsPageState extends State<PatientsPage> {
   Widget _buildContent() {
     switch (_selectedIndex) {
       case 0:
-        return const AddPatientForm();
+        return AddPatientForm(
+          clinicId: _clinicId,
+        );
       case 1:
-        return const PatientListPage();
+        return PatientListPage(
+          clinicId: _clinicId,
+        );
       case 2:
         return const DaftarTindakanPasien();
       default:
-        return const AddPatientForm();
+        return AddPatientForm(
+          clinicId: _clinicId,
+        );
     }
   }
 }
@@ -223,8 +270,9 @@ class SidebarItem extends StatelessWidget {
 }
 
 class AddPatientForm extends StatefulWidget {
-  const AddPatientForm({super.key});
+  const AddPatientForm({required this.clinicId, super.key});
 
+  final String? clinicId;
   @override
   State<AddPatientForm> createState() => _AddPatientFormState();
 }
@@ -249,89 +297,63 @@ class _AddPatientFormState extends State<AddPatientForm> {
   @override
   void initState() {
     super.initState();
-    _fetchClinicId();
+    _fetchMedicalRecordNumber();
   }
-
-// Pertama, tambahkan variabel untuk menyimpan ID klinik
-  String? _clinicId;
 
 // Tambahkan fungsi untuk mendapatkan ID klinik berdasarkan email user yang login
-  Future<void> _fetchClinicId() async {
-    try {
-      // Dapatkan email dari user saat ini
-      final User? user = FirebaseAuth.instance.currentUser;
-      if (user != null && user.email != null) {
-        final String userEmail = user.email!;
-
-        // Cari klinik dengan email tersebut
-        final snapshot = await FirebaseFirestore.instance
-            .collection('clinics')
-            .where('email', isEqualTo: userEmail)
-            .limit(1)
-            .get();
-
-        if (snapshot.docs.isNotEmpty) {
-          setState(() {
-            _clinicId = snapshot.docs.first.id;
-          });
-
-          // Setelah mendapatkan ID klinik, lanjutkan dengan fetch nomor rekam medis
-          _fetchMedicalRecordNumber();
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Klinik tidak ditemukan!')),
-          );
-        }
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to fetch clinic ID: $e')),
-      );
-    }
-  }
-
   Future<void> _fetchMedicalRecordNumber() async {
     try {
-      if (_clinicId == null) {
+      if (widget.clinicId == null) {
         throw Exception('ID Klinik tidak tersedia');
       }
 
       if (kDebugMode) {
-        print('Clinic ID: $_clinicId');
+        print('Clinic ID: ${widget.clinicId}');
       }
 
-      // Ambil semua data untuk klinik ini
       final snapshot = await FirebaseFirestore.instance
           .collection('pasien')
-          .where('clinicId', isEqualTo: _clinicId)
+          .where('clinicId', isEqualTo: widget.clinicId)
           .get();
 
       int lastNumber = 0;
-      if (snapshot.docs.isNotEmpty) {
-        // Loop melalui semua dokumen untuk menemukan nomor terbesar
-        for (var doc in snapshot.docs) {
-          final String? mrn = doc.data()['medicalRecordNumber'] as String?;
 
-          if (mrn != null) {
-            // Parse nomor rekam medis
-            final int? number = int.tryParse(mrn);
-            if (number != null && number > lastNumber) {
-              lastNumber = number;
+      if (snapshot.docs.isNotEmpty) {
+        for (var doc in snapshot.docs) {
+          try {
+            final String? mrn = doc.data()['medicalRecordNumber'] as String?;
+
+            if (mrn != null) {
+              final int? number = int.tryParse(mrn);
+              if (number != null && number > lastNumber) {
+                lastNumber = number;
+              }
+            }
+          } catch (innerError) {
+            if (kDebugMode) {
+              print('Error parsing MRN in doc ${doc.id}: $innerError');
             }
           }
         }
       }
 
-      // Nomor berikutnya adalah nomor terakhir + 1
       final nextNumber = lastNumber + 1;
 
       setState(() {
-        // Format: 8 digit dengan leading zeros
         _medicalRecordNumber = nextNumber.toString().padLeft(8, '0');
       });
-    } catch (e) {
+
+      if (kDebugMode) {
+        print('Generated medical record number: $_medicalRecordNumber');
+      }
+    } catch (e, stackTrace) {
+      if (kDebugMode) {
+        print('Failed to fetch medical record number: $e');
+        print(stackTrace);
+      }
+
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to fetch medical record number: $e')),
+        SnackBar(content: Text('Gagal mengambil nomor rekam medis: $e')),
       );
     }
   }
@@ -344,7 +366,7 @@ class _AddPatientFormState extends State<AddPatientForm> {
 
       try {
         // Pastikan clinicId ada
-        if (_clinicId == null) {
+        if (widget.clinicId == null) {
           throw Exception('ID Klinik tidak tersedia');
         }
 
@@ -364,7 +386,7 @@ class _AddPatientFormState extends State<AddPatientForm> {
           'pekerjaan': _pekerjaanController.text,
           'medicalRecordNumber': _medicalRecordNumber,
           'imageUrl': imageUrl,
-          'clinicId': _clinicId, // Tambahkan clinicId ke data pasien
+          'clinicId': widget.clinicId, // Tambahkan clinicId ke data pasien
           'createdAt': FieldValue.serverTimestamp(),
         };
 
@@ -900,8 +922,9 @@ class _AddPatientFormState extends State<AddPatientForm> {
 }
 
 class PatientListPage extends StatefulWidget {
-  const PatientListPage({super.key});
+  const PatientListPage({required this.clinicId, super.key});
 
+  final String? clinicId;
   @override
   State<PatientListPage> createState() => _PatientListPageState();
 }
@@ -1072,21 +1095,46 @@ class _PatientListPageState extends State<PatientListPage> {
   }
 
   Stream<QuerySnapshot> _buildPatientQuery() {
-    Query query = FirebaseFirestore.instance.collection('pasien');
+    try {
+      if (widget.clinicId == null) {
+        throw Exception('ID Klinik tidak tersedia');
+      }
 
-    // If search query is provided, filter results
-    if (_searchQuery.isNotEmpty) {
-      // Search by name (case-insensitive prefix match)
-      query = query
-          .where('fullName', isGreaterThanOrEqualTo: _searchQuery)
-          .where('fullName', isLessThanOrEqualTo: '$_searchQuery\uf8ff')
-          .limit(20);
-    } else {
-      // Default: latest patients first
-      query = query.orderBy('createdAt', descending: true).limit(20);
+      Query query = FirebaseFirestore.instance
+          .collection('pasien')
+          .where('clinicId', isEqualTo: widget.clinicId);
+
+      if (_searchQuery.isNotEmpty) {
+        query = query
+            .where('fullName', isGreaterThanOrEqualTo: _searchQuery)
+            .where('fullName', isLessThanOrEqualTo: '$_searchQuery\uf8ff')
+            .limit(20);
+
+        if (kDebugMode) {
+          print('Mencari pasien dengan nama mengandung: $_searchQuery');
+        }
+      } else {
+        query = query.orderBy('createdAt', descending: true).limit(20);
+
+        if (kDebugMode) {
+          print('Menampilkan pasien terbaru (tanpa pencarian)');
+        }
+      }
+
+      return query.snapshots().handleError((error) {
+        if (kDebugMode) {
+          print('Error dalam stream query pasien: $error');
+        }
+      });
+    } catch (e, stackTrace) {
+      if (kDebugMode) {
+        print('Gagal membangun query pasien: $e');
+        print(stackTrace);
+      }
+
+      // Mengembalikan stream kosong jika terjadi error
+      return const Stream.empty();
     }
-
-    return query.snapshots();
   }
 
   Widget _buildDesktopPatientItem(String id, Map<String, dynamic> data) {

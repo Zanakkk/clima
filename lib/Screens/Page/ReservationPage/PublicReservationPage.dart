@@ -1,5 +1,6 @@
-// ignore_for_file: deprecated_member_use
+// ignore_for_file: deprecated_member_use, avoid_web_libraries_in_flutter
 import 'dart:html' as html;
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
@@ -43,6 +44,8 @@ class _PublicReservationPageState extends State<PublicReservationPage> {
 
   String? _endpointId;
   bool _isPublicReservation = false;
+  bool isLoading = false;
+
   @override
   void initState() {
     super.initState();
@@ -58,7 +61,7 @@ class _PublicReservationPageState extends State<PublicReservationPage> {
     super.dispose();
   }
 
-  // REVISI 4: Tambahkan method untuk mengecek endpoint ID dari URL
+  // Method untuk mengecek endpoint ID dari URL
   void _checkForEndpointId() {
     final String currentUrl = html.window.location.href;
     final Uri uri = Uri.parse(currentUrl);
@@ -68,7 +71,11 @@ class _PublicReservationPageState extends State<PublicReservationPage> {
     if (pathSegments.isNotEmpty) {
       final String lastSegment = pathSegments.last;
       // Jika segment terakhir bukan 'reservasi' atau path kosong, maka itu adalah endpoint ID
-      if (lastSegment.isNotEmpty && lastSegment != 'reservasipublik') {
+      if (lastSegment.isNotEmpty &&
+          lastSegment != 'reservasipublik' &&
+          lastSegment != 'reservasi' &&
+          lastSegment.length > 5) {
+        // Asumsi endpoint ID minimal 6 karakter
         setState(() {
           _endpointId = lastSegment;
           _isPublicReservation = true;
@@ -80,49 +87,58 @@ class _PublicReservationPageState extends State<PublicReservationPage> {
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
 
-    // Hanya load clinic ID dulu
+    // Load clinic ID berdasarkan jenis reservation
     await _loadClinicId();
 
     setState(() => _isLoading = false);
   }
 
-  // Get the clinic ID
-  // REVISI 5: Ubah method _loadClinicId untuk menggunakan endpoint ID
-// Get the clinic ID
-// REVISI 5: Ubah method _loadClinicId untuk menggunakan endpoint ID
+  // FIXED: Method _loadClinicId untuk handle public dan private reservation
   Future _loadClinicId() async {
     try {
       if (_isPublicReservation && _endpointId != null) {
-        print(1);
+        // UNTUK PUBLIC RESERVATION: Query berdasarkan endpointId tanpa cek login
         final querySnapshot = await _firestore
             .collection('clinics')
             .where('endpointId', isEqualTo: _endpointId)
             .limit(1)
             .get();
-        print(2);
-        if (querySnapshot.docs.isNotEmpty) {
-          setState(() {
-            _clinicId = querySnapshot.docs.first.id;
-          });
-          print(3);
-          // Setelah _clinicId di-set, baru fetch data lainnya
-          await _fetchDoctors();
-          await _fetchProcedures();
-          print(4);
-        } else {
-          _showSnackBar('Klinik tidak ditemukan untuk endpoint: $_endpointId');
-        }
-      } else {
-        final querySnapshot =
-            await _firestore.collection('clinics').limit(1).get();
+
         if (querySnapshot.docs.isNotEmpty) {
           setState(() {
             _clinicId = querySnapshot.docs.first.id;
           });
 
-          // Setelah _clinicId di-set, baru fetch data lainnya
+          // Setelah _clinicId di-set, fetch data lainnya
           await _fetchDoctors();
           await _fetchProcedures();
+        } else {
+          _showSnackBar('Klinik tidak ditemukan untuk endpoint: $_endpointId');
+        }
+      } else {
+        // UNTUK PRIVATE RESERVATION: Cek login dulu
+        final userEmail = FirebaseAuth.instance.currentUser?.email;
+        if (userEmail == null) {
+          _showSnackBar('User belum login');
+          return;
+        }
+
+        final querySnapshot = await _firestore
+            .collection('clinics')
+            .where('email', isEqualTo: userEmail)
+            .limit(1)
+            .get();
+
+        if (querySnapshot.docs.isNotEmpty) {
+          setState(() {
+            _clinicId = querySnapshot.docs.first.id;
+          });
+
+          // Setelah _clinicId di-set, fetch data lainnya
+          await _fetchDoctors();
+          await _fetchProcedures();
+        } else {
+          _showSnackBar('Klinik tidak ditemukan untuk email: $userEmail');
         }
       }
     } catch (e) {
@@ -130,20 +146,60 @@ class _PublicReservationPageState extends State<PublicReservationPage> {
     }
   }
 
-// Fetch list of doctors from firestore - FILTERED BY CLINIC ID
+  // FIXED: Fetch list of doctors - handle untuk public reservation
   Future _fetchDoctors() async {
-    if (_clinicId == null) {
-      _showSnackBar('Clinic ID tidak tersedia');
-      return;
-    }
-    print(21);
     try {
+      // Jika ini public reservation dan clinicId sudah ada, langsung fetch
+      if (_isPublicReservation && _clinicId != null) {
+        final snapshot = await _firestore
+            .collection('dokter')
+            .where('clinicId', isEqualTo: _clinicId)
+            .get();
+
+        final List<Map<String, dynamic>> doctors = snapshot.docs.map((doc) {
+          return {
+            'id': doc.id,
+            ...doc.data(),
+          };
+        }).toList();
+
+        setState(() {
+          _doctors = doctors;
+        });
+        return;
+      }
+
+      // Untuk private reservation, cek login dulu
+      final userEmail = FirebaseAuth.instance.currentUser?.email;
+      if (userEmail == null) {
+        setState(() {
+          isLoading = false;
+        });
+        return;
+      }
+
+      // Jika clinicId belum ada, ambil dari koleksi 'clinics' berdasarkan email
+      if (_clinicId == null || _clinicId!.isEmpty) {
+        final clinicSnapshot = await _firestore
+            .collection('clinics')
+            .where('email', isEqualTo: userEmail)
+            .limit(1)
+            .get();
+
+        if (clinicSnapshot.docs.isEmpty) {
+          _showSnackBar('Clinic tidak ditemukan untuk email ini');
+          return;
+        }
+
+        _clinicId = clinicSnapshot.docs.first.id;
+      }
+
+      // Setelah pasti ada clinicId, ambil daftar dokter
       final snapshot = await _firestore
           .collection('dokter')
           .where('clinicId', isEqualTo: _clinicId)
           .get();
 
-      print(22);
       final List<Map<String, dynamic>> doctors = snapshot.docs.map((doc) {
         return {
           'id': doc.id,
@@ -151,31 +207,31 @@ class _PublicReservationPageState extends State<PublicReservationPage> {
         };
       }).toList();
 
-      print(23);
       setState(() {
         _doctors = doctors;
       });
-      print(24);
     } catch (e) {
       _showSnackBar('Gagal mengambil data dokter: ${e.toString()}');
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
     }
   }
 
-// Fetch list of procedures/treatments from firestore - FILTERED BY CLINIC ID
+  // Fetch list of procedures/treatments from firestore - FILTERED BY CLINIC ID
   Future _fetchProcedures() async {
     if (_clinicId == null) {
       _showSnackBar('Clinic ID tidak tersedia');
       return;
     }
 
-    print(31);
     try {
       final snapshot = await _firestore
           .collection('pricelist')
           .where('clinicId', isEqualTo: _clinicId)
           .get();
 
-      print(32);
       final List<Map<String, dynamic>> procedures = snapshot.docs.map((doc) {
         final data = doc.data();
         return {
@@ -186,31 +242,11 @@ class _PublicReservationPageState extends State<PublicReservationPage> {
         };
       }).toList();
 
-      print(33);
       setState(() {
         _procedures = procedures;
       });
-      print(34);
     } catch (e) {
       _showSnackBar('Gagal mengambil data perawatan: ${e.toString()}');
-    }
-  }
-
-// Optional: Method untuk refresh semua data berdasarkan clinic ID
-  Future _refreshDataByClinicId() async {
-    if (_clinicId == null) {
-      _showSnackBar('Clinic ID tidak tersedia');
-      return;
-    }
-
-    try {
-      await Future.wait([
-        _fetchDoctors(),
-        _fetchProcedures(),
-      ]);
-      _showSnackBar('Data berhasil diperbarui');
-    } catch (e) {
-      _showSnackBar('Gagal memperbarui data: ${e.toString()}');
     }
   }
 
@@ -265,15 +301,12 @@ class _PublicReservationPageState extends State<PublicReservationPage> {
           'clinicId': _clinicId,
           'reservationCode': reservationCode,
           'status': 'pending',
-          // TAMBAHKAN FIELD UNTUK PUBLIC RESERVATION
           'isPublicReservation': _isPublicReservation,
           'endpointId': _endpointId,
         };
 
-        // UBAH COLLECTION BERDASARKAN JENIS RESERVASI
-        final String collectionName =
-            _isPublicReservation ? 'reservasipublik' : 'reservasipublik';
-        await _firestore.collection(collectionName).add(reservationData);
+        // Gunakan collection yang sama untuk semua reservation
+        await _firestore.collection('reservasipublik').add(reservationData);
 
         // Reset form
         _formKey.currentState!.reset();
@@ -297,22 +330,17 @@ class _PublicReservationPageState extends State<PublicReservationPage> {
     }
   }
 
-  // Check reservation by phone number
-  // REVISI 7: Ubah method _checkReservation untuk mencari di collection yang tepat
+  // FIXED: Check reservation by phone number
   Future<void> _checkReservation(String phoneNumber) async {
     setState(() => _isCheckingReservation = true);
 
     try {
-      // Tentukan collection yang akan dicari
-      final String collectionName =
-          _isPublicReservation ? 'reservasipublik' : 'reservasipublik';
-
       QuerySnapshot snapshot;
 
       if (_isPublicReservation && _clinicId != null) {
         // Untuk public reservation, filter berdasarkan clinicId juga
         snapshot = await _firestore
-            .collection(collectionName)
+            .collection('reservasipublik')
             .where('phone', isEqualTo: phoneNumber)
             .where('clinicId', isEqualTo: _clinicId)
             .orderBy('createdAt', descending: true)
@@ -320,7 +348,7 @@ class _PublicReservationPageState extends State<PublicReservationPage> {
             .get();
       } else {
         snapshot = await _firestore
-            .collection(collectionName)
+            .collection('reservasipublik')
             .where('phone', isEqualTo: phoneNumber)
             .orderBy('createdAt', descending: true)
             .limit(1)
@@ -341,9 +369,7 @@ class _PublicReservationPageState extends State<PublicReservationPage> {
         _showSnackBar('Tidak ada reservasi dengan nomor telepon tersebut');
       }
     } catch (e) {
-      print(e);
       _showSnackBar('Gagal mengecek reservasi: ${e.toString()}');
-      print(e);
     } finally {
       setState(() => _isCheckingReservation = false);
     }
@@ -560,10 +586,11 @@ class _PublicReservationPageState extends State<PublicReservationPage> {
     }
   }
 
-  // Replace ResponsiveWrapper with MediaQuery for responsiveness
+  // MAIN BUILD METHOD - TIDAK ADA DRAWER UNTUK PUBLIC RESERVATION
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // TIDAK ADA DRAWER DI SINI
       body: _buildMainContent(),
     );
   }
@@ -614,7 +641,7 @@ class _PublicReservationPageState extends State<PublicReservationPage> {
     );
   }
 
-// Helper method to determine if device is tablet based on width
+  // Helper method to determine if device is tablet based on width
   bool _isTablet(BuildContext context) {
     return MediaQuery.of(context).size.width >= 800;
   }
@@ -829,7 +856,6 @@ class _PublicReservationPageState extends State<PublicReservationPage> {
       ),
     );
   }
-// Add these four methods in the _ReservationsPageState class, wherever appropriate
 
   Widget _buildFooter() {
     return Container(
@@ -858,7 +884,7 @@ class _PublicReservationPageState extends State<PublicReservationPage> {
         ],
       ),
     );
-  } // Add these four methods in the _ReservationsPageState class, wherever appropriate
+  }
 
   Widget _buildOperationalHoursInfo() {
     return Container(

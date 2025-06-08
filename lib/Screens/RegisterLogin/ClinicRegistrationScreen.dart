@@ -2,12 +2,14 @@
 
 import 'dart:html' as html;
 import 'dart:math';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
+
 import '../HomePage.dart';
 
 class ClinicRegistrationScreen extends StatefulWidget {
@@ -64,8 +66,7 @@ class _ClinicRegistrationScreenState extends State<ClinicRegistrationScreen> {
 
   Future<void> _uploadFile(Uint8List bytes) async {
     try {
-      setState(() {
-      });
+      setState(() {});
 
       final String fileName = '${DateTime.now().millisecondsSinceEpoch}.png';
       final storageRef =
@@ -83,8 +84,7 @@ class _ClinicRegistrationScreenState extends State<ClinicRegistrationScreen> {
         _downloadUrl = downloadUrl;
       });
     } catch (e) {
-      setState(() {
-      });
+      setState(() {});
       _showErrorDialog("Upload Error", "Failed to upload logo: $e");
     }
   }
@@ -111,8 +111,7 @@ class _ClinicRegistrationScreenState extends State<ClinicRegistrationScreen> {
       return;
     }
 
-    setState(() {
-    });
+    setState(() {});
 
     try {
       final String clinicName = _nameController.text.trim();
@@ -124,7 +123,7 @@ class _ClinicRegistrationScreenState extends State<ClinicRegistrationScreen> {
 
       // Create basic clinic data for Firestore (without plan selection)
       final Map<String, dynamic> clinicData = {
-        'activation' : false,
+        'activation': false,
         'name': clinicName,
         'address': clinicAddress,
         'email': clinicEmail,
@@ -132,8 +131,6 @@ class _ClinicRegistrationScreenState extends State<ClinicRegistrationScreen> {
         'passwordManagement': passwordManagement,
         'endpointId': endpointId,
         'createdAt': FieldValue.serverTimestamp(),
-        'registrationComplete':
-            false, // Flag to indicate plan selection is pending
       };
 
       // Save to Firestore
@@ -159,8 +156,7 @@ class _ClinicRegistrationScreenState extends State<ClinicRegistrationScreen> {
       _showErrorDialog("Registration Error", "Failed to register clinic: $e");
     } finally {
       if (mounted) {
-        setState(() {
-        });
+        setState(() {});
       }
     }
   }
@@ -300,7 +296,7 @@ class _ClinicRegistrationScreenState extends State<ClinicRegistrationScreen> {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Text(
-          'Clinic Logo',
+          'Logo Klinik',
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: Theme.of(context).primaryColor,
@@ -309,7 +305,7 @@ class _ClinicRegistrationScreenState extends State<ClinicRegistrationScreen> {
         ),
         const SizedBox(height: 16),
         Text(
-          'Upload your clinic logo to display to your patients',
+          'Unggah logo klinik Anda untuk ditampilkan kepada pasien.',
           style: TextStyle(color: Colors.grey[600]),
           textAlign: TextAlign.center,
         ),
@@ -353,7 +349,7 @@ class _ClinicRegistrationScreenState extends State<ClinicRegistrationScreen> {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'Click to upload',
+                      'Klik untuk mengunggah',
                       style: TextStyle(
                         color: Colors.grey[700],
                         fontWeight: FontWeight.bold,
@@ -361,7 +357,7 @@ class _ClinicRegistrationScreenState extends State<ClinicRegistrationScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'PNG, JPG up to 5MB',
+                      'PNG, JPG hingga 5MB',
                       style: TextStyle(color: Colors.grey[600], fontSize: 12),
                     ),
                   ],
@@ -373,7 +369,7 @@ class _ClinicRegistrationScreenState extends State<ClinicRegistrationScreen> {
           child: ElevatedButton.icon(
             onPressed: _pickImage,
             icon: Icon(_imageBytes != null ? Icons.edit : Icons.upload),
-            label: Text(_imageBytes != null ? 'Change Logo' : 'Upload Logo'),
+            label: Text(_imageBytes != null ? 'Ubah Logo' : 'Unggah Logo'),
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
@@ -393,7 +389,7 @@ class _ClinicRegistrationScreenState extends State<ClinicRegistrationScreen> {
                 });
               },
               icon: const Icon(Icons.delete_outline, size: 18),
-              label: const Text('Remove'),
+              label: const Text('Hapus'),
               style: TextButton.styleFrom(
                 foregroundColor: Colors.red[700],
               ),
@@ -412,8 +408,8 @@ class _ClinicRegistrationScreenState extends State<ClinicRegistrationScreen> {
           TextFormField(
             controller: _nameController,
             decoration: InputDecoration(
-              labelText: 'Clinic Name',
-              hintText: 'Enter your clinic name',
+              labelText: 'Nama Klinik',
+              hintText: 'Masukkan Nama Klinik Anda',
               prefixIcon: const Icon(Icons.business),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -425,7 +421,7 @@ class _ClinicRegistrationScreenState extends State<ClinicRegistrationScreen> {
             ),
             validator: (value) {
               if (value == null || value.trim().isEmpty) {
-                return 'Clinic name is required';
+                return 'Nama Klinik Dibutuhkan';
               }
               return null;
             },
@@ -434,8 +430,8 @@ class _ClinicRegistrationScreenState extends State<ClinicRegistrationScreen> {
           TextFormField(
             controller: _addressController,
             decoration: InputDecoration(
-              labelText: 'Clinic Address',
-              hintText: 'Enter your clinic address',
+              labelText: 'Alamat Klinik',
+              hintText: 'Masukkan Alamat Klinik Anda',
               prefixIcon: const Icon(Icons.location_on),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -447,7 +443,7 @@ class _ClinicRegistrationScreenState extends State<ClinicRegistrationScreen> {
             ),
             validator: (value) {
               if (value == null || value.trim().isEmpty) {
-                return 'Clinic address is required';
+                return 'Alamat Klinik Dibutuhkan';
               }
               return null;
             },
@@ -457,8 +453,8 @@ class _ClinicRegistrationScreenState extends State<ClinicRegistrationScreen> {
           TextFormField(
             controller: _passwordManagementController,
             decoration: InputDecoration(
-              labelText: 'Management Password',
-              hintText: 'Create a secure password',
+              labelText: 'Kata Sandi Manajemen',
+              hintText: 'Buat kata sandi yang aman',
               prefixIcon: const Icon(Icons.lock),
               suffixIcon: IconButton(
                 icon: Icon(
@@ -481,10 +477,10 @@ class _ClinicRegistrationScreenState extends State<ClinicRegistrationScreen> {
             obscureText: _obscurePassword,
             validator: (value) {
               if (value == null || value.trim().isEmpty) {
-                return 'Password is required';
+                return 'Kata Sandi Dibutuhkan';
               }
               if (value.length < 8) {
-                return 'Password must be at least 8 characters';
+                return 'Kata sandi harus terdiri dari minimal 8 karakter';
               }
               return null;
             },
@@ -493,8 +489,8 @@ class _ClinicRegistrationScreenState extends State<ClinicRegistrationScreen> {
           TextFormField(
             controller: _confirmPasswordController,
             decoration: InputDecoration(
-              labelText: 'Confirm Password',
-              hintText: 'Confirm your password',
+              labelText: 'Konfirmasi Kata Sandi',
+              hintText: 'Konfirmasi Kata Sandi',
               prefixIcon: const Icon(Icons.lock_outline),
               suffixIcon: IconButton(
                 icon: Icon(
@@ -519,10 +515,10 @@ class _ClinicRegistrationScreenState extends State<ClinicRegistrationScreen> {
             obscureText: _obscureConfirmPassword,
             validator: (value) {
               if (value == null || value.trim().isEmpty) {
-                return 'Please confirm your password';
+                return 'Konfirmasi Kata Sandi';
               }
               if (value != _passwordManagementController.text) {
-                return 'Passwords do not match';
+                return 'Kata Sandi Tidak Sesuai';
               }
               return null;
             },
@@ -550,7 +546,7 @@ class _ClinicRegistrationScreenState extends State<ClinicRegistrationScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              'Continue to Select Plan',
+              'Lanjut Pilih Paket',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,

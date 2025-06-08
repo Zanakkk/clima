@@ -14,6 +14,7 @@ import 'ClinicRegistrationScreen.dart';
 import 'ForgotPassword.dart';
 import 'LoadingOverlay.dart';
 import 'Register.dart';
+import 'VerificationWindow.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -171,10 +172,25 @@ class _LoginScreenState extends State<LoginScreen>
           ),
         );
       } else {
-        // Clinic data found, navigate to home screen
+        // Clinic data found, check activation status
         final clinicDoc = querySnapshot.docs.first;
         final clinicData = clinicDoc.data();
 
+        // Check if activation field exists and is false
+        final bool isActivated = clinicData['activation'] ?? false;
+
+        if (!isActivated) {
+          // Account not activated, redirect to activation screen
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const ActivationScreen(),
+            ),
+          );
+          return;
+        }
+
+        // Account is activated, proceed with normal flow
         // Save clinic ID for future reference
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('clinicId', clinicDoc.id);
@@ -279,16 +295,16 @@ class _LoginScreenState extends State<LoginScreen>
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               elevation: 2,
-                              child: Padding(
-                                padding: const EdgeInsets.all(12),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
                                 child: Image.asset(
                                   'assets/LOGO.JPG',
-                                  width: 40,
-                                  height: 40,
+                                  width: 64,
+                                  height: 64,
+                                  fit: BoxFit.cover, // penting!
                                 ),
                               ),
                             ),
-
                             const SizedBox(height: 24),
                             Text(
                               'CLIMA NUSANTARA',
@@ -312,12 +328,11 @@ class _LoginScreenState extends State<LoginScreen>
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _buildFeatureItem(
-                                Icons.medical_services_rounded,
+                            _buildFeatureItem(Icons.medical_services_rounded,
                                 'Patient Records Management'),
                             const SizedBox(height: 16),
-                            _buildFeatureItem(Icons.payment_rounded,
-                                'Billing & Invoices'),
+                            _buildFeatureItem(
+                                Icons.payment_rounded, 'Billing & Invoices'),
                             const SizedBox(height: 16),
                             _buildFeatureItem(Icons.analytics_rounded,
                                 'Analytics & Reporting'),
@@ -353,8 +368,8 @@ class _LoginScreenState extends State<LoginScreen>
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                'CLIMA telah mentransformasi operasional klinik kami. Manajemen pasien kini menjadi lebih lancar dan efisien.'
-                                    ,style: GoogleFonts.poppins(
+                                'CLIMA telah mentransformasi operasional klinik kami. Manajemen pasien kini menjadi lebih lancar dan efisien.',
+                                style: GoogleFonts.poppins(
                                   fontSize: 14,
                                   fontStyle: FontStyle.italic,
                                   color: Colors.white.withOpacity(0.9),
@@ -477,243 +492,257 @@ class _LoginScreenState extends State<LoginScreen>
     return Form(
       key: _formKey,
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Welcome Back',
-            style: GoogleFonts.poppins(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Log in to your clinic account',
-            style: GoogleFonts.poppins(
-              fontSize: 16,
-              color: Colors.grey[600],
-            ),
-          ),
-          const SizedBox(height: 32),
-
-          // Email Field
-          Text(
-            'Email Address',
-            style: GoogleFonts.poppins(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: Colors.black87,
-            ),
-          ),
-          const SizedBox(height: 8),
-          TextFormField(
-            controller: _emailController,
-            keyboardType: TextInputType.emailAddress,
-            decoration: InputDecoration(
-              hintText: 'Enter your email',
-              prefixIcon: Icon(
-                Icons.email_outlined,
-                color: Theme.of(context).colorScheme.primary,
-              ),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 16,
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(
-                  color: Colors.grey[300]!,
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Selamat Datang',
+                style: GoogleFonts.poppins(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
                 ),
               ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(
-                  color: Colors.grey[300]!,
-                ),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(
-                  color: Theme.of(context).colorScheme.primary,
-                  width: 2,
-                ),
-              ),
-            ),
-            validator: Validators.validateEmail,
-          ),
-          const SizedBox(height: 24),
-
-          // Password Field
-          Text(
-            'Password',
-            style: GoogleFonts.poppins(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: Colors.black87,
-            ),
-          ),
-          const SizedBox(height: 8),
-          TextFormField(
-            controller: _passwordController,
-            obscureText: _obscurePassword,
-            decoration: InputDecoration(
-              hintText: 'Enter your password',
-              prefixIcon: Icon(
-                Icons.lock_outline,
-                color: Theme.of(context).colorScheme.primary,
-              ),
-              suffixIcon: IconButton(
-                icon: Icon(
-                  _obscurePassword
-                      ? Icons.visibility_outlined
-                      : Icons.visibility_off_outlined,
+              const SizedBox(height: 8),
+              Text(
+                'Masuk ke akun klinik Anda',
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
                   color: Colors.grey[600],
                 ),
-                onPressed: () {
-                  setState(() {
-                    _obscurePassword = !_obscurePassword;
-                  });
-                },
               ),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 16,
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(
-                  color: Colors.grey[300]!,
-                ),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(
-                  color: Colors.grey[300]!,
-                ),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(
-                  color: Theme.of(context).colorScheme.primary,
-                  width: 2,
-                ),
-              ),
-            ),
-            validator: Validators.validatePassword,
+              const SizedBox(height: 32),
+            ],
           ),
-          const SizedBox(height: 12),
-
-          // Remember Me & Forgot Password
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Transform.scale(
-                    scale: 0.9,
-                    child: Checkbox(
-                      value: _rememberMe,
-                      onChanged: (value) {
-                        setState(() {
-                          _rememberMe = value ?? false;
-                        });
-                      },
-                      activeColor: Theme.of(context).colorScheme.primary,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(4),
-                      ),
+              // Email Field
+              Text(
+                'Email Address',
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextFormField(
+                controller: _emailController,
+                keyboardType: TextInputType.emailAddress,
+                decoration: InputDecoration(
+                  hintText: 'Enter your email',
+                  prefixIcon: Icon(
+                    Icons.email_outlined,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 16,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: Colors.grey[300]!,
                     ),
                   ),
-                  Text(
-                    'Remember me',
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      color: Colors.grey[700],
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: Colors.grey[300]!,
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: Theme.of(context).colorScheme.primary,
+                      width: 2,
+                    ),
+                  ),
+                ),
+                validator: Validators.validateEmail,
+              ),
+              const SizedBox(height: 24),
+
+              // Password Field
+              Text(
+                'Password',
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextFormField(
+                controller: _passwordController,
+                obscureText: _obscurePassword,
+                decoration: InputDecoration(
+                  hintText: 'Enter your password',
+                  prefixIcon: Icon(
+                    Icons.lock_outline,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscurePassword
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined,
+                      color: Colors.grey[600],
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _obscurePassword = !_obscurePassword;
+                      });
+                    },
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 16,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: Colors.grey[300]!,
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: Colors.grey[300]!,
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: Theme.of(context).colorScheme.primary,
+                      width: 2,
+                    ),
+                  ),
+                ),
+                validator: Validators.validatePassword,
+              ),
+              const SizedBox(height: 12),
+
+              // Remember Me & Forgot Password
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Transform.scale(
+                        scale: 0.9,
+                        child: Checkbox(
+                          value: _rememberMe,
+                          onChanged: (value) {
+                            setState(() {
+                              _rememberMe = value ?? false;
+                            });
+                          },
+                          activeColor: Theme.of(context).colorScheme.primary,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                      ),
+                      Text(
+                        'Remember me',
+                        style: GoogleFonts.poppins(
+                          fontSize: 14,
+                          color: Colors.grey[700],
+                        ),
+                      ),
+                    ],
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ForgotPasswordScreen(),
+                        ),
+                      );
+                    },
+                    child: Text(
+                      'Forgot Password?',
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
                     ),
                   ),
                 ],
               ),
-              TextButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const ForgotPasswordScreen(),
+              const SizedBox(height: 32),
+            ],
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Login Button
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: ElevatedButton(
+                  onPressed: _loginWithEmailPassword,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Theme.of(context).colorScheme.primary,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                  );
-                },
-                child: Text(
-                  'Forgot Password?',
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Theme.of(context).colorScheme.primary,
                   ),
+                  child: Text(
+                    'Log In',
+                    style: GoogleFonts.poppins(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // Register Link
+              Center(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'Don\'t have an account?',
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        color: Colors.grey[700],
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const RegisterScreen(),
+                          ),
+                        );
+                      },
+                      child: Text(
+                        'Register Now',
+                        style: GoogleFonts.poppins(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
-          ),
-          const SizedBox(height: 32),
-
-          // Login Button
-          SizedBox(
-            width: double.infinity,
-            height: 52,
-            child: ElevatedButton(
-              onPressed: _loginWithEmailPassword,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Theme.of(context).colorScheme.primary,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: Text(
-                'Log In',
-                style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 24),
-
-          // Register Link
-          Center(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  'Don\'t have an account?',
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    color: Colors.grey[700],
-                  ),
-                ),
-                TextButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const RegisterScreen(),
-                      ),
-                    );
-                  },
-                  child: Text(
-                    'Register Now',
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+          )
         ],
       ),
     );
